@@ -19,12 +19,12 @@
         <form @submit.prevent="handleSubmit">
           <div class="form-grid">
 
-            <!-- Cabang — menentukan mode -->
+            <!-- Cabang — menentukan mode, diambil dari Firestore -->
             <div style="grid-column:1/-1;">
               <label class="form-label">Cabang Lomba <span class="req">*</span></label>
-              <select v-model="form.cabang" class="tcr-input">
-                <option value="">Pilih cabang lomba…</option>
-                <option v-for="c in CABANG_LIST" :key="c" :value="c">{{ c }}</option>
+              <select v-model="form.cabang" class="tcr-input" :disabled="kategoriStore.loading">
+                <option value="">{{ kategoriStore.loading ? 'Memuat daftar lomba…' : 'Pilih cabang lomba…' }}</option>
+                <option v-for="k in kategoriStore.list" :key="k.id" :value="k.nama">{{ k.nama }}</option>
               </select>
             </div>
 
@@ -47,8 +47,12 @@
               </div>
             </template>
 
-            <!-- TEAM: Nama Ketua Tim -->
+            <!-- TEAM: Nama Regu + Nama Ketua Tim -->
             <template v-if="isTeam">
+              <div style="grid-column:1/-1;">
+                <label class="form-label">Nama Tim / Regu <span class="req">*</span></label>
+                <input v-model="form.namaRegu" class="tcr-input" placeholder="cth: Tim Merah Putih, Blok Anggrek" />
+              </div>
               <div style="grid-column:1/-1;">
                 <label class="form-label">Nama Ketua Tim <span class="req">*</span></label>
                 <input v-model="form.namaKetua" class="tcr-input" placeholder="Nama lengkap ketua tim" />
@@ -59,9 +63,9 @@
             <template v-if="form.cabang">
               <div>
                 <label class="form-label">Koridor <span class="req">*</span></label>
-                <select v-model="form.koridor" class="tcr-input">
-                  <option value="">Pilih koridor…</option>
-                  <option v-for="k in 5" :key="k" :value="k">Koridor {{ k }}</option>
+                <select v-model="form.koridorId" class="tcr-input" :disabled="koridorStore.loading">
+                  <option value="">{{ koridorStore.loading ? 'Memuat koridor…' : 'Pilih koridor…' }}</option>
+                  <option v-for="k in koridorStore.list" :key="k.id" :value="k.id">{{ k.nama }}</option>
                 </select>
               </div>
               <div>
@@ -118,33 +122,102 @@
         </div>
       </div>
     </div>
+
+    <!-- Daftar Peserta Terdaftar -->
+    <div class="peserta-section">
+      <div class="peserta-sec-header">
+        <div>
+          <div class="eyebrow">Peserta Terdaftar</div>
+          <p class="peserta-sec-sub">{{ regStore.list.length }} peserta telah mendaftar</p>
+        </div>
+      </div>
+
+      <div class="peserta-list">
+        <div v-for="(r, i) in regStore.list" :key="r.id || i"
+          class="peserta-item" :class="{ 'peserta-open': expandedPeserta === (r.id || i) }"
+          @click="togglePeserta(r.id || i)">
+
+          <div class="peserta-main">
+            <span class="p-num">{{ i + 1 }}</span>
+            <div class="p-info">
+              <div class="p-nama">{{ r.namaRegu || r.namaKetua || r.nama || '—' }}</div>
+              <div class="p-sub">{{ r.cabang }}{{ r.namaRegu && r.namaKetua ? ' · ' + r.namaKetua : '' }}</div>
+            </div>
+            <span class="p-tipe" :class="r.tipe === 'tim' ? 'p-tim' : 'p-pers'">
+              {{ r.tipe === 'tim' ? '👥 Tim' : '🙋 Perorangan' }}
+            </span>
+            <div class="p-koridor">{{ r.koridorNama || (r.koridor ? `Koridor ${r.koridor}` : '—') }}</div>
+            <span class="p-chevron">{{ expandedPeserta === (r.id || i) ? '▲' : '▼' }}</span>
+          </div>
+
+          <div v-if="expandedPeserta === (r.id || i)" class="peserta-detail">
+            <div class="pd-grid">
+              <div v-if="r.namaRegu" class="pd-block">
+                <div class="pd-label">Nama Tim</div>
+                <div class="pd-val">{{ r.namaRegu }}</div>
+              </div>
+              <div v-if="r.blokRumah" class="pd-block">
+                <div class="pd-label">Blok Rumah</div>
+                <div class="pd-val">{{ r.blokRumah }}</div>
+              </div>
+              <div class="pd-block">
+                <div class="pd-label">Koridor</div>
+                <div class="pd-val">{{ r.koridorNama || (r.koridor ? `Koridor ${r.koridor}` : '—') }}</div>
+              </div>
+              <div class="pd-block">
+                <div class="pd-label">Jenis</div>
+                <div class="pd-val">{{ r.tipe === 'tim' ? 'Beregu / Tim' : 'Perorangan' }}</div>
+              </div>
+              <div v-if="r.tglDate || r.createdAt" class="pd-block">
+                <div class="pd-label">Tgl Daftar</div>
+                <div class="pd-val">{{ formatDate(r.tglDate || r.createdAt) }}</div>
+              </div>
+            </div>
+            <div v-if="r.tipe === 'tim' && r.anggota?.length" class="pd-anggota">
+              <div class="pd-label">Anggota Tim ({{ r.anggota.length }} orang)</div>
+              <ol class="pd-anggota-ol">
+                <li v-for="(a, idx) in r.anggota" :key="idx">{{ a }}</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+
+        <div v-if="!regStore.list.length && !regStore.loading" class="peserta-empty">
+          Belum ada peserta terdaftar.
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { reactive, computed, watch, onMounted } from 'vue'
+import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { useRegistrasiStore } from '@/stores/useRegistrasi'
+import { useKategoriStore }    from '@/stores/useKategori'
+import { useKoridorStore }     from '@/stores/useKoridor'
 
-const regStore = useRegistrasiStore()
-
-const TEAM_CABANG = ['Voli Putra', 'Voli Putri', 'Badminton Beregu']
-const CABANG_LIST = ['Voli Putra','Voli Putri','Badminton Beregu','Futsal Anak','Mobile Legends','Balap Karung','Tarik Tambang','Makan Kerupuk','Balap Kelereng','Panjat Pinang']
+const regStore      = useRegistrasiStore()
+const kategoriStore = useKategoriStore()
+const koridorStore  = useKoridorStore()
 
 const form = reactive({
   cabang:    '',
-  koridor:   '',
+  koridorId: '',
   blokRumah: '',
   wa:        '',
   nama:      '',      // perorangan
+  namaRegu:  '',      // tim
   namaKetua: '',      // tim
   anggota:   [''],    // tim
 })
 
-const isTeam = computed(() => TEAM_CABANG.includes(form.cabang))
+const selectedKategori = computed(() => kategoriStore.list.find(k => k.nama === form.cabang))
+const isTeam = computed(() => selectedKategori.value?.jenis === 'Beregu')
 
 // Reset nama/anggota saat ganti cabang agar tidak tercampur
 watch(() => form.cabang, () => {
   form.nama      = ''
+  form.namaRegu  = ''
   form.namaKetua = ''
   form.anggota   = ['']
 })
@@ -154,23 +227,35 @@ function removeAnggota(i) { form.anggota.splice(i, 1) }
 
 async function handleSubmit() {
   const tipe = isTeam.value ? 'tim' : 'perorangan'
+  const koridorNama = koridorStore.list.find(k => k.id === form.koridorId)?.nama || ''
   const payload = {
     tipe,
-    cabang:    form.cabang,
-    koridor:   form.koridor,
-    blokRumah: form.blokRumah,
-    wa:        form.wa,
+    cabang:      form.cabang,
+    koridorId:   form.koridorId,
+    koridorNama,
+    blokRumah:   form.blokRumah,
+    wa:          form.wa,
     ...(tipe === 'tim'
-      ? { namaKetua: form.namaKetua, anggota: form.anggota.filter(a => a.trim()) }
+      ? { namaRegu: form.namaRegu, namaKetua: form.namaKetua, anggota: form.anggota.filter(a => a.trim()) }
       : { nama: form.nama }),
   }
   const ok = await regStore.submit(payload)
   if (ok) {
-    Object.assign(form, { cabang:'', koridor:'', blokRumah:'', wa:'', nama:'', namaKetua:'', anggota:[''] })
+    Object.assign(form, { cabang:'', koridorId:'', blokRumah:'', wa:'', nama:'', namaRegu:'', namaKetua:'', anggota:[''] })
   }
 }
 
-onMounted(() => { regStore.reset(); regStore.fetch() })
+const expandedPeserta = ref(null)
+function togglePeserta(key) {
+  expandedPeserta.value = expandedPeserta.value === key ? null : key
+}
+const formatDate = (d) => {
+  if (!d) return '—'
+  const dt = d?.seconds ? new Date(d.seconds * 1000) : new Date(d)
+  return dt.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+}
+
+onMounted(() => { regStore.reset(); regStore.fetch(); kategoriStore.fetch(); koridorStore.fetch() })
 </script>
 
 <style scoped>
@@ -234,10 +319,46 @@ onMounted(() => { regStore.reset(); regStore.fetch() })
 .sidebar-divider { height: 1px; background: rgba(255,255,255,.12); margin: 20px 0; }
 .sidebar-info { font: 600 13px/1.6 'Plus Jakarta Sans'; color: #B8B0A6; }
 
+/* Daftar Peserta Section */
+.peserta-section    { margin-top: 36px; }
+.peserta-sec-header { margin-bottom: 16px; }
+.peserta-sec-sub    { font: 500 13px/1 'Plus Jakarta Sans'; color: #7A7368; margin: 6px 0 0; }
+
+.peserta-list { display: flex; flex-direction: column; gap: 0; border: 1.5px solid #F0D3D7; border-radius: 10px; overflow: hidden; background: #fff; }
+
+.peserta-item { border-bottom: 1px solid #F0EBE2; cursor: pointer; transition: background .12s; }
+.peserta-item:last-child { border-bottom: none; }
+.peserta-item:hover .peserta-main { background: #FAF8F3; }
+.peserta-open .peserta-main { background: #FAF8F3; border-bottom: 1px solid #F0D3D7; }
+
+.peserta-main { display: flex; align-items: center; gap: 12px; padding: 14px 18px; flex-wrap: wrap; }
+.p-num  { flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%; background: #F0D3D7; display: flex; align-items: center; justify-content: center; font: 700 12px/1 'Plus Jakarta Sans'; color: #CE1126; }
+.p-info { flex: 1; min-width: 140px; }
+.p-nama { font: 700 14px/1.2 'Plus Jakarta Sans'; color: #1A1613; }
+.p-sub  { font: 500 12px/1 'Plus Jakarta Sans'; color: #9A9389; margin-top: 3px; }
+.p-tipe { flex-shrink: 0; padding: 4px 10px; border-radius: 6px; font: 600 11px/1 'Plus Jakarta Sans'; white-space: nowrap; }
+.p-tim  { background: #EEF2FF; color: #4338CA; }
+.p-pers { background: #FEF3C7; color: #92400E; }
+.p-koridor { font: 600 13px/1 'Plus Jakarta Sans'; color: #5A534B; white-space: nowrap; }
+.p-chevron { margin-left: auto; font: 700 10px/1 'Plus Jakarta Sans'; color: #9A9389; flex-shrink: 0; }
+
+.peserta-detail { padding: 16px 18px; background: #F7F4EE; display: flex; flex-direction: column; gap: 14px; }
+.pd-grid  { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.pd-block { }
+.pd-label { font: 700 11px/1 'Plus Jakarta Sans'; letter-spacing: .08em; text-transform: uppercase; color: #9A9389; margin-bottom: 6px; }
+.pd-val   { font: 600 14px/1.3 'Plus Jakarta Sans'; color: #1A1613; }
+.pd-anggota    { }
+.pd-anggota-ol { margin: 8px 0 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+.pd-anggota-ol li { font: 500 13px/1.5 'Plus Jakarta Sans'; color: #1A1613; }
+
+.peserta-empty { padding: 32px; text-align: center; color: #9A9389; font: 500 14px/1 'Plus Jakarta Sans'; }
+
 @media(max-width:767px) {
   .reg-grid, .form-grid { grid-template-columns: 1fr !important; }
   .page-title { font-size: 26px; }
   .form-card { padding: 18px; }
   .sidebar-card { padding: 18px; }
+  .pd-grid { grid-template-columns: 1fr 1fr; }
+  .p-koridor { display: none; }
 }
 </style>

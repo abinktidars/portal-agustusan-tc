@@ -26,6 +26,12 @@ export const useTipeStore = defineStore('tipe', () => {
   function warna(nama) { return colorMap.value[nama]?.warna || '#7A7368' }
   function bg(nama)    { return colorMap.value[nama]?.bg    || '#F0EBE2' }
 
+  // Lookup by Firestore document ID (untuk relasi tipeId)
+  function findById(id)   { return list.value.find(t => t.id === id) }
+  function namaById(id)   { return findById(id)?.nama   || '' }
+  function warnaById(id)  { return findById(id)?.warna  || '#7A7368' }
+  function bgById(id)     { return findById(id)?.bg      || '#F0EBE2' }
+
   async function fetch() {
     loading.value = true
     try {
@@ -42,5 +48,5 @@ export const useTipeStore = defineStore('tipe', () => {
   async function update(id, data) { await fb.updateTipe(id, data); await fetch() }
   async function remove(id)       { await fb.deleteTipe(id);       await fetch() }
 
-  return { list, loading, colorMap, namaList, warna, bg, fetch, add, update, remove }
+  return { list, loading, colorMap, namaList, warna, bg, findById, namaById, warnaById, bgById, fetch, add, update, remove }
 })

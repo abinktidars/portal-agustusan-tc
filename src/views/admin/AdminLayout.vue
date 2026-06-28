@@ -45,8 +45,10 @@ const navItems = [
   { name: 'admin-tipe',       icon: '🎨', label: 'Tipe Lomba' },
   { name: 'admin-kategori',   icon: '🏷️', label: 'Kategori Lomba' },
   { name: 'admin-jadwal',     icon: '📅', label: 'Jadwal' },
-  { name: 'admin-hasil',      icon: '🏆', label: 'Hasil' },
+  { name: 'admin-klasemen',   icon: '🥇', label: 'Klasemen' },
   { name: 'admin-registrasi', icon: '📋', label: 'Registrasi' },
+  { name: 'admin-koridor',    icon: '🏘️', label: 'Koridor' },
+  { name: 'admin-lokasi',     icon: '📍', label: 'Lokasi' },
   { name: 'admin-users',      icon: '👥', label: 'Data User' },
 ]
 </script>

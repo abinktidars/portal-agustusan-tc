@@ -16,9 +16,9 @@ export const useRegistrasiStore = defineStore('registrasi', () => {
   const error     = ref('')
 
   const recent = () => list.value.slice(0, 5).map(r => ({
-    initial: ((r.namaKetua || r.nama) || '?').charAt(0).toUpperCase(),
-    nama:    r.namaKetua || r.nama || '—',
-    line:    `${r.cabang} · Koridor ${r.koridor}`,
+    initial: ((r.namaRegu || r.namaKetua || r.nama) || '?').charAt(0).toUpperCase(),
+    nama:    r.namaRegu || r.namaKetua || r.nama || '—',
+    line:    `${r.cabang} · ${r.koridorNama || (r.koridor ? `Koridor ${r.koridor}` : '—')}`,
   }))
 
   async function fetch() {
@@ -36,12 +36,16 @@ export const useRegistrasiStore = defineStore('registrasi', () => {
   async function submit(form) {
     error.value = ''
 
-    if (!form.cabang || !form.koridor || !form.blokRumah?.trim() || !form.wa?.trim()) {
+    if (!form.cabang || !form.koridorId || !form.blokRumah?.trim() || !form.wa?.trim()) {
       error.value = 'Mohon lengkapi Cabang, Koridor, Blok Rumah, dan No. WhatsApp.'
       return false
     }
 
     if (form.tipe === 'tim') {
+      if (!form.namaRegu?.trim()) {
+        error.value = 'Nama Tim / Regu wajib diisi.'
+        return false
+      }
       if (!form.namaKetua?.trim()) {
         error.value = 'Nama Ketua Tim wajib diisi.'
         return false
@@ -71,10 +75,40 @@ export const useRegistrasiStore = defineStore('registrasi', () => {
     }
   }
 
+  async function add(data) {
+    loading.value = true
+    try {
+      await fb.addRegistrasi({ ...data, ts: Date.now() })
+      await fetch()
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function update(id, data) {
+    loading.value = true
+    try {
+      await fb.updateRegistrasi(id, data)
+      await fetch()
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function remove(id) {
+    loading.value = true
+    try {
+      await fb.deleteRegistrasi(id)
+      list.value = list.value.filter(r => r.id !== id)
+    } finally {
+      loading.value = false
+    }
+  }
+
   function reset() {
     submitted.value = false
     error.value = ''
   }
 
-  return { list, loading, submitted, error, recent, fetch, submit, reset }
+  return { list, loading, submitted, error, recent, fetch, submit, add, update, remove, reset }
 })

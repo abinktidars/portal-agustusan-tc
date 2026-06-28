@@ -28,7 +28,10 @@ const router = createRouter({
         { path: 'kategori',   name: 'admin-kategori',   component: () => import('@/views/admin/AdminKategoriView.vue'),   meta: { requiresAuth: true } },
         { path: 'jadwal',     name: 'admin-jadwal',     component: () => import('@/views/admin/AdminJadwalView.vue'),     meta: { requiresAuth: true } },
         { path: 'hasil',      name: 'admin-hasil',      component: () => import('@/views/admin/AdminHasilView.vue'),      meta: { requiresAuth: true } },
+        { path: 'klasemen',   name: 'admin-klasemen',   component: () => import('@/views/admin/AdminKlasemenView.vue'),   meta: { requiresAuth: true } },
         { path: 'registrasi', name: 'admin-registrasi', component: () => import('@/views/admin/AdminRegistrasiView.vue'), meta: { requiresAuth: true } },
+        { path: 'koridor',    name: 'admin-koridor',    component: () => import('@/views/admin/AdminKoridorView.vue'),    meta: { requiresAuth: true } },
+        { path: 'lokasi',     name: 'admin-lokasi',     component: () => import('@/views/admin/AdminLokasiView.vue'),     meta: { requiresAuth: true } },
         { path: 'users',      name: 'admin-users',      component: () => import('@/views/admin/AdminUsersView.vue'),      meta: { requiresAuth: true } },
       ]
     }
