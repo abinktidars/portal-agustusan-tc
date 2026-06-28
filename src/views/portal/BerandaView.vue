@@ -12,7 +12,7 @@
           <p class="hero-desc">Portal bersama warga Teras Country Residence. Cek jadwal &amp; hasil pertandingan, klasemen antar koridor, dan daftar lomba, semua di satu tempat. </p>
           <div class="hero-actions">
             <button class="btn-white" @click="$router.push({ name: 'registrasi' })">Daftar Lomba Sekarang</button>
-            <button class="btn-outline" @click="$router.push({ name: 'jadwal' })">Lihat Jadwal</button>
+            <!-- <button class="btn-outline" @click="$router.push({ name: 'jadwal' })">Lihat Jadwal</button> -->
           </div>
         </div>
       </div>
@@ -160,8 +160,8 @@ onUnmounted(() => clearInterval(timer))
   border-radius: 50%; background: repeating-linear-gradient(45deg,rgba(255,255,255,.16) 0 14px,transparent 14px 28px);
 }
 .hero-bg-stripe {
-  position: absolute; bottom: 0; left: 0; right: 0; height: 8px;
-  background: repeating-linear-gradient(90deg,#fff 0 24px,transparent 24px 48px); opacity: .5;
+  position: absolute; bottom: 0; left: 0; right: 0; height: 5px;
+  background: repeating-linear-gradient(90deg,#fff 0 15px,transparent 15px 30px); opacity: .5;
 }
 .hero-badge {
   display: inline-flex; align-items: center; gap: 8px; padding: 7px 14px;
