@@ -3,22 +3,22 @@ import { ref } from 'vue'
 import * as fb from '@/firebase/helpers'
 
 const FALLBACK = [
-  { nama:'Budi Santoso',    blok:'Blok Anggrek',     cabang:'Voli Putra',        tim:'Garuda Anggrek',    ts: Date.now() - 172800000 },
-  { nama:'Sari Lestari',    blok:'Blok Dahlia',      cabang:'Voli Putri',        tim:'Srikandi Dahlia',   ts: Date.now() - 86400000 },
-  { nama:'Andi Pratama',    blok:'Blok Bougenville', cabang:'Mobile Legends',    tim:'BGV Esport',        ts: Date.now() - 18000000 },
-  { nama:'Dewi Anggraini',  blok:'Blok Cempaka',     cabang:'Badminton Beregu',  tim:'Cempaka Smash',     ts: Date.now() - 7200000 },
+  { tipe:'tim',         namaKetua:'Budi Santoso',   cabang:'Voli Putra',       koridor:1, blokRumah:'A5',  ts: Date.now() - 172800000 },
+  { tipe:'tim',         namaKetua:'Sari Lestari',   cabang:'Voli Putri',       koridor:2, blokRumah:'B3',  ts: Date.now() - 86400000 },
+  { tipe:'perorangan',  nama:'Andi Pratama',         cabang:'Mobile Legends',   koridor:3, blokRumah:'C7',  ts: Date.now() - 18000000 },
+  { tipe:'tim',         namaKetua:'Dewi Anggraini', cabang:'Badminton Beregu', koridor:4, blokRumah:'D2',  ts: Date.now() - 7200000 },
 ]
 
 export const useRegistrasiStore = defineStore('registrasi', () => {
-  const list    = ref([])
-  const loading = ref(false)
+  const list      = ref([])
+  const loading   = ref(false)
   const submitted = ref(false)
-  const error   = ref('')
+  const error     = ref('')
 
   const recent = () => list.value.slice(0, 5).map(r => ({
-    initial: (r.nama || '?').charAt(0).toUpperCase(),
-    nama: r.nama,
-    line: `${r.cabang} · ${r.blok}`,
+    initial: ((r.namaKetua || r.nama) || '?').charAt(0).toUpperCase(),
+    nama:    r.namaKetua || r.nama || '—',
+    line:    `${r.cabang} · Koridor ${r.koridor}`,
   }))
 
   async function fetch() {
@@ -35,11 +35,30 @@ export const useRegistrasiStore = defineStore('registrasi', () => {
 
   async function submit(form) {
     error.value = ''
-    if (!form.nama.trim() || !form.wa.trim() || !form.blok || !form.cabang) {
-      error.value = 'Mohon lengkapi Nama, No. WhatsApp, Blok, dan Cabang Lomba.'
+
+    if (!form.cabang || !form.koridor || !form.blokRumah?.trim() || !form.wa?.trim()) {
+      error.value = 'Mohon lengkapi Cabang, Koridor, Blok Rumah, dan No. WhatsApp.'
       return false
     }
+
+    if (form.tipe === 'tim') {
+      if (!form.namaKetua?.trim()) {
+        error.value = 'Nama Ketua Tim wajib diisi.'
+        return false
+      }
+      if (!form.anggota?.some(a => a.trim())) {
+        error.value = 'Isi minimal satu nama peserta tim.'
+        return false
+      }
+    } else {
+      if (!form.nama?.trim()) {
+        error.value = 'Nama Peserta wajib diisi.'
+        return false
+      }
+    }
+
     try {
+      loading.value = true
       await fb.addRegistrasi({ ...form, ts: Date.now() })
       submitted.value = true
       await fetch()
@@ -47,6 +66,8 @@ export const useRegistrasiStore = defineStore('registrasi', () => {
     } catch (e) {
       error.value = 'Gagal mengirim: ' + e.message
       return false
+    } finally {
+      loading.value = false
     }
   }
 
