@@ -9,16 +9,17 @@
         class="chip" :class="{ active: jadwalStore.filterCabang === c }"
         @click="selectCabang(c, i)">{{ c }}</button>
     </div>
-    <div ref="statusRowRef" class="tcr-scroll chip-row" style="padding:10px 0 6px;">
+    <!-- <div ref="statusRowRef" class="tcr-scroll chip-row" style="padding:10px 0 6px;">
       <button v-for="(s, i) in jadwalStore.statusOptions" :key="s"
         :ref="el => { if(el) statusBtnRefs[i] = el }"
         class="chip" :class="{ active: jadwalStore.filterStatus === s }"
         @click="selectStatus(s, i)">{{ s }}</button>
-    </div>
+    </div> -->
 
     <div class="jadwal-list">
       <div v-for="j in jadwalStore.filtered" :key="j.id" class="jadwal-row">
         <div class="jadwal-date">
+          <div class="hari">{{ hariDariTgl(j) }}</div>
           <div class="tgl">{{ j.tgl }}</div>
           <div class="jam">{{ j.jam }}</div>
         </div>
@@ -29,7 +30,7 @@
             <span class="cabang">{{ j.cabang }}</span>
           </div>
           <div class="peserta">{{ j.peserta }}</div>
-          <div class="venue">📍 {{ j.lokasi || j.venue }}</div>
+          <div class="venue">📍 Lokasi: {{ j.lokasi || j.venue }}</div>
         </div>
         <StatusBadge :status="j.status" />
       </div>
@@ -45,6 +46,20 @@ import StatusBadge from '@/components/StatusBadge.vue'
 
 const jadwalStore = useJadwalStore()
 const katColor = (k) => ({ Olahraga:'#CE1126', Tradisional:'#C0871C', 'E-Sport':'#2D5B8A', Acara:'#2E7D52' })[k] || '#CE1126'
+const monthMap = {
+  Jan: 0,
+  Feb: 1,
+  Mar: 2,
+  Apr: 3,
+  Mei: 4,
+  Jun: 5,
+  Jul: 6,
+  Agu: 7,
+  Sep: 8,
+  Okt: 9,
+  Nov: 10,
+  Des: 11,
+}
 
 const cabangRowRef  = ref(null)
 const statusRowRef  = ref(null)
@@ -54,6 +69,25 @@ const statusBtnRefs = []
 function scrollToCenter(row, btn) {
   if (!row || !btn) return
   row.scrollTo({ left: btn.offsetLeft - row.clientWidth / 2 + btn.offsetWidth / 2, behavior: 'smooth' })
+}
+
+function hariDariTgl(jadwal) {
+  if (jadwal?.hari) return jadwal.hari
+  if (jadwal?.tglDate instanceof Date && !Number.isNaN(jadwal.tglDate.getTime())) {
+    return jadwal.tglDate.toLocaleDateString('id-ID', { weekday: 'long' })
+  }
+
+  const parts = String(jadwal?.tgl || '').trim().split(/\s+/)
+  if (parts.length < 2) return '-'
+
+  const tanggal = Number(parts[0])
+  const bulan = monthMap[parts[1]]
+  if (!tanggal || bulan === undefined) return '-'
+
+  const date = new Date(2026, bulan, tanggal)
+  if (Number.isNaN(date.getTime())) return '-'
+
+  return date.toLocaleDateString('id-ID', { weekday: 'long' })
 }
 
 function selectCabang(c, i) {
@@ -76,6 +110,7 @@ onMounted(() => jadwalStore.fetch())
 .jadwal-list { display: flex; flex-direction: column; gap: 12px; margin-top: 18px; }
 .jadwal-row  { display: flex; align-items: center; gap: 18px; background: #fff; border: 1.5px solid #F0D3D7; border-radius: 8px; padding: 18px 20px; flex-wrap: wrap; }
 .jadwal-date { flex: 0 0 auto; text-align: center; min-width: 70px; }
+.hari { font: 700 11px/1 'Plus Jakarta Sans'; letter-spacing: .08em; text-transform: uppercase; color: #9A6B12; }
 .tgl  { font: 800 16px/1 Archivo; color: #CE1126; }
 .jam  { font: 600 13px/1 'Plus Jakarta Sans'; color: #7A7368; margin-top: 6px; }
 .divider-v { width: 1px; align-self: stretch; background: #ECE7DE; }
