@@ -114,7 +114,14 @@
         </div>
         <div class="sidebar-divider"></div>
         <div class="sidebar-info">
-          Pendaftaran ditutup <strong style="color:#fff;">8 Juli 2026</strong>. Info &amp; bantuan: Sekretariat Panitia di Pos Satpam Utama atau WA <strong style="color:#F4C36B;">0812-1745-2026</strong>.
+          Pertanyaan lebih lanjut, hubungi: <br>
+          Andi (Ketua Panitia)
+          <a
+            href="https://wa.me/6281574109182?text=Halo%20Andi%2C%20saya%20ingin%20bertanya%20soal%20registrasi%20lomba"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="wa-link"
+          >0815-7410-9182</a>.
         </div>
       </div>
     </div>
@@ -233,6 +240,8 @@ onMounted(() => { regStore.reset(); regStore.fetch() })
 .recent-line  { font: 500 12px/1.2 'Plus Jakarta Sans'; color: #B8B0A6; margin-top: 3px; }
 .sidebar-divider { height: 1px; background: rgba(255,255,255,.12); margin: 20px 0; }
 .sidebar-info { font: 600 13px/1.6 'Plus Jakarta Sans'; color: #B8B0A6; }
+.wa-link { color: #F4C36B; font-weight: 700; text-decoration: underline; text-underline-offset: 2px; }
+.wa-link:hover { color: #FFD98B; }
 
 @media(max-width:767px) {
   .reg-grid, .form-grid { grid-template-columns: 1fr !important; }

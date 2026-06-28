@@ -1,10 +1,11 @@
 <template>
   <div>
-    <div class="eyebrow">Klasemen Antar-Blok</div>
+    <div class="eyebrow">Klasemen Antar-Koridor</div>
     <h2 class="page-title">Perolehan Medali &amp; Poin</h2>
     <div class="table-wrap">
       <div class="table-head">
-        <div>Peringkat</div><div>Blok</div>
+        <div>Peringkat</div>
+        <div>Koridor</div>
         <div style="text-align:center;">🥇</div>
         <div style="text-align:center;">🥈</div>
         <div style="text-align:center;">🥉</div>
