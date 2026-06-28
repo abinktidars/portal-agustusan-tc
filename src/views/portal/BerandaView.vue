@@ -82,7 +82,7 @@
               <span class="dot" :style="{ background: katColor(j.kat) }"></span>
               <span class="jadwal-cabang">{{ j.cabang }}</span>
             </div>
-            <div class="jadwal-sub">{{ j.peserta }} · {{ j.venue }}</div>
+            <div class="jadwal-sub">{{ j.peserta }} · {{ j.lokasi || j.venue }}</div>
           </div>
           <StatusBadge :status="j.status" />
         </div>

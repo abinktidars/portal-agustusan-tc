@@ -27,7 +27,7 @@
             <span class="cabang">{{ j.cabang }}</span>
           </div>
           <div class="peserta">{{ j.peserta }}</div>
-          <div class="venue">📍 {{ j.venue }}</div>
+          <div class="venue">📍 {{ j.lokasi || j.venue }}</div>
         </div>
         <StatusBadge :status="j.status" />
       </div>
