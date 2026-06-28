@@ -14,11 +14,16 @@
       </div>
       <div>
         <div class="footer-heading">Kontak Panitia</div>
-        <div class="footer-text">WA: 0812-1745-2026<br>Sekretariat: Pos Satpam Utama<br>Jam: 16.00–21.00 WIB</div>
+        <div class="footer-text">
+          <p>
+            Andi (Ketua): +62 815-7410-9182<br>
+            Ashwin (Wakil): +62 819-0303-1903<br>
+          </p>
+        </div>
       </div>
       <div>
         <div class="footer-heading">Periode Acara</div>
-        <div class="footer-text">11 Juli – 31 Agustus 2026<br>Puncak: 17 Agustus 2026<br>Lokasi: Lingkungan TCR</div>
+        <div class="footer-text">11 Juli – 31 Agustus 2026<br>Puncak: 15 Agustus 2026<br>Lokasi: Lapangan Fasum Teras Country</div>
       </div>
     </div>
     <div class="footer-copy">© 2026 Teras Country Residence · Dirgahayu Republik Indonesia 🇮🇩</div>

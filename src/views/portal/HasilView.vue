@@ -38,18 +38,21 @@ onMounted(() => hasilStore.fetch())
 .page-title{ margin: 9px 0 22px; font: 800 32px/1.05 Archivo; color: #1A1613; text-transform: uppercase; }
 .hasil-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 16px; }
 .hasil-card { background: #fff; border: 1.5px solid #F0D3D7; border-radius: 8px; padding: 22px; }
-.hasil-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.hasil-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
 .cabang { font: 800 16px/1.1 Archivo; color: #1A1613; }
-.tgl    { font: 600 12px/1 'Plus Jakarta Sans'; color: #9A9389; }
-.dot    { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.tgl    { font: 600 12px/1 'Plus Jakarta Sans'; color: #9A9389; white-space: nowrap; }
+.dot    { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
 .skor-row { display: flex; align-items: center; justify-content: center; gap: 18px; margin: 18px 0; }
-.tim  { flex: 1; font: 700 15px/1.3 'Plus Jakarta Sans'; color: #5A534B; }
+.tim  { flex: 1; min-width: 0; font: 700 15px/1.3 'Plus Jakarta Sans'; color: #5A534B; word-break: break-word; }
 .tim:first-child { text-align: right; }
-.skor { font: 900 26px/1 Archivo; color: #CE1126; background: #FBEAEC; border-radius: 12px; padding: 8px 14px; white-space: nowrap; }
-.juara-row { display: flex; align-items: center; background: #E7F2EB; border-radius: 10px; padding: 9px 12px; }
+.skor { flex-shrink: 0; font: 900 26px/1 Archivo; color: #CE1126; background: #FBEAEC; border-radius: 12px; padding: 8px 14px; white-space: nowrap; }
+.juara-row { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; background: #E7F2EB; border-radius: 10px; padding: 9px 12px; }
 @media(max-width:767px) {
   .hasil-grid { grid-template-columns: 1fr; }
   .page-title { font-size: 26px; }
   .hasil-card { padding: 16px; }
+  .skor-row { gap: 10px; }
+  .skor { font-size: 22px; padding: 7px 12px; }
+  .tim { font-size: 13px; }
 }
 </style>
