@@ -6,10 +6,13 @@
           <div class="section-eyebrow">Data</div>
           <h2 class="section-title">Daftar Registrasi Peserta</h2>
         </div>
-        <input v-model="search" type="text" class="tcr-input" placeholder="Cari nama / blok / cabang..." style="max-width:260px;" />
+        <div class="header-actions">
+          <input v-model="search" type="text" class="tcr-input search-input" placeholder="Cari nama / blok / cabang..." />
+          <button class="btn-export" @click="doExport">Export Excel</button>
+        </div>
       </div>
 
-      <div class="table-wrap">
+      <div class="table-wrap" style="margin-bottom:0;">
         <table class="reg-table">
           <thead>
             <tr>
@@ -22,8 +25,8 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(r, i) in filtered" :key="r.id">
-              <td class="td-num">{{ i + 1 }}</td>
+            <tr v-for="(r, i) in paginated" :key="r.id">
+              <td class="td-num">{{ (page-1)*PER_PAGE + i + 1 }}</td>
               <td class="td-bold">{{ r.nama }}</td>
               <td><a :href="`https://wa.me/${r.wa}`" target="_blank" class="wa-link">{{ r.wa }}</a></td>
               <td>{{ r.blok || r.blokRumah || '-' }}</td>
@@ -36,16 +39,21 @@
           </tbody>
         </table>
       </div>
+      <PaginationBar v-model="page" :total="filtered.length" :per-page="PER_PAGE" />
     </div>
   </main>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRegistrasiStore } from '@/stores/useRegistrasi'
+import PaginationBar from '@/components/PaginationBar.vue'
+import { exportToExcel } from '@/utils/exportExcel'
 
 const regStore = useRegistrasiStore()
 const search   = ref('')
+const page     = ref(1)
+const PER_PAGE = 10
 
 const filtered = computed(() => {
   const q = search.value.toLowerCase()
@@ -55,11 +63,24 @@ const filtered = computed(() => {
     (r.cabang||'').toLowerCase().includes(q)
   )
 })
+const paginated = computed(() => filtered.value.slice((page.value-1)*PER_PAGE, page.value*PER_PAGE))
+watch(search, () => { page.value = 1 })
 
 const formatDate = (d) => {
   if (!d) return '-'
   const dt = d?.seconds ? new Date(d.seconds * 1000) : new Date(d)
   return dt.toLocaleDateString('id-ID', { day:'numeric', month:'short', year:'numeric' })
+}
+
+function doExport() {
+  exportToExcel(filtered.value, [
+    { label: 'No',         field: (_, i) => i + 1 },
+    { label: 'Nama',       field: 'nama' },
+    { label: 'No. WA',     field: 'wa' },
+    { label: 'Blok',       field: r => r.blok || r.blokRumah || '' },
+    { label: 'Cabang',     field: 'cabang' },
+    { label: 'Tgl Daftar', field: r => formatDate(r.tglDate || r.createdAt) },
+  ], 'registrasi-peserta')
 }
 
 onMounted(() => regStore.fetch())
@@ -83,4 +104,8 @@ onMounted(() => regStore.fetch())
 .wa-link { color:#CE1126; text-decoration:none; font:600 13px/1 'Plus Jakarta Sans'; }
 .cabang-badge { display:inline-flex; padding:4px 10px; border-radius:6px; background:#FCE7EA; color:#CE1126; font:600 12px/1 'Plus Jakarta Sans'; }
 .empty   { text-align:center; padding:32px; color:#9A9389; font:500 14px/1 'Plus Jakarta Sans'; }
+.header-actions { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.search-input   { width:220px; }
+.btn-export     { padding:10px 18px; border:1.5px solid #2E7D52; border-radius:10px; background:#fff; color:#2E7D52; font:700 13px/1 'Plus Jakarta Sans'; cursor:pointer; white-space:nowrap; transition:background .15s; }
+.btn-export:hover { background:#E7F2EB; }
 </style>

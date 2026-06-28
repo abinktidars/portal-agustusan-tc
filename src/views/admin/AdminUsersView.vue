@@ -6,7 +6,11 @@
           <div class="section-eyebrow">Manajemen</div>
           <h2 class="section-title">Data User</h2>
         </div>
-        <button class="tcr-btn-red" @click="openForm()">+ Tambah User</button>
+        <div class="header-actions">
+          <input v-model="search" type="text" class="tcr-input search-input" placeholder="Cari user..." />
+          <button class="btn-export" @click="doExport">Export Excel</button>
+          <button class="tcr-btn-red" @click="openForm()">+ Tambah User</button>
+        </div>
       </div>
 
       <form v-if="showForm" @submit.prevent="submit" class="inline-form">
@@ -56,8 +60,8 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(u, i) in users" :key="u.id">
-              <td class="td-num">{{ i + 1 }}</td>
+            <tr v-for="(u, i) in paginated" :key="u.id">
+              <td class="td-num">{{ (page-1)*PER_PAGE + i + 1 }}</td>
               <td class="td-bold">{{ u.nama || '-' }}</td>
               <td>{{ u.email }}</td>
               <td>
@@ -70,8 +74,8 @@
                 </div>
               </td>
             </tr>
-            <tr v-if="!users.length && !loading">
-              <td colspan="5" class="empty">Belum ada user</td>
+            <tr v-if="!filtered.length && !loading">
+              <td colspan="5" class="empty">{{ search ? 'Tidak ada hasil pencarian' : 'Belum ada user' }}</td>
             </tr>
             <tr v-if="loading">
               <td colspan="5" class="empty">Memuat...</td>
@@ -79,13 +83,16 @@
           </tbody>
         </table>
       </div>
+      <PaginationBar v-model="page" :total="filtered.length" :per-page="PER_PAGE" />
     </div>
   </main>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, watch, onMounted } from 'vue'
 import * as fb from '@/firebase/helpers'
+import PaginationBar from '@/components/PaginationBar.vue'
+import { exportToExcel } from '@/utils/exportExcel'
 
 const ROLE_LABEL = { admin:'Admin', panitia:'Panitia', warga:'Warga' }
 
@@ -94,6 +101,29 @@ const loading   = ref(false)
 const saving    = ref(false)
 const showForm  = ref(false)
 const formError = ref('')
+const search    = ref('')
+const page      = ref(1)
+const PER_PAGE  = 10
+
+const filtered  = computed(() => {
+  const q = search.value.toLowerCase()
+  return users.value.filter(u => !q ||
+    (u.nama||'').toLowerCase().includes(q) ||
+    (u.email||'').toLowerCase().includes(q) ||
+    (u.role||'').toLowerCase().includes(q)
+  )
+})
+const paginated = computed(() => filtered.value.slice((page.value-1)*PER_PAGE, page.value*PER_PAGE))
+watch(search, () => { page.value = 1 })
+
+function doExport() {
+  exportToExcel(filtered.value, [
+    { label: 'No',    field: (_, i) => i + 1 },
+    { label: 'Nama',  field: 'nama' },
+    { label: 'Email', field: 'email' },
+    { label: 'Role',  field: r => ROLE_LABEL[r.role] || r.role },
+  ], 'data-user')
+}
 const form      = reactive({ nama:'', email:'', role:'panitia', password:'', editId:null })
 
 async function fetchUsers() {
@@ -170,4 +200,8 @@ onMounted(fetchUsers)
 .btn-edit { padding:6px 14px; border:1px solid #E2DCD2; border-radius:8px; background:#fff; color:#1A1613; font:600 12px/1 'Plus Jakarta Sans'; cursor:pointer; }
 .btn-del  { padding:6px 14px; border:1px solid #FBEAEC; border-radius:8px; background:#FBEAEC; color:#CE1126; font:600 12px/1 'Plus Jakarta Sans'; cursor:pointer; }
 .empty    { text-align:center; padding:32px; color:#9A9389; font:500 14px/1 'Plus Jakarta Sans'; }
+.header-actions { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.search-input   { width:220px; }
+.btn-export     { padding:10px 18px; border:1.5px solid #2E7D52; border-radius:10px; background:#fff; color:#2E7D52; font:700 13px/1 'Plus Jakarta Sans'; cursor:pointer; white-space:nowrap; transition:background .15s; }
+.btn-export:hover { background:#E7F2EB; }
 </style>
