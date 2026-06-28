@@ -62,5 +62,9 @@ const katBg    = (k) => ({ Olahraga:'#FBEAEC', Tradisional:'#FBF1DD', 'E-Sport':
 .tag        { font: 600 12px/1 'Plus Jakarta Sans'; color: #5A534B; background: #F5F0E8; border-radius: 8px; padding: 7px 10px; }
 .daftar-btn { margin-top: 16px; padding: 11px; border: 1.5px solid #CE1126; border-radius: 10px; background: transparent; color: #CE1126; font: 700 13px/1 'Plus Jakarta Sans'; cursor: pointer; transition: all .15s; }
 .daftar-btn:hover { background: #CE1126; color: #fff; }
-@media(max-width:767px) { .lomba-grid { grid-template-columns: 1fr; } }
+@media(max-width:767px) {
+  .lomba-grid { grid-template-columns: 1fr; }
+  .page-title { font-size: 26px; }
+  .lomba-card { padding: 16px; }
+}
 </style>

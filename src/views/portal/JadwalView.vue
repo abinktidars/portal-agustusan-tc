@@ -62,4 +62,10 @@ onMounted(() => jadwalStore.fetch())
 .venue   { font: 500 13px/1.4 'Plus Jakarta Sans'; color: #9A9389; margin-top: 3px; }
 .dot     { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
 .empty-state { padding: 32px; text-align: center; color: #9A9389; font: 500 14px/1 'Plus Jakarta Sans'; }
+@media(max-width:767px) {
+  .page-title { font-size: 26px; }
+  .jadwal-row { padding: 14px; gap: 10px; }
+  .jadwal-info { min-width: 130px; }
+  .divider-v { display: none; }
+}
 </style>

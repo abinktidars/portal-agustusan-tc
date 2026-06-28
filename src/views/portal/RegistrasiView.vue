@@ -114,5 +114,10 @@ onMounted(() => { regStore.reset(); regStore.fetch() })
 .recent-line  { font: 500 12px/1.2 'Plus Jakarta Sans'; color: #B8B0A6; margin-top: 3px; }
 .sidebar-divider { height: 1px; background: rgba(255,255,255,.12); margin: 20px 0; }
 .sidebar-info { font: 600 13px/1.6 'Plus Jakarta Sans'; color: #B8B0A6; }
-@media(max-width:767px) { .reg-grid, .form-grid { grid-template-columns: 1fr !important; } }
+@media(max-width:767px) {
+  .reg-grid, .form-grid { grid-template-columns: 1fr !important; }
+  .page-title { font-size: 26px; }
+  .form-card { padding: 18px; }
+  .sidebar-card { padding: 18px; }
+}
 </style>

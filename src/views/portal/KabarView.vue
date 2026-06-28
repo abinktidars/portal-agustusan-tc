@@ -42,4 +42,9 @@ const pengumuman = [
 .tgl  { font: 600 12px/1 'Plus Jakarta Sans'; color: #9A9389; }
 .kabar-judul { font: 800 19px/1.2 Archivo; color: #1A1613; margin-top: 12px; }
 .kabar-isi   { font: 500 14px/1.6 'Plus Jakarta Sans'; color: #5A534B; margin-top: 8px; }
+@media(max-width:767px) {
+  .page-title { font-size: 26px; }
+  .kabar-card { padding: 16px; }
+  .kabar-judul { font-size: 17px; }
+}
 </style>

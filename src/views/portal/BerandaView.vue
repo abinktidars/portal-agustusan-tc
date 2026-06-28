@@ -151,7 +151,7 @@ onUnmounted(() => clearInterval(timer))
 <style scoped>
 .hero-grid { display:grid; grid-template-columns:1.15fr .85fr; gap:30px; align-items:stretch; }
 .hero-card {
-  background: #CE1126; border-radius: 10px; padding: 38px;
+  background: #CE1126; border-radius: 10px; padding: 24px;
   display: flex; flex-direction: column; justify-content: center;
   position: relative; overflow: hidden;
 }
@@ -222,7 +222,16 @@ onUnmounted(() => clearInterval(timer))
 
 @media(max-width:767px) {
   .hero-grid, .quick-grid, .klasemen-grid { grid-template-columns: 1fr !important; }
-  .hero-title { font-size: 36px !important; }
+  .hero-grid { gap: 16px; }
+  .hero-title { font-size: 34px !important; }
+  .hero-desc { font-size: 15px; }
+  .hero-card { padding: 20px; }
+  .countdown-card { padding: 20px; }
   .cd-grid { grid-template-columns: repeat(2,1fr); }
+  .section-title { font-size: 24px; }
+  .jadwal-row { padding: 14px; gap: 10px; }
+  .quick-grid { margin-top: 12px; gap: 10px; }
+  .quick-card { padding: 16px; }
+  .klasemen-card { padding: 16px; }
 }
 </style>

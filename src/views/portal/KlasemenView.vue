@@ -33,7 +33,7 @@ onMounted(() => klasemenStore.fetch())
 <style scoped>
 .eyebrow   { font: 700 13px/1 'Plus Jakarta Sans'; letter-spacing: .12em; text-transform: uppercase; color: #9A6B12; }
 .page-title{ margin: 9px 0 22px; font: 800 32px/1.05 Archivo; color: #1A1613; text-transform: uppercase; }
-.table-wrap { background: #fff; border: 1.5px solid #F0D3D7; border-radius: 8px; overflow: hidden; }
+.table-wrap { background: #fff; border: 1.5px solid #F0D3D7; border-radius: 8px; overflow: hidden; overflow-x: auto; }
 .table-head {
   display: grid; grid-template-columns: 60px 1fr 70px 70px 70px 90px; gap: 8px;
   padding: 14px 20px; background: #1A1613; color: #fff;
@@ -49,6 +49,11 @@ onMounted(() => klasemenStore.fetch())
 .poin  { font: 900 22px/1 Archivo; color: #CE1126; }
 .note  { font: 500 13px/1.5 'Plus Jakarta Sans'; color: #9A9389; margin-top: 14px; }
 @media(max-width:767px) {
-  .table-head, .table-row { grid-template-columns: 40px 1fr 50px 50px 50px 60px; gap: 4px; padding: 12px; }
+  .page-title { font-size: 26px; }
+  .table-head, .table-row { grid-template-columns: 36px 1fr 44px 44px 44px 54px; gap: 4px; padding: 10px 12px; }
+  .rank { font-size: 18px; }
+  .nama { font-size: 13px; }
+  .medal { font-size: 13px; }
+  .poin { font-size: 18px; }
 }
 </style>

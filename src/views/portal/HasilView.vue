@@ -47,5 +47,9 @@ onMounted(() => hasilStore.fetch())
 .tim:first-child { text-align: right; }
 .skor { font: 900 26px/1 Archivo; color: #CE1126; background: #FBEAEC; border-radius: 12px; padding: 8px 14px; white-space: nowrap; }
 .juara-row { display: flex; align-items: center; background: #E7F2EB; border-radius: 10px; padding: 9px 12px; }
-@media(max-width:767px) { .hasil-grid { grid-template-columns: 1fr; } }
+@media(max-width:767px) {
+  .hasil-grid { grid-template-columns: 1fr; }
+  .page-title { font-size: 26px; }
+  .hasil-card { padding: 16px; }
+}
 </style>
