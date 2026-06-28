@@ -1,0 +1,76 @@
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; background: #FCF5F1; color: #1A1613; }
+::selection { background: #CE1126; color: #fff; }
+
+@keyframes tcrPulse { 0%,100%{opacity:1;} 50%{opacity:.35;} }
+@keyframes tcrFade { from{opacity:0;transform:translateY(10px);} to{opacity:1;transform:none;} }
+
+.tcr-scroll::-webkit-scrollbar { height: 6px; }
+.tcr-scroll::-webkit-scrollbar-thumb { background: #E2DCD2; border-radius: 999px; }
+
+.tcr-input {
+  padding: 13px 14px;
+  border: 1.5px solid #E2DCD2;
+  border-radius: 11px;
+  font: 500 15px/1 'Plus Jakarta Sans', sans-serif;
+  background: #FAF8F3;
+  color: #1A1613;
+  outline: none;
+  width: 100%;
+  transition: border-color .15s, background .15s;
+}
+.tcr-input:focus { border-color: #CE1126; background: #fff; }
+
+.tcr-btn-red {
+  padding: 13px 20px;
+  border: none;
+  border-radius: 12px;
+  background: #CE1126;
+  color: #fff;
+  font: 700 14px/1 'Plus Jakarta Sans', sans-serif;
+  cursor: pointer;
+  box-shadow: 0 6px 16px rgba(206,17,38,.28);
+  transition: opacity .15s;
+}
+.tcr-btn-red:hover { opacity: .9; }
+
+.chip {
+  flex: 0 0 auto;
+  padding: 9px 15px;
+  border-radius: 999px;
+  font: 600 13px/1 'Plus Jakarta Sans', sans-serif;
+  cursor: pointer;
+  white-space: nowrap;
+  border: 1.5px solid #E2DCD2;
+  background: #fff;
+  color: #5A534B;
+  transition: all .15s;
+}
+.chip.active {
+  border-color: #CE1126;
+  background: #CE1126;
+  color: #fff;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font: 700 11px/1 'Plus Jakarta Sans', sans-serif;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  flex: 0 0 auto;
+}
+.status-selesai    { background: #E7F2EB; color: #2E7D52; }
+.status-berlangsung{ background: #FCE7EA; color: #CE1126; }
+.status-akandatang { background: #FBF1DD; color: #9A6B12; }
+
+.flag-bar { height: 6px; background: repeating-linear-gradient(90deg,#CE1126 0 30px,#FFFFFF 30px 60px); }
+
+@media (max-width: 767px) {
+  .grid-2 { grid-template-columns: 1fr !important; }
+  .grid-3 { grid-template-columns: 1fr !important; }
+  .grid-4 { grid-template-columns: repeat(2,1fr) !important; }
+  .hide-mobile { display: none !important; }
+}
