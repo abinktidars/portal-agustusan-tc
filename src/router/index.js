@@ -23,29 +23,32 @@ const router = createRouter({
       component: () => import('@/views/admin/AdminLayout.vue'),
       children: [
         { path: '',           name: 'admin-login',      component: () => import('@/views/admin/AdminLoginView.vue') },
-        { path: 'dashboard',  name: 'admin-dashboard',  component: () => import('@/views/admin/AdminDashboardView.vue'),  meta: { requiresAuth: true } },
-        { path: 'tipe',       name: 'admin-tipe',       component: () => import('@/views/admin/AdminTipeView.vue'),       meta: { requiresAuth: true } },
-        { path: 'kategori',   name: 'admin-kategori',   component: () => import('@/views/admin/AdminKategoriView.vue'),   meta: { requiresAuth: true } },
-        { path: 'jadwal',     name: 'admin-jadwal',     component: () => import('@/views/admin/AdminJadwalView.vue'),     meta: { requiresAuth: true } },
-        { path: 'hasil',      name: 'admin-hasil',      component: () => import('@/views/admin/AdminHasilView.vue'),      meta: { requiresAuth: true } },
-        { path: 'klasemen',   name: 'admin-klasemen',   component: () => import('@/views/admin/AdminKlasemenView.vue'),   meta: { requiresAuth: true } },
-        { path: 'registrasi', name: 'admin-registrasi', component: () => import('@/views/admin/AdminRegistrasiView.vue'), meta: { requiresAuth: true } },
-        { path: 'koridor',    name: 'admin-koridor',    component: () => import('@/views/admin/AdminKoridorView.vue'),    meta: { requiresAuth: true } },
-        { path: 'lokasi',     name: 'admin-lokasi',     component: () => import('@/views/admin/AdminLokasiView.vue'),     meta: { requiresAuth: true } },
-        { path: 'users',      name: 'admin-users',      component: () => import('@/views/admin/AdminUsersView.vue'),      meta: { requiresAuth: true } },
+        { path: 'dashboard',  name: 'admin-dashboard',  component: () => import('@/views/admin/AdminDashboardView.vue'),  meta: { requiresAuth: true, roles: ['admin', 'panitia'] } },
+        { path: 'tipe',       name: 'admin-tipe',       component: () => import('@/views/admin/AdminTipeView.vue'),       meta: { requiresAuth: true, roles: ['admin'] } },
+        { path: 'kategori',   name: 'admin-kategori',   component: () => import('@/views/admin/AdminKategoriView.vue'),   meta: { requiresAuth: true, roles: ['admin'] } },
+        { path: 'jadwal',     name: 'admin-jadwal',     component: () => import('@/views/admin/AdminJadwalView.vue'),     meta: { requiresAuth: true, roles: ['admin', 'panitia'] } },
+        { path: 'hasil',      name: 'admin-hasil',      component: () => import('@/views/admin/AdminHasilView.vue'),      meta: { requiresAuth: true, roles: ['admin', 'panitia'] } },
+        { path: 'klasemen',   name: 'admin-klasemen',   component: () => import('@/views/admin/AdminKlasemenView.vue'),   meta: { requiresAuth: true, roles: ['admin', 'panitia'] } },
+        { path: 'registrasi', name: 'admin-registrasi', component: () => import('@/views/admin/AdminRegistrasiView.vue'), meta: { requiresAuth: true, roles: ['admin', 'panitia'] } },
+        { path: 'koridor',    name: 'admin-koridor',    component: () => import('@/views/admin/AdminKoridorView.vue'),    meta: { requiresAuth: true, roles: ['admin'] } },
+        { path: 'lokasi',     name: 'admin-lokasi',     component: () => import('@/views/admin/AdminLokasiView.vue'),     meta: { requiresAuth: true, roles: ['admin'] } },
+        { path: 'users',      name: 'admin-users',      component: () => import('@/views/admin/AdminUsersView.vue'),      meta: { requiresAuth: true, roles: ['admin'] } },
       ]
     }
   ]
 })
 
-const ROLES_WITH_DASHBOARD = ['admin', 'panitia']
-
 router.beforeEach((to) => {
-  if (to.meta.requiresAuth) {
-    const logged = localStorage.getItem('tcr_admin_logged')
-    const role   = localStorage.getItem('tcr_admin_role')
-    if (!logged || !ROLES_WITH_DASHBOARD.includes(role)) return { name: 'admin-login' }
-  }
+  if (!to.meta.requiresAuth) return
+
+  const logged = localStorage.getItem('tcr_admin_logged')
+  const role   = localStorage.getItem('tcr_admin_role')
+
+  if (!logged) return { name: 'admin-login' }
+
+  // Cek akses role ke halaman yang dituju
+  const allowedRoles = to.meta.roles || []
+  if (!allowedRoles.includes(role)) return { name: 'admin-dashboard' }
 })
 
 export default router
