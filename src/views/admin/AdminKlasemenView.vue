@@ -6,24 +6,24 @@
           <div class="section-eyebrow">Klasemen</div>
           <h2 class="section-title">Klasemen Per Kategori Lomba</h2>
         </div>
+        <div class="info-note">
+          🔄 Klasemen diisi otomatis dari data hasil pertandingan
+        </div>
       </div>
 
       <div v-if="isLoading" class="loading-text">Memuat data...</div>
 
       <template v-else>
         <div v-for="tipe in tipeStore.list" :key="tipe.id" class="tipe-block">
-          <!-- Tipe header -->
           <div class="tipe-header" :style="{ background: tipe.bg, borderLeftColor: tipe.warna }">
             <span class="tipe-nama" :style="{ color: tipe.warna }">{{ tipe.nama }}</span>
             <span class="tipe-count">{{ kategoriByTipe(tipe.id).length }} cabang</span>
           </div>
 
-          <!-- Empty tipe -->
           <div v-if="!kategoriByTipe(tipe.id).length" class="empty-tipe">
             Belum ada kategori untuk tipe ini.
           </div>
 
-          <!-- Kategori table -->
           <div v-else class="kat-table-wrap">
             <table class="kat-table">
               <thead>
@@ -33,76 +33,48 @@
                   <th>🥇 Juara 1</th>
                   <th>🥈 Juara 2</th>
                   <th>🥉 Juara 3</th>
-                  <th>Aksi</th>
+                  <th>Babak</th>
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="kat in kategoriByTipe(tipe.id)" :key="kat.id"
-                  :class="{ 'row-editing': editId === kat.id, 'row-filled': !!klasemenOf(kat.id) }">
+                <tr
+                  v-for="kat in kategoriByTipe(tipe.id)"
+                  :key="kat.id"
+                  :class="{ 'row-filled': !!klasemenOf(kat.nama) }"
+                >
+                  <td class="kat-nama-cell">{{ kat.nama }}</td>
+                  <td>
+                    <span class="jenis-badge" :class="kat.jenis === 'Perorangan' ? 'badge-p' : 'badge-b'">
+                      {{ kat.jenis || 'Beregu' }}
+                    </span>
+                  </td>
 
-                  <!-- Edit mode -->
-                  <template v-if="editId === kat.id">
-                    <td class="kat-nama-cell"><strong>{{ kat.nama }}</strong></td>
-                    <td>
-                      <span class="jenis-badge" :class="kat.jenis === 'Perorangan' ? 'badge-p' : 'badge-b'">
-                        {{ kat.jenis || 'Beregu' }}
+                  <template v-if="klasemenOf(kat.nama)">
+                    <td class="juara-cell">
+                      <span class="juara-nama">{{ klasemenOf(kat.nama).juara1 || '—' }}</span>
+                    </td>
+                    <td class="juara-cell">
+                      <span v-if="klasemenOf(kat.nama).juara2" class="juara-nama">
+                        {{ klasemenOf(kat.nama).juara2 }}
                       </span>
+                      <span v-else class="belum">—</span>
+                    </td>
+                    <td class="juara-cell">
+                      <span v-if="klasemenOf(kat.nama).juara3" class="juara-nama">
+                        {{ klasemenOf(kat.nama).juara3 }}
+                      </span>
+                      <span v-else class="belum">—</span>
                     </td>
                     <td>
-                      <input
-                        v-model="editForm.juara1"
-                        class="tcr-input input-sm"
-                        :placeholder="kat.jenis === 'Perorangan' ? 'Nama peserta' : 'Blok / tim'"
-                      />
-                    </td>
-                    <td>
-                      <input v-model="editForm.juara2" class="tcr-input input-sm" placeholder="Nama / blok" />
-                    </td>
-                    <td>
-                      <input v-model="editForm.juara3" class="tcr-input input-sm" placeholder="Nama / blok" />
-                    </td>
-                    <td class="action-cell">
-                      <button @click="saveEdit(kat)" class="btn-save-sm">Simpan</button>
-                      <button @click="cancelEdit" class="btn-cancel-sm">Batal</button>
+                      <span v-if="klasemenOf(kat.nama).babak" class="babak-badge">
+                        {{ klasemenOf(kat.nama).babak }}
+                      </span>
+                      <span v-else class="belum">—</span>
                     </td>
                   </template>
 
-                  <!-- View mode -->
                   <template v-else>
-                    <td class="kat-nama-cell">{{ kat.nama }}</td>
-                    <td>
-                      <span class="jenis-badge" :class="kat.jenis === 'Perorangan' ? 'badge-p' : 'badge-b'">
-                        {{ kat.jenis || 'Beregu' }}
-                      </span>
-                    </td>
-                    <td class="juara-cell">
-                      <span v-if="klasemenOf(kat.id)?.juara1" class="juara-nama">
-                        {{ klasemenOf(kat.id).juara1 }}
-                      </span>
-                      <span v-else class="belum">—</span>
-                    </td>
-                    <td class="juara-cell">
-                      <span v-if="klasemenOf(kat.id)?.juara2" class="juara-nama">
-                        {{ klasemenOf(kat.id).juara2 }}
-                      </span>
-                      <span v-else class="belum">—</span>
-                    </td>
-                    <td class="juara-cell">
-                      <span v-if="klasemenOf(kat.id)?.juara3" class="juara-nama">
-                        {{ klasemenOf(kat.id).juara3 }}
-                      </span>
-                      <span v-else class="belum">—</span>
-                    </td>
-                    <td class="action-cell">
-                      <button @click="openEdit(kat)" class="btn-edit-sm">
-                        {{ klasemenOf(kat.id) ? 'Edit' : '+ Isi' }}
-                      </button>
-                      <button
-                        v-if="klasemenOf(kat.id)"
-                        @click="hapus(kat)"
-                        class="btn-del-sm"
-                      >Hapus</button>
-                    </td>
+                    <td colspan="4" class="belum-cell">Belum ada hasil pertandingan</td>
                   </template>
                 </tr>
               </tbody>
@@ -119,67 +91,69 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
-import { useKlasemenStore } from '@/stores/useKlasemen'
+import { ref, computed, onMounted, watch } from 'vue'
+import { useHasilStore }    from '@/stores/useHasil'
 import { useKategoriStore } from '@/stores/useKategori'
 import { useTipeStore }     from '@/stores/useTipe'
 
-const klasemenStore = useKlasemenStore()
+const hasilStore    = useHasilStore()
 const kategoriStore = useKategoriStore()
 const tipeStore     = useTipeStore()
 
-const editId   = ref(null)
-const editForm = reactive({ juara1: '', juara2: '', juara3: '' })
-
 const isLoading = computed(() =>
-  klasemenStore.loading || kategoriStore.loading || tipeStore.loading
+  hasilStore.loading || kategoriStore.loading || tipeStore.loading
 )
 
 function kategoriByTipe(tipeId) {
   return kategoriStore.list.filter(k => k.tipeId === tipeId)
 }
 
-function klasemenOf(kategoriId) {
-  return klasemenStore.byKategori[kategoriId] || null
-}
-
-function openEdit(kat) {
-  editId.value = kat.id
-  const existing = klasemenOf(kat.id)
-  editForm.juara1 = existing?.juara1 || ''
-  editForm.juara2 = existing?.juara2 || ''
-  editForm.juara3 = existing?.juara3 || ''
-}
-
-function cancelEdit() {
-  editId.value = null
-  Object.assign(editForm, { juara1: '', juara2: '', juara3: '' })
-}
-
-async function saveEdit(kat) {
-  if (!editForm.juara1.trim()) return
-  await klasemenStore.set(kat.id, {
-    kategoriId:   kat.id,
-    kategoriNama: kat.nama,
-    tipeId:       kat.tipeId,
-    jenis:        kat.jenis || 'Beregu',
-    juara1:       editForm.juara1.trim(),
-    juara2:       editForm.juara2.trim(),
-    juara3:       editForm.juara3.trim(),
+// Group hasil by cabang name
+const hasilByKabang = computed(() => {
+  const map = {}
+  hasilStore.list.forEach(h => {
+    if (!map[h.cabang]) map[h.cabang] = []
+    map[h.cabang].push(h)
   })
-  cancelEdit()
-}
+  return map
+})
 
-async function hapus(kat) {
-  if (!confirm(`Hapus data klasemen "${kat.nama}"?`)) return
-  await klasemenStore.remove(kat.id)
+// Derivasi klasemen dari hasil — sama dengan logika portal
+function klasemenOf(katNama) {
+  const entries = hasilByKabang.value[katNama] || []
+  if (!entries.length) return null
+
+  const finalEntry = entries.find(e => /final/i.test(e.babak || ''))
+  const entry = finalEntry || entries[0]
+
+  const isPerorangan = !!(entry.juara1 || entry.juara2 || entry.juara3) || entry.jenis === 'Perorangan'
+
+  if (isPerorangan) {
+    return {
+      juara1: entry.juara1 || '',
+      juara2: entry.juara2 || '',
+      juara3: entry.juara3 || '',
+      babak:  entry.babak  || '',
+    }
+  }
+
+  if (entry.juara) {
+    return {
+      juara1: entry.juara,
+      juara2: '',
+      juara3: '',
+      babak:  entry.babak || '',
+    }
+  }
+
+  return null
 }
 
 onMounted(async () => {
   await Promise.all([
     tipeStore.fetch(),
     kategoriStore.fetch(),
-    klasemenStore.fetch(),
+    hasilStore.fetch(),
   ])
 })
 </script>
@@ -190,6 +164,11 @@ onMounted(async () => {
 .section-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 28px; flex-wrap: wrap; }
 .section-eyebrow{ font: 700 13px/1 'Plus Jakarta Sans'; letter-spacing: .12em; text-transform: uppercase; color: #9A6B12; }
 .section-title  { font: 800 28px/1.05 Archivo; color: #1A1613; margin: 8px 0 0; }
+
+.info-note {
+  font: 600 13px/1 'Plus Jakarta Sans'; color: #2D5B8A;
+  background: #E5EDF7; border-radius: 10px; padding: 10px 16px;
+}
 
 .loading-text { font: 500 14px/1 'Plus Jakarta Sans'; color: #9A9389; padding: 32px 0; }
 
@@ -209,9 +188,7 @@ onMounted(async () => {
   width: 100%; border-collapse: collapse;
   font: 500 13px/1.4 'Plus Jakarta Sans';
 }
-.kat-table thead tr {
-  background: #F8F6F3;
-}
+.kat-table thead tr { background: #F8F6F3; }
 .kat-table th {
   padding: 11px 14px; text-align: left;
   font: 700 12px/1 'Plus Jakarta Sans'; color: #7A7368;
@@ -224,31 +201,24 @@ onMounted(async () => {
 }
 .kat-table tbody tr:last-child { border-bottom: none; }
 .kat-table tbody tr:hover { background: #FDFCFA; }
-.kat-table tbody tr.row-editing { background: #FFFBF2; }
 .kat-table tbody tr.row-filled td.kat-nama-cell { font-weight: 700; color: #1A1613; }
 .kat-table td { padding: 10px 14px; vertical-align: middle; }
 
 .kat-nama-cell { font: 600 14px/1.2 'Plus Jakarta Sans'; color: #1A1613; min-width: 140px; }
 
-/* Jenis badges */
 .jenis-badge { font: 700 10px/1 'Plus Jakarta Sans'; letter-spacing: .06em; text-transform: uppercase; padding: 3px 8px; border-radius: 6px; white-space: nowrap; }
 .badge-b     { background: #E5EDF7; color: #2D5B8A; }
 .badge-p     { background: #FBF1DD; color: #C0871C; }
 
-/* Juara cells */
 .juara-cell { min-width: 120px; }
 .juara-nama { font: 600 13px/1.3 'Plus Jakarta Sans'; color: #1A1613; }
 .belum      { color: #C9C2B6; font-style: italic; }
+.belum-cell { color: #C9C2B6; font-style: italic; font-size: 13px; }
 
-/* Edit input */
-.input-sm { padding: 7px 10px !important; font-size: 13px !important; min-width: 110px; }
-
-/* Action cells */
-.action-cell { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
-.btn-edit-sm   { padding: 6px 12px; border-radius: 8px; border: 1.5px solid #C0871C; background: #FBF1DD; color: #C0871C; font: 700 12px/1 'Plus Jakarta Sans'; cursor: pointer; }
-.btn-save-sm   { padding: 6px 12px; border-radius: 8px; border: none; background: #2E7D52; color: #fff; font: 700 12px/1 'Plus Jakarta Sans'; cursor: pointer; }
-.btn-cancel-sm { padding: 6px 12px; border-radius: 8px; border: 1.5px solid #E2DCD2; background: transparent; color: #7A7368; font: 700 12px/1 'Plus Jakarta Sans'; cursor: pointer; }
-.btn-del-sm    { padding: 6px 12px; border-radius: 8px; border: 1px solid #FBEAEC; background: #FBEAEC; color: #CE1126; font: 700 12px/1 'Plus Jakarta Sans'; cursor: pointer; }
+.babak-badge {
+  font: 700 11px/1 'Plus Jakarta Sans'; letter-spacing: .05em; text-transform: uppercase;
+  padding: 3px 8px; border-radius: 6px; background: #E7F2EB; color: #2E7D52;
+}
 
 .empty-tipe   { font: 500 13px/1 'Plus Jakarta Sans'; color: #C9C2B6; padding: 16px 0 8px; }
 .empty-global { font: 500 14px/1.5 'Plus Jakarta Sans'; color: #9A9389; padding: 48px 0; text-align: center; }

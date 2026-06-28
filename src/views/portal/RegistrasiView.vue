@@ -19,7 +19,7 @@
         <form @submit.prevent="handleSubmit">
           <div class="form-grid">
 
-            <!-- Cabang — menentukan mode, diambil dari Firestore -->
+            <!-- 1. Cabang Lomba -->
             <div style="grid-column:1/-1;">
               <label class="form-label">Cabang Lomba <span class="req">*</span></label>
               <select v-model="form.cabang" class="tcr-input" :disabled="kategoriStore.loading">
@@ -28,38 +28,7 @@
               </select>
             </div>
 
-            <!-- Mode badge -->
-            <div v-if="form.cabang" style="grid-column:1/-1;">
-              <div class="mode-badge" :class="isTeam ? 'mode-tim' : 'mode-perorangan'">
-                <span class="mode-icon">{{ isTeam ? '👥' : '🙋' }}</span>
-                <div>
-                  <div class="mode-title">{{ isTeam ? 'Daftar sebagai Ketua Tim' : 'Daftar Perorangan' }}</div>
-                  <div class="mode-desc">{{ isTeam ? 'Cabang ini didaftarkan oleh ketua tim beserta daftar anggota.' : 'Cabang ini bisa didaftarkan langsung per peserta.' }}</div>
-                </div>
-              </div>
-            </div>
-
-            <!-- INDIVIDUAL: Nama Peserta -->
-            <template v-if="!isTeam && form.cabang">
-              <div style="grid-column:1/-1;">
-                <label class="form-label">Nama Peserta <span class="req">*</span></label>
-                <input v-model="form.nama" class="tcr-input" placeholder="Nama lengkap peserta" />
-              </div>
-            </template>
-
-            <!-- TEAM: Nama Regu + Nama Ketua Tim -->
-            <template v-if="isTeam">
-              <div style="grid-column:1/-1;">
-                <label class="form-label">Nama Tim / Regu <span class="req">*</span></label>
-                <input v-model="form.namaRegu" class="tcr-input" placeholder="cth: Tim Merah Putih, Blok Anggrek" />
-              </div>
-              <div style="grid-column:1/-1;">
-                <label class="form-label">Nama Ketua Tim <span class="req">*</span></label>
-                <input v-model="form.namaKetua" class="tcr-input" placeholder="Nama lengkap ketua tim" />
-              </div>
-            </template>
-
-            <!-- Koridor + Blok Rumah -->
+            <!-- 2. Koridor + Blok Rumah + No. WA (selalu tampil setelah cabang dipilih) -->
             <template v-if="form.cabang">
               <div>
                 <label class="form-label">Koridor <span class="req">*</span></label>
@@ -72,27 +41,52 @@
                 <label class="form-label">Blok Rumah <span class="req">*</span></label>
                 <input v-model="form.blokRumah" class="tcr-input" placeholder="Contoh: A1, B12" />
               </div>
-
-              <!-- No. WhatsApp -->
               <div style="grid-column:1/-1;">
                 <label class="form-label">No. WhatsApp <span class="req">*</span></label>
                 <input v-model="form.wa" class="tcr-input" placeholder="0812xxxx" type="tel" />
               </div>
-            </template>
 
-            <!-- TEAM: Daftar Peserta -->
-            <template v-if="isTeam">
+              <!-- Mode badge -->
               <div style="grid-column:1/-1;">
-                <label class="form-label">Daftar Nama Peserta <span class="req">*</span></label>
-                <div class="anggota-list">
-                  <div v-for="(_, i) in form.anggota" :key="i" class="anggota-row">
-                    <span class="anggota-num">{{ i + 1 }}</span>
-                    <input v-model="form.anggota[i]" class="tcr-input" :placeholder="`Nama peserta ke-${i + 1}`" />
-                    <button v-if="form.anggota.length > 1" type="button" class="anggota-remove" @click="removeAnggota(i)">×</button>
+                <div class="mode-badge" :class="isTeam ? 'mode-tim' : 'mode-perorangan'">
+                  <span class="mode-icon">{{ isTeam ? '👥' : '🙋' }}</span>
+                  <div>
+                    <div class="mode-title">{{ isTeam ? 'Daftar sebagai Ketua Tim' : 'Daftar Perorangan' }}</div>
+                    <div class="mode-desc">{{ isTeam ? 'Cabang ini didaftarkan oleh ketua tim beserta daftar anggota.' : 'Cabang ini bisa didaftarkan langsung per peserta.' }}</div>
                   </div>
                 </div>
-                <button type="button" class="anggota-add" @click="addAnggota">+ Tambah Peserta</button>
               </div>
+
+              <!-- PERORANGAN: Nama Peserta -->
+              <div v-if="!isTeam" style="grid-column:1/-1;">
+                <label class="form-label">Nama Peserta <span class="req">*</span></label>
+                <input v-model="form.nama" class="tcr-input" placeholder="Nama lengkap peserta" />
+              </div>
+
+              <!-- TIM: Nama Regu + Nama Ketua -->
+              <template v-if="isTeam">
+                <div style="grid-column:1/-1;">
+                  <label class="form-label">Nama Tim / Regu <span class="req">*</span></label>
+                  <input v-model="form.namaRegu" class="tcr-input" placeholder="cth: Tim Merah Putih, Blok Anggrek" />
+                </div>
+                <div style="grid-column:1/-1;">
+                  <label class="form-label">Nama Ketua Tim <span class="req">*</span></label>
+                  <input v-model="form.namaKetua" class="tcr-input" placeholder="Nama lengkap ketua tim" />
+                </div>
+
+                <!-- TIM: Daftar Anggota -->
+                <div style="grid-column:1/-1;">
+                  <label class="form-label">Daftar Nama Anggota <span class="req">*</span></label>
+                  <div class="anggota-list">
+                    <div v-for="(_, i) in form.anggota" :key="i" class="anggota-row">
+                      <span class="anggota-num">{{ i + 1 }}</span>
+                      <input v-model="form.anggota[i]" class="tcr-input" :placeholder="`Nama anggota ke-${i + 1}`" />
+                      <button v-if="form.anggota.length > 1" type="button" class="anggota-remove" @click="removeAnggota(i)">×</button>
+                    </div>
+                  </div>
+                  <button type="button" class="anggota-add" @click="addAnggota">+ Tambah Anggota</button>
+                </div>
+              </template>
             </template>
 
           </div>
@@ -198,11 +192,13 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch, onMounted } from 'vue'
+import { ref, reactive, computed, watch, onMounted, nextTick } from 'vue'
+import { useRoute } from 'vue-router'
 import { useRegistrasiStore } from '@/stores/useRegistrasi'
 import { useKategoriStore }    from '@/stores/useKategori'
 import { useKoridorStore }     from '@/stores/useKoridor'
 
+const route         = useRoute()
 const regStore      = useRegistrasiStore()
 const kategoriStore = useKategoriStore()
 const koridorStore  = useKoridorStore()
@@ -233,19 +229,37 @@ function addAnggota() { form.anggota.push('') }
 function removeAnggota(i) { form.anggota.splice(i, 1) }
 
 async function handleSubmit() {
+  regStore.error = ''
+
+  if (!form.cabang)            { regStore.error = 'Cabang lomba wajib dipilih.';         return }
+  if (!form.koridorId)         { regStore.error = 'Koridor wajib dipilih.';              return }
+  if (!form.blokRumah.trim())  { regStore.error = 'Blok Rumah wajib diisi.';            return }
+  if (!form.wa.trim())         { regStore.error = 'No. WhatsApp wajib diisi.';           return }
+
   const tipe = isTeam.value ? 'tim' : 'perorangan'
+
+  if (tipe === 'tim') {
+    if (!form.namaRegu.trim())             { regStore.error = 'Nama Tim / Regu wajib diisi.';    return }
+    if (!form.namaKetua.trim())            { regStore.error = 'Nama Ketua Tim wajib diisi.';     return }
+    if (!form.anggota.some(a => a.trim())) { regStore.error = 'Isi minimal satu nama anggota.'; return }
+  } else {
+    if (!form.nama.trim())                 { regStore.error = 'Nama Peserta wajib diisi.';       return }
+  }
+
   const koridorNama = koridorStore.list.find(k => k.id === form.koridorId)?.nama || ''
   const payload = {
     tipe,
-    cabang:      form.cabang,
-    koridorId:   form.koridorId,
+    status:    'new',
+    cabang:    form.cabang,
+    koridorId: form.koridorId,
     koridorNama,
-    blokRumah:   form.blokRumah,
-    wa:          form.wa,
+    blokRumah: form.blokRumah.trim(),
+    wa:        form.wa.trim(),
     ...(tipe === 'tim'
-      ? { namaRegu: form.namaRegu, namaKetua: form.namaKetua, anggota: form.anggota.filter(a => a.trim()) }
-      : { nama: form.nama }),
+      ? { namaRegu: form.namaRegu.trim(), namaKetua: form.namaKetua.trim(), anggota: form.anggota.filter(a => a.trim()) }
+      : { nama: form.nama.trim() }),
   }
+
   const ok = await regStore.submit(payload)
   if (ok) {
     Object.assign(form, { cabang:'', koridorId:'', blokRumah:'', wa:'', nama:'', namaRegu:'', namaKetua:'', anggota:[''] })
@@ -262,7 +276,23 @@ const formatDate = (d) => {
   return dt.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
-onMounted(() => { regStore.reset(); regStore.fetch(); kategoriStore.fetch(); koridorStore.fetch() })
+onMounted(async () => {
+  regStore.reset()
+  regStore.fetch()
+  koridorStore.fetch()
+  await kategoriStore.fetch()
+
+  // Pre-fill cabang dari query param (dari tombol "Daftar Sekarang" di jadwal)
+  const cabangParam = route.query.cabang
+  if (cabangParam) {
+    const match = kategoriStore.list.find(k => k.nama === cabangParam)
+    if (match) {
+      form.cabang = match.nama
+      await nextTick()
+      document.querySelector('.form-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }
+})
 </script>
 
 <style scoped>

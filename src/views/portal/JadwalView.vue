@@ -103,8 +103,9 @@ function openDetail(j) {
 }
 
 function goRegistrasi() {
+  const cabang = selectedJadwal.value?.cabang || ''
   selectedJadwal.value = null
-  router.push({ name: 'registrasi' })
+  router.push({ name: 'registrasi', query: cabang ? { cabang } : {} })
 }
 
 const cabangRowRef  = ref(null)

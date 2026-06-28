@@ -23,7 +23,6 @@
     </div>
 
     <template v-else>
-      <!-- Grid kartu per kategori -->
       <div v-if="kategoriForActiveTipe.length" class="kat-grid">
         <div
           v-for="kat in kategoriForActiveTipe"
@@ -34,31 +33,47 @@
             '--tb': activeTipeObj?.bg    || '#FBEAEC',
           }"
         >
-          <!-- Card header -->
           <div class="kat-card-top">
             <span class="kat-nama">{{ kat.nama }}</span>
             <span class="kat-jenis">{{ kat.jenis || 'Beregu' }}</span>
           </div>
 
-          <!-- Podium juara -->
-          <template v-if="klasemenOf(kat.id)">
-            <div class="podium">
-              <div v-if="klasemenOf(kat.id).juara1" class="podium-item podium-gold">
-                <span class="medal-icon">🥇</span>
-                <span class="podium-nama">{{ klasemenOf(kat.id).juara1 }}</span>
+          <!-- Ada hasil -->
+          <template v-if="klasemenOf(kat.nama)">
+            <!-- Perorangan: podium lengkap -->
+            <template v-if="klasemenOf(kat.nama).isPerorangan">
+              <div class="podium">
+                <div v-if="klasemenOf(kat.nama).juara1" class="podium-item podium-gold">
+                  <span class="medal-icon">🥇</span>
+                  <span class="podium-nama">{{ klasemenOf(kat.nama).juara1 }}</span>
+                </div>
+                <div v-if="klasemenOf(kat.nama).juara2" class="podium-item">
+                  <span class="medal-icon">🥈</span>
+                  <span class="podium-nama">{{ klasemenOf(kat.nama).juara2 }}</span>
+                </div>
+                <div v-if="klasemenOf(kat.nama).juara3" class="podium-item">
+                  <span class="medal-icon">🥉</span>
+                  <span class="podium-nama">{{ klasemenOf(kat.nama).juara3 }}</span>
+                </div>
               </div>
-              <div v-if="klasemenOf(kat.id).juara2" class="podium-item">
-                <span class="medal-icon">🥈</span>
-                <span class="podium-nama">{{ klasemenOf(kat.id).juara2 }}</span>
+            </template>
+
+            <!-- Beregu: tampilkan juara saja -->
+            <template v-else>
+              <div class="podium">
+                <div class="podium-item podium-gold">
+                  <span class="medal-icon">🏆</span>
+                  <span class="podium-nama">{{ klasemenOf(kat.nama).juara1 }}</span>
+                </div>
               </div>
-              <div v-if="klasemenOf(kat.id).juara3" class="podium-item">
-                <span class="medal-icon">🥉</span>
-                <span class="podium-nama">{{ klasemenOf(kat.id).juara3 }}</span>
-              </div>
+            </template>
+
+            <div class="entry-babak" v-if="klasemenOf(kat.nama).babak">
+              {{ klasemenOf(kat.nama).babak }}
             </div>
           </template>
 
-          <!-- Belum ada data -->
+          <!-- Belum ada hasil -->
           <template v-else>
             <div class="no-data">
               <span class="no-data-icon">⏳</span>
@@ -68,30 +83,29 @@
         </div>
       </div>
 
-      <!-- Tipe kosong -->
       <div v-else class="empty-tipe">
         Belum ada cabang lomba untuk kategori ini.
       </div>
     </template>
 
-    <p class="note">Data klasemen diperbarui oleh panitia setiap selesai pertandingan.</p>
+    <p class="note">Klasemen diperbarui otomatis dari data hasil pertandingan.</p>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
-import { useKlasemenStore }  from '@/stores/useKlasemen'
-import { useKategoriStore }  from '@/stores/useKategori'
-import { useTipeStore }      from '@/stores/useTipe'
+import { useHasilStore }    from '@/stores/useHasil'
+import { useKategoriStore } from '@/stores/useKategori'
+import { useTipeStore }     from '@/stores/useTipe'
 
-const klasemenStore = useKlasemenStore()
+const hasilStore    = useHasilStore()
 const kategoriStore = useKategoriStore()
 const tipeStore     = useTipeStore()
 
 const activeTipe = ref(null)
 
 const isLoading = computed(() =>
-  klasemenStore.loading || kategoriStore.loading || tipeStore.loading
+  hasilStore.loading || kategoriStore.loading || tipeStore.loading
 )
 
 const activeTipeObj = computed(() =>
@@ -103,18 +117,54 @@ const kategoriForActiveTipe = computed(() => {
   return kategoriStore.list.filter(k => k.tipeId === activeTipe.value)
 })
 
-function klasemenOf(kategoriId) {
-  return klasemenStore.byKategori[kategoriId] || null
+// Group hasil by cabang name
+const hasilByKabang = computed(() => {
+  const map = {}
+  hasilStore.list.forEach(h => {
+    if (!map[h.cabang]) map[h.cabang] = []
+    map[h.cabang].push(h)
+  })
+  return map
+})
+
+// Derivasi klasemen dari hasil — prioritas babak "Final", fallback ke paling baru
+function klasemenOf(katNama) {
+  const entries = hasilByKabang.value[katNama] || []
+  if (!entries.length) return null
+
+  const finalEntry = entries.find(e => /final/i.test(e.babak || ''))
+  const entry = finalEntry || entries[0] // entries[0] = paling baru (sorted desc)
+
+  const isPerorangan = !!(entry.juara1 || entry.juara2 || entry.juara3) || entry.jenis === 'Perorangan'
+
+  if (isPerorangan) {
+    return {
+      isPerorangan: true,
+      juara1: entry.juara1 || '',
+      juara2: entry.juara2 || '',
+      juara3: entry.juara3 || '',
+      babak:  entry.babak  || '',
+    }
+  }
+
+  if (entry.juara) {
+    return {
+      isPerorangan: false,
+      juara1: entry.juara,
+      babak:  entry.babak || '',
+    }
+  }
+
+  return null
 }
 
-// Set tab pertama otomatis setelah data tipe dimuat
 watch(() => tipeStore.list, (list) => {
   if (list.length && !activeTipe.value) activeTipe.value = list[0].id
 })
 
 onMounted(async () => {
   await Promise.all([
-    klasemenStore.fetch(),
+    hasilStore.fetch(),
     kategoriStore.fetch(),
     tipeStore.fetch(),
   ])
@@ -125,7 +175,6 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-/* ── Header ─────────────────────────────────── */
 .eyebrow    { font: 700 13px/1 'Plus Jakarta Sans'; letter-spacing: .12em; text-transform: uppercase; color: #9A6B12; }
 .page-title { margin: 9px 0 24px; font: 800 32px/1.05 Archivo; color: #1A1613; text-transform: uppercase; }
 .note       { font: 500 13px/1.5 'Plus Jakarta Sans'; color: #9A9389; margin-top: 24px; }
@@ -149,7 +198,7 @@ onMounted(async () => {
 }
 @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
 
-/* ── Kategori Grid ───────────────────────────── */
+/* ── Grid ────────────────────────────────────── */
 .kat-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -165,7 +214,6 @@ onMounted(async () => {
   padding: 18px 20px;
   display: flex; flex-direction: column; gap: 16px;
 }
-
 .kat-card-top {
   display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;
 }
@@ -186,7 +234,12 @@ onMounted(async () => {
 .medal-icon  { font-size: 22px; line-height: 1; flex-shrink: 0; }
 .podium-nama { font: 600 14px/1.3 'Plus Jakarta Sans'; color: #3A3530; }
 
-/* ── Empty / loading states ──────────────────── */
+.entry-babak {
+  font: 600 11px/1 'Plus Jakarta Sans'; letter-spacing: .06em; text-transform: uppercase;
+  color: #9A9389;
+}
+
+/* ── Empty states ────────────────────────────── */
 .no-data {
   display: flex; flex-direction: column; align-items: center; gap: 8px;
   padding: 18px 0;
@@ -202,9 +255,9 @@ onMounted(async () => {
 
 /* ── Responsive ──────────────────────────────── */
 @media(max-width:767px) {
-  .page-title { font-size: 26px; }
-  .kat-grid   { grid-template-columns: 1fr; }
-  .medal-icon { font-size: 18px; }
-  .podium-nama{ font-size: 13px; }
+  .page-title  { font-size: 26px; }
+  .kat-grid    { grid-template-columns: 1fr; }
+  .medal-icon  { font-size: 18px; }
+  .podium-nama { font-size: 13px; }
 }
 </style>
