@@ -46,6 +46,19 @@ export const addKategori    = (data) => addDoc(collection(db, 'kategori'), { ...
 export const updateKategori = (id, data) => updateDoc(doc(db, 'kategori', id), data)
 export const deleteKategori = (id) => deleteDoc(doc(db, 'kategori', id))
 
+// ── LOMBA ─────────────────────────────────────────────
+export async function getLomba() {
+  try {
+    const snap = await getDocs(query(collection(db, 'lomba'), orderBy('urutan')))
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }))
+  } catch {
+    const snap = await getDocs(collection(db, 'lomba'))
+    return snap.docs
+      .map(d => ({ id: d.id, ...d.data() }))
+      .sort((a, b) => (a.urutan || 999) - (b.urutan || 999))
+  }
+}
+
 // ── KLASEMEN ──────────────────────────────────────────
 export async function getKlasemen() {
   const snap = await getDocs(collection(db, 'klasemen'))
