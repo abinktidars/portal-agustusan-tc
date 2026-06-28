@@ -11,21 +11,27 @@
       </div>
       <button class="tcr-btn-red hide-mobile" @click="$router.push({ name: 'registrasi' })">Daftar Lomba</button>
     </div>
-    <nav class="header-nav tcr-scroll">
+    <nav ref="navRef" class="header-nav tcr-scroll">
       <button
-        v-for="item in navItems"
+        v-for="(item, i) in navItems"
         :key="item.name"
+        :ref="el => { if(el) btnRefs[i] = el }"
         class="nav-btn"
         :class="{ active: route.name === item.name }"
-        @click="$router.push({ name: item.name })"
+        @click="handleNavClick(item, i)"
       >{{ item.label }}</button>
     </nav>
   </header>
 </template>
 
 <script setup>
-import { useRoute } from 'vue-router'
-const route = useRoute()
+import { ref, watch, nextTick } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+
+const route  = useRoute()
+const router = useRouter()
+const navRef  = ref(null)
+const btnRefs = []
 
 const navItems = [
   { name: 'beranda',     label: 'Beranda' },
@@ -37,6 +43,23 @@ const navItems = [
   { name: 'kabar',       label: 'Kabar' },
   { name: 'galeri',      label: 'Galeri' },
 ]
+
+function scrollToCenter(btn) {
+  const nav = navRef.value
+  if (!nav || !btn) return
+  nav.scrollTo({ left: btn.offsetLeft - nav.clientWidth / 2 + btn.offsetWidth / 2, behavior: 'smooth' })
+}
+
+function handleNavClick(item, i) {
+  router.push({ name: item.name })
+  scrollToCenter(btnRefs[i])
+}
+
+watch(() => route.name, async () => {
+  await nextTick()
+  const i = navItems.findIndex(n => n.name === route.name)
+  if (i !== -1) scrollToCenter(btnRefs[i])
+}, { immediate: true })
 </script>
 
 <style scoped>
@@ -47,7 +70,7 @@ const navItems = [
   border-bottom: 2px solid #CE1126;
 }
 .header-inner {
-  max-width: 1180px; margin: 0 auto;
+  max-width: 1200px; margin: 0 auto;
   padding: 12px 22px;
   display: flex; align-items: center; justify-content: space-between; gap: 16px;
 }
@@ -62,6 +85,7 @@ const navItems = [
 .brand-title { font: 800 17px/1.1 Archivo; color: #1A1613; margin-top: 3px; white-space: nowrap; }
 .header-nav {
   display: flex; gap: 7px; overflow-x: auto; padding: 0 22px 10px;
+  max-width: 1200px; margin: 0 auto;
 }
 .nav-btn {
   flex: 0 0 auto; padding: 9px 16px; border: none; border-radius: 999px;
@@ -71,5 +95,11 @@ const navItems = [
 .nav-btn.active {
   background: #CE1126; color: #fff;
   box-shadow: 0 4px 12px rgba(206,17,38,.28);
+}
+@media(max-width:767px) {
+  .hide-mobile { display: none; }
+  .header-inner { padding: 10px 16px; }
+  .header-nav { padding: 0 16px 10px; }
+  .brand-title { font-size: 15px; }
 }
 </style>

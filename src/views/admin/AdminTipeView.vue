@@ -1,4 +1,11 @@
 <template>
+  <Transition name="toast">
+    <div v-if="toast.show" class="toast" :class="toast.type">
+      <span class="toast-icon">{{ toast.type === 'success' ? '✓' : '✕' }}</span>
+      {{ toast.msg }}
+    </div>
+  </Transition>
+
   <main class="adm-main">
     <div class="adm-section">
       <div class="section-header">
@@ -6,7 +13,11 @@
           <div class="section-eyebrow">Master Data</div>
           <h2 class="section-title">Tipe Lomba</h2>
         </div>
-        <button class="tcr-btn-red" @click="openForm()">+ Tambah Tipe</button>
+        <div class="header-actions">
+          <input v-model="search" type="text" class="tcr-input search-input" placeholder="Cari tipe..." />
+          <button class="btn-export" @click="doExport">Export Excel</button>
+          <button class="tcr-btn-red" @click="openForm()">+ Tambah Tipe</button>
+        </div>
       </div>
 
       <form v-if="showForm" @submit.prevent="submit" class="inline-form">
@@ -61,8 +72,8 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(t, i) in store.list" :key="t.id">
-              <td class="td-num">{{ i + 1 }}</td>
+            <tr v-for="(t, i) in paginated" :key="t.id">
+              <td class="td-num">{{ (page-1)*PER_PAGE + i + 1 }}</td>
               <td class="td-bold">{{ t.nama }}</td>
               <td>
                 <div style="display:flex;align-items:center;gap:8px;">
@@ -81,12 +92,13 @@
                 </div>
               </td>
             </tr>
-            <tr v-if="!store.list.length">
-              <td colspan="6" class="empty">Belum ada tipe lomba</td>
+            <tr v-if="!filtered.length">
+              <td colspan="6" class="empty">{{ search ? 'Tidak ada hasil pencarian' : 'Belum ada tipe lomba' }}</td>
             </tr>
           </tbody>
         </table>
       </div>
+      <PaginationBar v-model="page" :total="filtered.length" :per-page="PER_PAGE" />
 
       <p class="info-note">
         💡 Tipe lomba digunakan untuk mengelompokkan kategori lomba dan menentukan warna tampilan di portal.
@@ -96,11 +108,42 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
-import { useTipeStore } from '@/stores/useTipe'
+import { ref, reactive, computed, watch, onMounted } from 'vue'
+import { useTipeStore }     from '@/stores/useTipe'
+import { useKategoriStore } from '@/stores/useKategori'
+import PaginationBar from '@/components/PaginationBar.vue'
+import { exportToExcel } from '@/utils/exportExcel'
 
-const store    = useTipeStore()
+const store         = useTipeStore()
+const kategoriStore = useKategoriStore()
 const showForm = ref(false)
+const search   = ref('')
+const page     = ref(1)
+const PER_PAGE = 10
+const toast    = reactive({ show: false, msg: '', type: 'success' })
+let toastTimer = null
+
+function showToast(msg, type = 'success') {
+  clearTimeout(toastTimer)
+  toast.msg = msg; toast.type = type; toast.show = true
+  toastTimer = setTimeout(() => { toast.show = false }, 3000)
+}
+
+const filtered  = computed(() => {
+  const q = search.value.toLowerCase()
+  return store.list.filter(t => !q || t.nama.toLowerCase().includes(q))
+})
+const paginated = computed(() => filtered.value.slice((page.value-1)*PER_PAGE, page.value*PER_PAGE))
+watch(search, () => { page.value = 1 })
+
+function doExport() {
+  exportToExcel(filtered.value, [
+    { label: 'No',     field: (_, i) => i + 1 },
+    { label: 'Nama Tipe', field: 'nama' },
+    { label: 'Warna',  field: 'warna' },
+    { label: 'Urutan', field: 'urutan' },
+  ], 'tipe-lomba')
+}
 const form     = reactive({ nama:'', warna:'#CE1126', urutan:1, editId:null })
 
 const PRESET_COLORS = [
@@ -139,18 +182,38 @@ function resetForm() {
 }
 
 async function submit() {
-  if (!form.nama.trim() || !form.warna) return
-  const bg = bgFromWarna(form.warna)
-  const payload = { nama:form.nama.trim(), warna:form.warna, bg, urutan:form.urutan||1 }
-  form.editId ? await store.update(form.editId, payload) : await store.add(payload)
-  resetForm()
+  if (!form.nama.trim()) { showToast('Nama tipe wajib diisi.', 'error'); return }
+  if (!form.warna)       { showToast('Warna wajib dipilih.', 'error'); return }
+  const isEdit = !!form.editId
+  const bg      = bgFromWarna(form.warna)
+  const payload = { nama: form.nama.trim(), warna: form.warna, bg, urutan: form.urutan || 1 }
+  try {
+    isEdit ? await store.update(form.editId, payload) : await store.add(payload)
+    showToast(isEdit ? `Tipe "${payload.nama}" berhasil diperbarui.` : `Tipe "${payload.nama}" berhasil ditambahkan.`)
+    resetForm()
+  } catch {
+    showToast('Gagal menyimpan. Coba lagi.', 'error')
+  }
 }
 
-function hapus(t) {
-  if (confirm(`Hapus tipe "${t.nama}"? Kategori yang menggunakan tipe ini tidak ikut terhapus.`)) store.remove(t.id)
+async function hapus(t) {
+  await kategoriStore.fetch()
+  const terpakai = kategoriStore.list.filter(k => k.tipe === t.nama)
+  if (terpakai.length) {
+    const namaKat = terpakai.map(k => k.nama).join(', ')
+    showToast(`Tidak bisa dihapus — digunakan oleh ${terpakai.length} kategori: ${namaKat}.`, 'error')
+    return
+  }
+  if (!confirm(`Hapus tipe "${t.nama}"?`)) return
+  try {
+    await store.remove(t.id)
+    showToast(`Tipe "${t.nama}" berhasil dihapus.`)
+  } catch {
+    showToast('Gagal menghapus. Coba lagi.', 'error')
+  }
 }
 
-onMounted(() => store.fetch())
+onMounted(() => { store.fetch(); kategoriStore.fetch() })
 </script>
 
 <style scoped>
@@ -191,4 +254,16 @@ onMounted(() => store.fetch())
 .btn-del  { padding:6px 14px; border:1px solid #FBEAEC; border-radius:8px; background:#FBEAEC; color:#CE1126; font:600 12px/1 'Plus Jakarta Sans'; cursor:pointer; }
 .empty    { text-align:center; padding:32px; color:#9A9389; font:500 14px/1 'Plus Jakarta Sans'; }
 .info-note { font:500 13px/1.5 'Plus Jakarta Sans'; color:#9A9389; margin:16px 0 0; }
+.header-actions { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.search-input   { width:220px; }
+.btn-export     { padding:10px 18px; border:1.5px solid #2E7D52; border-radius:10px; background:#fff; color:#2E7D52; font:700 13px/1 'Plus Jakarta Sans'; cursor:pointer; white-space:nowrap; transition:background .15s; }
+.btn-export:hover { background:#E7F2EB; }
+.toast { position:fixed; bottom:28px; right:28px; z-index:9999; display:flex; align-items:center; gap:10px; padding:14px 20px; border-radius:12px; min-width:260px; max-width:380px; font:600 14px/1.4 'Plus Jakarta Sans'; box-shadow:0 8px 24px rgba(0,0,0,.18); pointer-events:none; }
+.toast.success { background:#1A1613; color:#fff; }
+.toast.error   { background:#CE1126; color:#fff; }
+.toast-icon    { width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; font:700 13px/1 Archivo; flex-shrink:0; }
+.toast.success .toast-icon { background:rgba(255,255,255,.15); }
+.toast.error   .toast-icon { background:rgba(0,0,0,.15); }
+.toast-enter-active, .toast-leave-active { transition: all .25s ease; }
+.toast-enter-from, .toast-leave-to { opacity:0; transform:translateY(12px); }
 </style>

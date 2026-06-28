@@ -29,5 +29,8 @@ const galeri = ['HUT RI ke-80','Final Voli Putra','Tarik Tambang','Karnaval Anak
 }
 .slot-label { font: 600 11px/1.4 ui-monospace,Menlo,monospace; color: #A89F92; }
 .slot-name  { font: 600 12px/1.4 ui-monospace,Menlo,monospace; color: #7A7368; margin-top: 4px; }
-@media(max-width:767px) { .galeri-grid { grid-template-columns: repeat(2,1fr); } }
+@media(max-width:767px) {
+  .galeri-grid { grid-template-columns: repeat(2,1fr); }
+  .page-title { font-size: 26px; }
+}
 </style>

@@ -6,7 +6,11 @@
           <div class="section-eyebrow">Manajemen</div>
           <h2 class="section-title">Jadwal Pertandingan</h2>
         </div>
-        <button class="tcr-btn-red" @click="openForm()">+ Tambah Jadwal</button>
+        <div class="header-actions">
+          <input v-model="search" type="text" class="tcr-input search-input" placeholder="Cari jadwal..." />
+          <button class="btn-export" @click="doExport">Export Excel</button>
+          <button class="tcr-btn-red" @click="openForm()">+ Tambah Jadwal</button>
+        </div>
       </div>
 
       <form v-if="showForm" @submit.prevent="submit" class="inline-form">
@@ -61,7 +65,7 @@
       </div>
 
       <div class="card-grid">
-        <div v-for="j in filtered" :key="j.id" class="item-card">
+        <div v-for="j in paginated" :key="j.id" class="item-card">
           <div class="item-card-header">
             <div style="display:flex;align-items:center;gap:7px;">
               <span class="dot" :style="{ background: tipeColor(j.kat) }"></span>
@@ -79,27 +83,53 @@
         </div>
         <div v-if="!filtered.length" class="empty" style="grid-column:1/-1;">Belum ada jadwal</div>
       </div>
+      <PaginationBar v-model="page" :total="filtered.length" :per-page="PER_PAGE" />
     </div>
   </main>
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { useKategoriStore } from '@/stores/useKategori'
 import { useJadwalStore }   from '@/stores/useJadwal'
 import { useTipeStore }     from '@/stores/useTipe'
+import PaginationBar from '@/components/PaginationBar.vue'
+import { exportToExcel } from '@/utils/exportExcel'
 
 const kategoriStore = useKategoriStore()
 const jadwalStore   = useJadwalStore()
 const tipeStore     = useTipeStore()
 const showForm      = ref(false)
 const filterStatus  = ref('')
+const search        = ref('')
+const page          = ref(1)
+const PER_PAGE      = 9
 const form = reactive({ cabang:'', kat:'', tgl:'', jam:'', peserta:'', lokasi:'', status:'Akan Datang', editId:null })
 
 const tipeColor = (t) => tipeStore.warna(t)
 const statusCls  = (s) => ({ 'Berlangsung':'status-berlangsung', 'Selesai':'status-selesai', 'Akan Datang':'status-akandatang' }[s] || 'status-akandatang')
 
-const filtered = computed(() => jadwalStore.list.filter(j => !filterStatus.value || j.status === filterStatus.value))
+const filtered  = computed(() => {
+  const q = search.value.toLowerCase()
+  return jadwalStore.list.filter(j =>
+    (!filterStatus.value || j.status === filterStatus.value) &&
+    (!q || (j.cabang||'').toLowerCase().includes(q) || (j.peserta||'').toLowerCase().includes(q) || (j.lokasi||'').toLowerCase().includes(q))
+  )
+})
+const paginated = computed(() => filtered.value.slice((page.value-1)*PER_PAGE, page.value*PER_PAGE))
+watch([filterStatus, search], () => { page.value = 1 })
+
+function doExport() {
+  exportToExcel(filtered.value, [
+    { label: 'No',      field: (_, i) => i + 1 },
+    { label: 'Cabang',  field: 'cabang' },
+    { label: 'Tanggal', field: 'tgl' },
+    { label: 'Jam',     field: 'jam' },
+    { label: 'Peserta', field: 'peserta' },
+    { label: 'Lokasi',  field: r => r.lokasi || r.venue || '' },
+    { label: 'Status',  field: 'status' },
+  ], 'jadwal-pertandingan')
+}
 
 function onCabangChange() {
   const found = kategoriStore.list.find(k => k.nama === form.cabang)
@@ -159,7 +189,11 @@ onMounted(() => { tipeStore.fetch(); kategoriStore.fetch(); jadwalStore.fetch() 
 .item-sub   { font:500 12px/1.4 'Plus Jakarta Sans'; color:#5A534B; margin-bottom:5px; }
 .item-actions { display:flex; gap:8px; margin-top:12px; }
 .dot  { width:9px; height:9px; border-radius:50%; display:inline-block; flex-shrink:0; margin-top:2px; }
-.btn-edit { flex:1; padding:8px; border:1px solid #E2DCD2; border-radius:8px; background:#fff; color:#1A1613; font:600 12px/1 'Plus Jakarta Sans'; cursor:pointer; }
-.btn-del  { flex:1; padding:8px; border:1px solid #FBEAEC; border-radius:8px; background:#FBEAEC; color:#CE1126; font:600 12px/1 'Plus Jakarta Sans'; cursor:pointer; }
+.btn-edit { padding:6px 14px; border:1px solid #E2DCD2; border-radius:8px; background:#fff; color:#1A1613; font:600 12px/1 'Plus Jakarta Sans'; cursor:pointer; }
+.btn-del  { padding:6px 14px; border:1px solid #FBEAEC; border-radius:8px; background:#FBEAEC; color:#CE1126; font:600 12px/1 'Plus Jakarta Sans'; cursor:pointer; }
 .empty    { text-align:center; padding:32px; color:#9A9389; font:500 14px/1 'Plus Jakarta Sans'; }
+.header-actions { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.search-input   { width:220px; }
+.btn-export     { padding:10px 18px; border:1.5px solid #2E7D52; border-radius:10px; background:#fff; color:#2E7D52; font:700 13px/1 'Plus Jakarta Sans'; cursor:pointer; white-space:nowrap; transition:background .15s; }
+.btn-export:hover { background:#E7F2EB; }
 </style>

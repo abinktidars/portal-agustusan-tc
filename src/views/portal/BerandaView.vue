@@ -9,7 +9,7 @@
         <div style="position:relative;">
           <div class="hero-badge">11 Juli – 31 Agustus 2026</div>
           <h1 class="hero-title">Semarak<br>Kemerdekaan <span style="color:#F4C36B;">ke-81</span></h1>
-          <p class="hero-desc">Portal bersama warga Teras Country Residence. Cek jadwal &amp; hasil pertandingan, klasemen antar-blok, dan daftar lomba — semua di satu tempat. <strong style="color:#fff;">Guyub Rukun, Raih Prestasi.</strong></p>
+          <p class="hero-desc">Portal bersama warga Teras Country Residence. Cek jadwal &amp; hasil pertandingan, klasemen antar koridor, dan daftar lomba, semua di satu tempat. </p>
           <div class="hero-actions">
             <button class="btn-white" @click="$router.push({ name: 'registrasi' })">Daftar Lomba Sekarang</button>
             <button class="btn-outline" @click="$router.push({ name: 'jadwal' })">Lihat Jadwal</button>
@@ -149,9 +149,9 @@ onUnmounted(() => clearInterval(timer))
 </script>
 
 <style scoped>
-.hero-grid { display:grid; grid-template-columns:1.15fr .85fr; gap:30px; align-items:stretch; }
+.hero-grid { display:grid; grid-template-columns:1.15fr .85fr; gap:16px; align-items:stretch; }
 .hero-card {
-  background: #CE1126; border-radius: 10px; padding: 38px;
+  background: #CE1126; border-radius: 10px; padding: 24px;
   display: flex; flex-direction: column; justify-content: center;
   position: relative; overflow: hidden;
 }
@@ -168,7 +168,7 @@ onUnmounted(() => clearInterval(timer))
   border-radius: 999px; background: rgba(255,255,255,.18); color: #fff;
   font: 700 12px/1 'Plus Jakarta Sans'; letter-spacing: .04em;
 }
-.hero-title { margin: 18px 0 0; font: 900 52px/.98 Archivo; letter-spacing: -.02em; color: #fff; }
+.hero-title { margin: 18px 0 0; font: 900 42px/.98 Archivo; letter-spacing: -.02em; color: #fff; }
 .hero-desc  { margin: 18px 0 0; font: 500 17px/1.6 'Plus Jakarta Sans'; color: rgba(255,255,255,.9); max-width: 46ch; }
 .hero-actions { display: flex; gap: 12px; margin-top: 26px; flex-wrap: wrap; }
 .btn-white   { padding: 14px 24px; border: none; border-radius: 8px; background: #fff; color: #CE1126; font: 800 15px/1 'Plus Jakarta Sans'; cursor: pointer; box-shadow: 0 8px 20px rgba(0,0,0,.18); }
@@ -222,7 +222,16 @@ onUnmounted(() => clearInterval(timer))
 
 @media(max-width:767px) {
   .hero-grid, .quick-grid, .klasemen-grid { grid-template-columns: 1fr !important; }
-  .hero-title { font-size: 36px !important; }
+  .hero-grid { gap: 16px; }
+  .hero-title { font-size: 34px !important; }
+  .hero-desc { font-size: 15px; }
+  .hero-card { padding: 20px; }
+  .countdown-card { padding: 20px; }
   .cd-grid { grid-template-columns: repeat(2,1fr); }
+  .section-title { font-size: 24px; }
+  .jadwal-row { padding: 14px; gap: 10px; }
+  .quick-grid { margin-top: 12px; gap: 10px; }
+  .quick-card { padding: 16px; }
+  .klasemen-card { padding: 16px; }
 }
 </style>

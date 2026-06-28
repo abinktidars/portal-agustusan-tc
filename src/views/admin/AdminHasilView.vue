@@ -6,7 +6,11 @@
           <div class="section-eyebrow">Hasil</div>
           <h2 class="section-title">Hasil Pertandingan</h2>
         </div>
-        <button class="tcr-btn-red" style="background:#2E7D52;box-shadow:0 6px 16px rgba(46,125,82,.25);" @click="openForm()">+ Tambah Hasil</button>
+        <div class="header-actions">
+          <input v-model="search" type="text" class="tcr-input search-input" placeholder="Cari hasil..." />
+          <button class="btn-export" @click="doExport">Export Excel</button>
+          <button class="tcr-btn-red" style="background:#2E7D52;box-shadow:0 6px 16px rgba(46,125,82,.25);" @click="openForm()">+ Tambah Hasil</button>
+        </div>
       </div>
 
       <form v-if="showForm" @submit.prevent="submit" class="inline-form">
@@ -44,7 +48,7 @@
       </form>
 
       <div class="card-grid">
-        <div v-for="h in hasilStore.list" :key="h.id" class="item-card">
+        <div v-for="h in paginated" :key="h.id" class="item-card">
           <div class="item-card-header">
             <div style="display:flex;align-items:center;gap:7px;">
               <span class="dot" :style="{ background: tipeColor(h.kat) }"></span>
@@ -55,25 +59,55 @@
           <div class="skor-display">{{ h.timA }} <span style="color:#7A7368;">{{ h.skor }}</span> {{ h.timB }}</div>
           <div class="juara-display">🏆 {{ h.juara }}</div>
           <div class="item-actions">
-            <button @click="hapus(h)" class="btn-del" style="flex:1;">Hapus</button>
+            <button @click="hapus(h)" class="btn-del">Hapus</button>
           </div>
         </div>
-        <div v-if="!hasilStore.list.length" class="empty" style="grid-column:1/-1;">Belum ada hasil pertandingan</div>
+        <div v-if="!filtered.length" class="empty" style="grid-column:1/-1;">{{ search ? 'Tidak ada hasil pencarian' : 'Belum ada hasil pertandingan' }}</div>
       </div>
+      <PaginationBar v-model="page" :total="filtered.length" :per-page="PER_PAGE" />
     </div>
   </main>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { useKategoriStore } from '@/stores/useKategori'
 import { useHasilStore }    from '@/stores/useHasil'
 import { useTipeStore }     from '@/stores/useTipe'
+import PaginationBar from '@/components/PaginationBar.vue'
+import { exportToExcel } from '@/utils/exportExcel'
 
 const kategoriStore = useKategoriStore()
 const hasilStore    = useHasilStore()
 const tipeStore     = useTipeStore()
 const showForm      = ref(false)
+const search        = ref('')
+const page          = ref(1)
+const PER_PAGE      = 9
+
+const filtered  = computed(() => {
+  const q = search.value.toLowerCase()
+  return hasilStore.list.filter(h => !q ||
+    (h.cabang||'').toLowerCase().includes(q) ||
+    (h.timA||'').toLowerCase().includes(q) ||
+    (h.timB||'').toLowerCase().includes(q) ||
+    (h.juara||'').toLowerCase().includes(q)
+  )
+})
+const paginated = computed(() => filtered.value.slice((page.value-1)*PER_PAGE, page.value*PER_PAGE))
+watch(search, () => { page.value = 1 })
+
+function doExport() {
+  exportToExcel(filtered.value, [
+    { label: 'No',      field: (_, i) => i + 1 },
+    { label: 'Cabang',  field: 'cabang' },
+    { label: 'Tanggal', field: 'tgl' },
+    { label: 'Tim A',   field: 'timA' },
+    { label: 'Tim B',   field: 'timB' },
+    { label: 'Skor',    field: 'skor' },
+    { label: 'Juara',   field: 'juara' },
+  ], 'hasil-pertandingan')
+}
 const form          = reactive({ cabang:'', kat:'', tgl:'', timA:'', timB:'', skor:'', juara:'' })
 
 const tipeColor = (t) => tipeStore.warna(t)
@@ -118,6 +152,10 @@ onMounted(() => { tipeStore.fetch(); kategoriStore.fetch(); hasilStore.fetch() }
 .skor-display  { background:#fff; border-radius:10px; padding:10px; margin-bottom:10px; text-align:center; font:800 18px/1 Archivo; color:#CE1126; }
 .juara-display { padding:8px 12px; background:#E7F2EB; border-radius:8px; text-align:center; font:700 12px/1.4 'Plus Jakarta Sans'; color:#2E7D52; margin-bottom:12px; }
 .item-actions { display:flex; gap:8px; }
-.btn-del { padding:8px; border:1px solid #FBEAEC; border-radius:8px; background:#FBEAEC; color:#CE1126; font:600 12px/1 'Plus Jakarta Sans'; cursor:pointer; }
+.btn-del { padding:6px 14px; border:1px solid #FBEAEC; border-radius:8px; background:#FBEAEC; color:#CE1126; font:600 12px/1 'Plus Jakarta Sans'; cursor:pointer; }
 .empty   { text-align:center; padding:32px; color:#9A9389; font:500 14px/1 'Plus Jakarta Sans'; }
+.header-actions { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.search-input   { width:220px; }
+.btn-export     { padding:10px 18px; border:1.5px solid #2E7D52; border-radius:10px; background:#fff; color:#2E7D52; font:700 13px/1 'Plus Jakarta Sans'; cursor:pointer; white-space:nowrap; transition:background .15s; }
+.btn-export:hover { background:#E7F2EB; }
 </style>
