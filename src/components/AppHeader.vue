@@ -35,12 +35,11 @@ const btnRefs = []
 
 const navItems = [
   { name: 'beranda',     label: 'Beranda' },
+  { name: 'lomba',       label: 'Lomba' },
   { name: 'jadwal',      label: 'Jadwal' },
   { name: 'hasil',       label: 'Hasil' },
-  { name: 'klasemen',    label: 'Klasemen' },
-  { name: 'lomba',       label: 'Lomba' },
   { name: 'registrasi',  label: 'Registrasi' },
-  { name: 'kabar',       label: 'Kabar' },
+  { name: 'klasemen',    label: 'Klasemen' },
   { name: 'galeri',      label: 'Galeri' },
 ]
 

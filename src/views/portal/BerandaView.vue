@@ -12,22 +12,22 @@
           <p class="hero-desc">Portal bersama warga Teras Country Residence. Cek jadwal &amp; hasil pertandingan, klasemen antar koridor, dan daftar lomba, semua di satu tempat. </p>
           <div class="hero-actions">
             <button class="btn-white" @click="$router.push({ name: 'registrasi' })">Daftar Lomba Sekarang</button>
-            <button class="btn-outline" @click="$router.push({ name: 'jadwal' })">Lihat Jadwal</button>
+            <!-- <button class="btn-outline" @click="$router.push({ name: 'jadwal' })">Lihat Jadwal</button> -->
           </div>
         </div>
       </div>
 
       <!-- Countdown card -->
       <div class="countdown-card">
-        <div class="cd-label">Menuju Puncak Acara</div>
-        <div class="cd-title">Upacara &amp; Karnaval<br><span style="color:#F4C36B;">17 Agustus 2026</span></div>
+        <div class="cd-label">Menuju Opening</div>
+        <div class="cd-title">Opening Acara<br><span style="color:#F4C36B;">Sabtu, 11 Juli 2026</span></div>
         <div class="cd-grid">
           <div class="cd-box" v-for="(val, lbl) in countdown" :key="lbl" :style="lbl==='Detik'?'color:#F4C36B':''">
             <div class="cd-num" :style="lbl==='Detik'?'color:#F4C36B':''">{{ val }}</div>
             <div class="cd-unit">{{ lbl }}</div>
           </div>
         </div>
-        <div class="cd-stats">
+        <!-- <div class="cd-stats">
           <div class="cd-stat-box">
             <div class="cd-stat-val">{{ jadwalStore.CABANG_LIST.length }}</div>
             <div class="cd-stat-lbl">Cabang Lomba</div>
@@ -38,9 +38,9 @@
           </div>
           <div class="cd-stat-box">
             <div class="cd-stat-val">5</div>
-            <div class="cd-stat-lbl">Blok Bertanding</div>
+            <div class="cd-stat-lbl">Koridor Bertanding</div>
           </div>
-        </div>
+        </div> -->
       </div>
     </section>
 
@@ -58,8 +58,8 @@
       </button>
       <button class="quick-card" @click="$router.push({ name: 'klasemen' })">
         <div class="quick-icon" style="background:#FBF1DD;color:#9A6B12;">K</div>
-        <div class="quick-title">Klasemen Blok</div>
-        <div class="quick-desc">Perolehan medali &amp; poin antar-blok.</div>
+        <div class="quick-title">Klasemen Koridor</div>
+        <div class="quick-desc">Perolehan medali &amp; poin antar Koridor.</div>
       </button>
     </section>
 
@@ -92,7 +92,7 @@
     <!-- Klasemen top 3 -->
     <section style="margin-top:44px;">
       <div class="section-eyebrow" style="color:#9A6B12;">Klasemen Sementara</div>
-      <h2 class="section-title" style="margin:9px 0 20px;">3 Blok Teratas</h2>
+      <h2 class="section-title" style="margin:9px 0 20px;">3 Koridor Teratas</h2>
       <div class="klasemen-grid">
         <div v-for="k in klasemenStore.top3" :key="k.nama" class="klasemen-card" :style="{ borderTopColor: k.accent }">
           <div style="display:flex;align-items:center;justify-content:space-between;">
@@ -122,7 +122,7 @@ const jadwalStore   = useJadwalStore()
 const klasemenStore = useKlasemenStore()
 const regStore      = useRegistrasiStore()
 
-const TARGET = new Date('2026-08-17T08:00:00+07:00').getTime()
+const TARGET = new Date('2026-07-11T08:00:00+07:00').getTime()
 const now    = ref(Date.now())
 let timer
 
@@ -160,8 +160,8 @@ onUnmounted(() => clearInterval(timer))
   border-radius: 50%; background: repeating-linear-gradient(45deg,rgba(255,255,255,.16) 0 14px,transparent 14px 28px);
 }
 .hero-bg-stripe {
-  position: absolute; bottom: 0; left: 0; right: 0; height: 8px;
-  background: repeating-linear-gradient(90deg,#fff 0 24px,transparent 24px 48px); opacity: .5;
+  position: absolute; bottom: 0; left: 0; right: 0; height: 5px;
+  background: repeating-linear-gradient(90deg,#fff 0 15px,transparent 15px 30px); opacity: .5;
 }
 .hero-badge {
   display: inline-flex; align-items: center; gap: 8px; padding: 7px 14px;

@@ -61,11 +61,23 @@ export const addKategori    = (data) => addDoc(collection(db, 'kategori'), { ...
 export const updateKategori = (id, data) => updateDoc(doc(db, 'kategori', id), data)
 export const deleteKategori = (id) => deleteDoc(doc(db, 'kategori', id))
 
+// ── LOMBA ─────────────────────────────────────────────
+export async function getLomba() {
+  try {
+    const snap = await getDocs(query(collection(db, 'lomba'), orderBy('urutan')))
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }))
+  } catch {
+    const snap = await getDocs(collection(db, 'lomba'))
+    return snap.docs
+      .map(d => ({ id: d.id, ...d.data() }))
+      .sort((a, b) => (a.urutan || 999) - (b.urutan || 999))
+  }
+}
+
 // ── KLASEMEN PER KATEGORI ─────────────────────────────
 export const getKlasemen = () =>
   getDocs(collection(db, 'klasemen')).then(s => s.docs.map(d => ({ id: d.id, ...d.data() })))
 
-// Gunakan kategoriId sebagai document ID agar upsert mudah
 export const setKlasemenKategori = (kategoriId, data) =>
   setDoc(doc(db, 'klasemen', kategoriId), { ...data, updatedAt: new Date() }, { merge: true })
 

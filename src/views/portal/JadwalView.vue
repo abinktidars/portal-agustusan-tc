@@ -9,12 +9,12 @@
         class="chip" :class="{ active: jadwalStore.filterCabang === c }"
         @click="selectCabang(c, i)">{{ c }}</button>
     </div>
-    <div ref="statusRowRef" class="tcr-scroll chip-row" style="padding:10px 0 6px;">
+    <!-- <div ref="statusRowRef" class="tcr-scroll chip-row" style="padding:10px 0 6px;">
       <button v-for="(s, i) in jadwalStore.statusOptions" :key="s"
         :ref="el => { if(el) statusBtnRefs[i] = el }"
         class="chip" :class="{ active: jadwalStore.filterStatus === s }"
         @click="selectStatus(s, i)">{{ s }}</button>
-    </div>
+    </div> -->
 
     <div class="jadwal-list">
       <div v-for="j in jadwalStore.filtered" :key="j.id"
@@ -22,6 +22,7 @@
         @keydown.enter="openDetail(j)" @keydown.space.prevent="openDetail(j)">
         <div class="jadwal-row">
           <div class="jadwal-date">
+            <div class="hari">{{ hariDariTgl(j) }}</div>
             <template v-if="j.tglSelesai && j.tglSelesai !== (j.tglMulai || j.tgl)">
               <div class="tgl">{{ j.tglMulai || j.tgl }}</div>
               <div class="tgl-sep">–</div>
@@ -80,6 +81,20 @@ const lokasiNama = (j) => {
 }
 
 const katColor = (k) => ({ Olahraga:'#CE1126', Tradisional:'#C0871C', 'E-Sport':'#2D5B8A', Acara:'#2E7D52' })[k] || '#CE1126'
+const monthMap = {
+  Jan: 0,
+  Feb: 1,
+  Mar: 2,
+  Apr: 3,
+  Mei: 4,
+  Jun: 5,
+  Jul: 6,
+  Agu: 7,
+  Sep: 8,
+  Okt: 9,
+  Nov: 10,
+  Des: 11,
+}
 
 const selectedJadwal = ref(null)
 
@@ -100,6 +115,25 @@ const statusBtnRefs = []
 function scrollToCenter(row, btn) {
   if (!row || !btn) return
   row.scrollTo({ left: btn.offsetLeft - row.clientWidth / 2 + btn.offsetWidth / 2, behavior: 'smooth' })
+}
+
+function hariDariTgl(jadwal) {
+  if (jadwal?.hari) return jadwal.hari
+  if (jadwal?.tglDate instanceof Date && !Number.isNaN(jadwal.tglDate.getTime())) {
+    return jadwal.tglDate.toLocaleDateString('id-ID', { weekday: 'long' })
+  }
+
+  const parts = String(jadwal?.tgl || '').trim().split(/\s+/)
+  if (parts.length < 2) return '-'
+
+  const tanggal = Number(parts[0])
+  const bulan = monthMap[parts[1]]
+  if (!tanggal || bulan === undefined) return '-'
+
+  const date = new Date(2026, bulan, tanggal)
+  if (Number.isNaN(date.getTime())) return '-'
+
+  return date.toLocaleDateString('id-ID', { weekday: 'long' })
 }
 
 function selectCabang(c, i) {
@@ -135,6 +169,7 @@ onMounted(() => {
 .row-arrow { margin-left: auto; font-size: 20px; color: #C8BFB5; flex-shrink: 0; line-height: 1; }
 .jadwal-item:hover .row-arrow { color: #CE1126; }
 .jadwal-date { flex: 0 0 auto; text-align: center; min-width: 70px; }
+.hari       { font: 700 10px/1 'Plus Jakarta Sans'; letter-spacing: .08em; text-transform: uppercase; color: #9A6B12; margin-bottom: 3px; }
 .tgl        { font: 800 15px/1 Archivo; color: #CE1126; }
 .tgl-sep    { font: 700 11px/1 'Plus Jakarta Sans'; color: #C8BFB5; margin: 2px 0; }
 .tgl-end    { color: #C0871C; }

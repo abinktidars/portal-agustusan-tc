@@ -12,6 +12,7 @@
           </div>
           <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
             <span v-if="isPerorangan(h)" class="jenis-badge">Perorangan</span>
+            <span v-if="getHari(h.tgl)" class="hari">{{ getHari(h.tgl) }}</span>
             <span class="tgl">{{ h.tgl }}</span>
           </div>
         </div>
@@ -72,6 +73,25 @@ function isPerorangan(h) {
   return !!(h.juara1 || h.juara2 || h.juara3) || h.jenis === 'Perorangan'
 }
 
+function getHari(tanggal) {
+  if (!tanggal) return ''
+  const raw = String(tanggal).trim()
+  const iso = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/)
+  let date
+  if (iso) {
+    date = new Date(Number(iso[1]), Number(iso[2]) - 1, Number(iso[3]))
+  } else {
+    const short = raw.match(/^(\d{1,2})\s+([A-Za-z]{3,})$/)
+    if (!short) return ''
+    const monthMap = { Jan:0, Feb:1, Mar:2, Apr:3, Mei:4, Jun:5, Jul:6, Agu:7, Sep:8, Okt:9, Nov:10, Des:11 }
+    const month = monthMap[short[2]]
+    if (month === undefined) return ''
+    date = new Date(new Date().getFullYear(), month, Number(short[1]))
+  }
+  if (Number.isNaN(date.getTime())) return ''
+  return new Intl.DateTimeFormat('id-ID', { weekday: 'long' }).format(date)
+}
+
 onMounted(() => hasilStore.fetch())
 </script>
 
@@ -84,12 +104,13 @@ onMounted(() => hasilStore.fetch())
   background: #fff; border: 1.5px solid #F0D3D7; border-radius: 8px; padding: 22px;
   display: flex; flex-direction: column; gap: 0;
 }
-
 .hasil-header {
   display: flex; align-items: flex-start; justify-content: space-between;
   gap: 10px; flex-wrap: wrap; margin-bottom: 16px;
 }
 .cabang { font: 800 16px/1.1 Archivo; color: #1A1613; }
+.tanggal-meta { display: flex; align-items: center; gap: 8px; justify-self: end; white-space: nowrap; }
+.hari   { font: 700 11px/1 'Plus Jakarta Sans'; color: #2E7D52; background: #E7F2EB; border: 1px solid #BFE0CC; border-radius: 999px; padding: 4px 8px; text-transform: capitalize; }
 .tgl    { font: 600 12px/1 'Plus Jakarta Sans'; color: #9A9389; white-space: nowrap; }
 .dot    { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex-shrink: 0; margin-top: 2px; }
 
@@ -133,11 +154,12 @@ onMounted(() => hasilStore.fetch())
 @media(max-width:767px) {
   .hasil-grid { grid-template-columns: 1fr; }
   .page-title { font-size: 26px; }
-  .hasil-card { padding: 16px; }
+  .hasil-card { padding: 14px; }
   .skor-row   { gap: 10px; }
   .skor       { font-size: 22px; padding: 7px 12px; }
   .tim        { font-size: 13px; }
   .podium-icon{ font-size: 18px; }
   .podium-nama{ font-size: 13px; }
+  .hari       { font-size: 10px; padding: 3px 7px; }
 }
 </style>
