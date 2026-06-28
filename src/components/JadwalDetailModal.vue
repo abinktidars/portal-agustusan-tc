@@ -120,11 +120,11 @@
                     <div class="peserta-info">
                       <div class="peserta-nama">{{ namaPeserta(p) }}</div>
                       <div class="peserta-line">
-                        {{ p.tipe === 'tim' ? 'Tim' : 'Perorangan' }}
+                        {{ isTimPeserta(p) ? 'Tim' : 'Perorangan' }}
                         <span v-if="p.koridorNama || p.koridor"> · {{ p.koridorNama || 'Koridor ' + p.koridor }}</span>
                         <span v-if="p.blokRumah"> · {{ p.blokRumah }}</span>
                       </div>
-                      <div v-if="p.tipe === 'tim' && p.anggota?.length" class="peserta-anggota">
+                      <div v-if="isTimPeserta(p) && p.anggota?.length" class="peserta-anggota">
                         Anggota: {{ p.anggota.filter(a => a).join(', ') }}
                       </div>
                     </div>
@@ -200,13 +200,21 @@
 import { ref, computed, watch } from 'vue'
 import StatusBadge from '@/components/StatusBadge.vue'
 import { useRegistrasiStore } from '@/stores/useRegistrasi'
-import { useLokasiStore } from '@/stores/useLokasi'
+import { useLokasiStore }     from '@/stores/useLokasi'
+import { useKategoriStore }   from '@/stores/useKategori'
 
 const props = defineProps({ jadwal: { type: Object, default: null } })
 const emit = defineEmits(['close', 'daftar'])
 
 const registrasiStore = useRegistrasiStore()
-const lokasiStore = useLokasiStore()
+const lokasiStore     = useLokasiStore()
+const kategoriStore   = useKategoriStore()
+
+function isTimPeserta(p) {
+  const kat = kategoriStore.list.find(k => k.nama === p.cabang)
+  if (kat?.jenis) return kat.jenis === 'Beregu'
+  return p.tipe === 'tim'
+}
 
 const activeTab = ref('detail')
 

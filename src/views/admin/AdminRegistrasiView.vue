@@ -138,15 +138,15 @@
                 <td class="td-num">{{ (page-1)*PER_PAGE + i + 1 }}</td>
                 <td>
                   <div class="td-bold">{{ r.namaRegu || r.namaKetua || r.nama || '—' }}</div>
-                  <div v-if="r.tipe === 'tim' && r.namaRegu && r.namaKetua" class="td-sub">Ketua: {{ r.namaKetua }}</div>
-                  <div v-if="r.tipe === 'tim' && r.anggota?.length" class="td-sub">{{ r.anggota.length }} anggota</div>
+                  <div v-if="isTimReg(r) && r.namaRegu && r.namaKetua" class="td-sub">Ketua: {{ r.namaKetua }}</div>
+                  <div v-if="isTimReg(r) && r.anggota?.length" class="td-sub">{{ r.anggota.length }} anggota</div>
                 </td>
                 <td>
                   <span class="status-chip" :class="statusCls(r.status)">{{ statusLabel(r.status) }}</span>
                 </td>
                 <td>
-                  <span class="tipe-chip" :class="r.tipe === 'tim' ? 'chip-tim' : 'chip-pers'">
-                    {{ r.tipe === 'tim' ? '👥 Tim' : '🙋 Pers.' }}
+                  <span class="tipe-chip" :class="isTimReg(r) ? 'chip-tim' : 'chip-pers'">
+                    {{ isTimReg(r) ? '👥 Tim' : '🙋 Pers.' }}
                   </span>
                 </td>
                 <td><span class="cabang-badge">{{ r.cabang }}</span></td>
@@ -187,13 +187,13 @@
                     </div>
 
                     <!-- Perorangan -->
-                    <div v-if="r.tipe === 'perorangan'" class="detail-block">
+                    <div v-if="!isTimReg(r)" class="detail-block">
                       <div class="detail-label">Nama Peserta</div>
                       <div class="detail-val detail-nama">{{ r.nama }}</div>
                     </div>
 
                     <!-- Tim -->
-                    <template v-if="r.tipe === 'tim'">
+                    <template v-if="isTimReg(r)">
                       <div v-if="r.namaRegu" class="detail-block">
                         <div class="detail-label">Nama Tim / Regu</div>
                         <div class="detail-val detail-nama">{{ r.namaRegu }}</div>
@@ -256,6 +256,15 @@ let toastTimer = null
 const selectedKategori = computed(() => kategoriStore.list.find(k => k.nama === form.cabang))
 const isTeam = computed(() => selectedKategori.value?.jenis === 'Beregu')
 
+// Derive tipe dari master kategori (bukan dari r.tipe yang tersimpan)
+// Sehingga perubahan jenis di master langsung tercermin di tabel
+function jenisOf(r) {
+  const kat = kategoriStore.list.find(k => k.nama === r.cabang)
+  if (kat?.jenis) return kat.jenis          // 'Beregu' | 'Perorangan'
+  return r.tipe === 'tim' ? 'Beregu' : 'Perorangan'  // fallback ke data lama
+}
+function isTimReg(r) { return jenisOf(r) === 'Beregu' }
+
 const allSelected  = computed(() => filtered.value.length > 0 && filtered.value.every(r => selectedIds.value.includes(r.id)))
 const someSelected = computed(() => selectedIds.value.length > 0 && !allSelected.value)
 
@@ -297,7 +306,7 @@ const filtered = computed(() => {
       (r.namaKetua || r.nama || '').toLowerCase().includes(q) ||
       (r.blokRumah || '').toLowerCase().includes(q) ||
       (r.cabang || '').toLowerCase().includes(q)
-    const matchTipe   = !filterTipe.value   || r.tipe === filterTipe.value
+    const matchTipe   = !filterTipe.value   || (filterTipe.value === 'tim' ? isTimReg(r) : !isTimReg(r))
     const matchStatus = !filterStatus.value || (r.status || 'new') === filterStatus.value
     return matchQ && matchTipe && matchStatus
   })
@@ -411,7 +420,7 @@ function doExport() {
     { label: 'Nama Tim',    field: r => r.namaRegu || '' },
     { label: 'Ketua / Peserta', field: r => r.namaKetua || r.nama || '' },
     { label: 'Status',      field: r => statusLabel(r.status) },
-    { label: 'Tipe',        field: r => r.tipe === 'tim' ? 'Tim' : 'Perorangan' },
+    { label: 'Tipe',        field: r => jenisOf(r) },
     { label: 'Cabang',      field: 'cabang' },
     { label: 'Blok Rumah',  field: 'blokRumah' },
     { label: 'Koridor',     field: r => r.koridorNama || (r.koridor ? `Koridor ${r.koridor}` : '') },

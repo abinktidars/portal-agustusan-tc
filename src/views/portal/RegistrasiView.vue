@@ -144,8 +144,8 @@
               <div class="p-nama">{{ r.namaRegu || r.namaKetua || r.nama || '—' }}</div>
               <div class="p-sub">{{ r.cabang }}{{ r.namaRegu && r.namaKetua ? ' · ' + r.namaKetua : '' }}</div>
             </div>
-            <span class="p-tipe" :class="r.tipe === 'tim' ? 'p-tim' : 'p-pers'">
-              {{ r.tipe === 'tim' ? '👥 Tim' : '🙋 Perorangan' }}
+            <span class="p-tipe" :class="isTimReg(r) ? 'p-tim' : 'p-pers'">
+              {{ isTimReg(r) ? '👥 Tim' : '🙋 Perorangan' }}
             </span>
             <div class="p-koridor">{{ r.koridorNama || (r.koridor ? `Koridor ${r.koridor}` : '—') }}</div>
             <span class="p-chevron">{{ expandedPeserta === (r.id || i) ? '▲' : '▼' }}</span>
@@ -167,14 +167,14 @@
               </div>
               <div class="pd-block">
                 <div class="pd-label">Jenis</div>
-                <div class="pd-val">{{ r.tipe === 'tim' ? 'Beregu / Tim' : 'Perorangan' }}</div>
+                <div class="pd-val">{{ isTimReg(r) ? 'Beregu / Tim' : 'Perorangan' }}</div>
               </div>
               <div v-if="r.tglDate || r.createdAt" class="pd-block">
                 <div class="pd-label">Tgl Daftar</div>
                 <div class="pd-val">{{ formatDate(r.tglDate || r.createdAt) }}</div>
               </div>
             </div>
-            <div v-if="r.tipe === 'tim' && r.anggota?.length" class="pd-anggota">
+            <div v-if="isTimReg(r) && r.anggota?.length" class="pd-anggota">
               <div class="pd-label">Anggota Tim ({{ r.anggota.length }} orang)</div>
               <ol class="pd-anggota-ol">
                 <li v-for="(a, idx) in r.anggota" :key="idx">{{ a }}</li>
@@ -216,6 +216,14 @@ const form = reactive({
 
 const selectedKategori = computed(() => kategoriStore.list.find(k => k.nama === form.cabang))
 const isTeam = computed(() => selectedKategori.value?.jenis === 'Beregu')
+
+// Derive tipe dari master kategori agar selalu sinkron dengan perubahan di master
+function jenisOf(r) {
+  const kat = kategoriStore.list.find(k => k.nama === r.cabang)
+  if (kat?.jenis) return kat.jenis
+  return r.tipe === 'tim' ? 'Beregu' : 'Perorangan'
+}
+function isTimReg(r) { return jenisOf(r) === 'Beregu' }
 
 // Reset nama/anggota saat ganti cabang agar tidak tercampur
 watch(() => form.cabang, () => {
