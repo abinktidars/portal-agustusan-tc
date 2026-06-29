@@ -15,36 +15,34 @@
         
         <!-- Atur Registrasi -->
         <RouterLink :to="{ name: 'admin-registrasi' }" class="shortcut-card registrasi-card">
-          <div class="shortcut-icon">📋</div>
+          <ClipboardList class="shortcut-icon" :size="24" :stroke-width="1.8" />
           <div class="shortcut-content">
             <div class="shortcut-label">Data Registrasi</div>
             <div class="shortcut-count">{{ regStore.list.length }} pendaftar</div>
           </div>
         </RouterLink>
-        
+
         <!-- Atur Lomba -->
         <RouterLink :to="{ name: 'admin-lomba' }" class="shortcut-card lomba-card">
-          <div class="shortcut-icon">🏅</div>
+          <Trophy class="shortcut-icon" :size="24" :stroke-width="1.8" />
           <div class="shortcut-content">
             <div class="shortcut-label">Atur Lomba</div>
             <div class="shortcut-count">{{ kategoriStore.list.length }} lomba</div>
           </div>
         </RouterLink>
 
-
         <!-- Kelola Jadwal -->
         <RouterLink :to="{ name: 'admin-jadwal' }" class="shortcut-card jadwal-card">
-          <div class="shortcut-icon">📅</div>
+          <CalendarDays class="shortcut-icon" :size="24" :stroke-width="1.8" />
           <div class="shortcut-content">
             <div class="shortcut-label">Atur Jadwal</div>
             <div class="shortcut-count">{{ jadwalStore.list.length }} jadwal</div>
           </div>
         </RouterLink>
 
-
         <!-- Atur Hasil -->
         <RouterLink :to="{ name: 'admin-hasil' }" class="shortcut-card hasil-card">
-          <div class="shortcut-icon">🏆</div>
+          <Award class="shortcut-icon" :size="24" :stroke-width="1.8" />
           <div class="shortcut-content">
             <div class="shortcut-label">Atur Hasil</div>
             <div class="shortcut-count">{{ allHasil.length }} hasil</div>
@@ -52,41 +50,7 @@
         </RouterLink>
       </div>
 
-      <!-- Lihat Semua Menu -->
-      <div class="shortcut-grid-extra">
-        <button @click="showAllMenu = true" class="shortcut-card menu-all-card">
-          <div class="shortcut-icon">📂</div>
-          <div class="shortcut-content">
-            <div class="shortcut-label">Lihat Semua</div>
-            <div class="shortcut-count">Menu Lengkap</div>
-          </div>
-          <span class="shortcut-arrow">→</span>
-        </button>
-      </div>
     </div>
-
-    <!-- Modal Semua Menu -->
-    <Transition name="modal">
-      <div v-if="showAllMenu" class="menu-all-modal" @click.self="showAllMenu = false">
-        <div class="menu-all-content">
-          <div class="menu-all-header">
-            <h3 class="menu-all-title">Semua Menu Navigasi</h3>
-            <button @click="showAllMenu = false" class="menu-close-btn">✕</button>
-          </div>
-          <div class="menu-all-grid">
-            <RouterLink
-              v-for="item in allMenuItems"
-              :key="item.name"
-              :to="{ name: item.name }"
-              class="menu-all-item"
-              @click="showAllMenu = false">
-              <span class="menu-item-icon">{{ item.icon }}</span>
-              <span class="menu-item-label">{{ item.label }}</span>
-            </RouterLink>
-          </div>
-        </div>
-      </div>
-    </Transition>
 
     <div class="row-2">
       <div class="adm-section">
@@ -184,6 +148,7 @@
 
 <script setup>
 import { ref, reactive, computed, watch, onMounted } from 'vue'
+import { Trophy, CalendarDays, Award, ClipboardList } from '@lucide/vue'
 import { useKategoriStore }   from '@/stores/useKategori'
 import { useJadwalStore }     from '@/stores/useJadwal'
 import { useHasilStore }      from '@/stores/useHasil'
@@ -297,19 +262,6 @@ function showToast(msg, type = 'success') {
   toast.msg = msg; toast.type = type; toast.show = true
   toastTimer = setTimeout(() => { toast.show = false }, 3500)
 }
-
-// --- shortcut menu utama ---
-const showAllMenu = ref(false)
-const allMenuItems = [
-  { name: 'admin-dashboard',  icon: '📊', label: 'Dashboard',      roles: ['admin', 'panitia'] },
-  { name: 'admin-lomba',      icon: '🏅', label: 'Lomba',          roles: ['admin'] },
-  { name: 'admin-jadwal',     icon: '📅', label: 'Jadwal',         roles: ['admin', 'panitia'] },
-  { name: 'admin-hasil',      icon: '🏆', label: 'Hasil',          roles: ['admin', 'panitia'] },
-  { name: 'admin-klasemen',   icon: '🥇', label: 'Klasemen',       roles: ['admin', 'panitia'] },
-  { name: 'admin-registrasi', icon: '📋', label: 'Registrasi',     roles: ['admin', 'panitia'] },
-  { name: 'admin-lokasi',     icon: '📍', label: 'Lokasi',         roles: ['admin'] },
-  { name: 'admin-users',      icon: '👥', label: 'Data User',      roles: ['admin'] },
-]
 
 // --- migrasi data lama ke koleksi hasil ---
 const migrating   = ref(false)
@@ -622,9 +574,8 @@ onMounted(() => {
   transform:translateY(0);
 }
 .shortcut-icon {
-  font-size:28px;
   flex-shrink:0;
-  line-height:1;
+  display:block;
 }
 .shortcut-content {
   flex:1;

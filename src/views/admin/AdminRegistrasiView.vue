@@ -27,76 +27,84 @@
             <option value="confirm">Diterima</option>
             <option value="cancel">Ditolak</option>
           </select>
-          <button class="btn-export" @click="doExport">Export Excel</button>
+          <button class="btn-export" @click="doExport"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>Export Excel</button>
           <button class="tcr-btn-red" @click="openForm()">+ Tambah Registrasi</button>
         </div>
       </div>
 
-      <!-- INLINE FORM -->
-      <form v-if="showForm" @submit.prevent="submit" class="inline-form">
-        <div class="form-row-main">
-          <div>
-            <label class="form-label">Cabang Lomba <span class="req">*</span></label>
-            <select v-model="form.cabang" class="tcr-input" :disabled="!!form.editId">
-              <option value="">Pilih cabang…</option>
-              <option v-for="k in kategoriStore.list" :key="k.id" :value="k.nama">{{ k.nama }}</option>
-            </select>
+      <!-- Modal Form -->
+      <div v-if="showForm" class="modal-overlay" @click.self="resetForm">
+        <div class="modal-card">
+          <div class="modal-hd">
+            <h3 class="modal-ttl">{{ form.editId ? 'Edit' : 'Tambah' }} Registrasi</h3>
+            <button type="button" class="modal-x" @click="resetForm">✕</button>
           </div>
-          <div>
-            <label class="form-label">Koridor <span class="req">*</span></label>
-            <select v-model="form.koridorId" class="tcr-input" :disabled="koridorStore.loading">
-              <option value="">{{ koridorStore.loading ? 'Memuat…' : 'Pilih koridor…' }}</option>
-              <option v-for="k in koridorStore.list" :key="k.id" :value="k.id">{{ k.nama }}</option>
-            </select>
-          </div>
-          <div>
-            <label class="form-label">Blok Rumah <span class="req">*</span></label>
-            <input v-model="form.blokRumah" class="tcr-input" placeholder="Contoh: A1, B12" />
-          </div>
-          <div>
-            <label class="form-label">No. WhatsApp <span class="req">*</span></label>
-            <input v-model="form.wa" class="tcr-input" type="tel" placeholder="0812xxxx" />
-          </div>
-        </div>
-
-        <!-- Perorangan: nama peserta -->
-        <div v-if="form.cabang && !isTeam" class="form-row-full">
-          <label class="form-label">Nama Peserta <span class="req">*</span></label>
-          <input v-model="form.nama" class="tcr-input" placeholder="Nama lengkap peserta" />
-        </div>
-
-        <!-- Tim: nama regu + nama ketua -->
-        <div v-if="form.cabang && isTeam" class="form-row-2">
-          <div>
-            <label class="form-label">Nama Tim / Regu <span class="req">*</span></label>
-            <input v-model="form.namaRegu" class="tcr-input" placeholder="cth: Tim Merah Putih, Blok Anggrek" />
-          </div>
-          <div>
-            <label class="form-label">Nama Ketua Tim <span class="req">*</span></label>
-            <input v-model="form.namaKetua" class="tcr-input" placeholder="Nama lengkap ketua tim" />
-          </div>
-        </div>
-
-        <!-- Tim: daftar anggota -->
-        <div v-if="form.cabang && isTeam" class="form-row-full">
-          <label class="form-label">Daftar Nama Anggota <span class="req">*</span></label>
-          <div class="anggota-list">
-            <div v-for="(_, i) in form.anggota" :key="i" class="anggota-row">
-              <span class="anggota-num">{{ i + 1 }}</span>
-              <input v-model="form.anggota[i]" class="tcr-input" :placeholder="`Nama anggota ke-${i + 1}`" />
-              <button v-if="form.anggota.length > 1" type="button" class="anggota-remove" @click="form.anggota.splice(i, 1)">×</button>
+          <form @submit.prevent="submit" class="modal-bd">
+            <div class="form-row-main">
+              <div>
+                <label class="form-label">Cabang Lomba <span class="req">*</span></label>
+                <select v-model="form.cabang" class="tcr-input" :disabled="!!form.editId">
+                  <option value="">Pilih cabang…</option>
+                  <option v-for="k in kategoriStore.list" :key="k.id" :value="k.nama">{{ k.nama }}</option>
+                </select>
+              </div>
+              <div>
+                <label class="form-label">Koridor <span class="req">*</span></label>
+                <select v-model="form.koridorId" class="tcr-input" :disabled="koridorStore.loading">
+                  <option value="">{{ koridorStore.loading ? 'Memuat…' : 'Pilih koridor…' }}</option>
+                  <option v-for="k in koridorStore.list" :key="k.id" :value="k.id">{{ k.nama }}</option>
+                </select>
+              </div>
+              <div>
+                <label class="form-label">Blok Rumah <span class="req">*</span></label>
+                <input v-model="form.blokRumah" class="tcr-input" placeholder="Contoh: A1, B12" />
+              </div>
+              <div>
+                <label class="form-label">No. WhatsApp <span class="req">*</span></label>
+                <input v-model="form.wa" class="tcr-input" type="tel" placeholder="0812xxxx" />
+              </div>
             </div>
-          </div>
-          <button type="button" class="anggota-add" @click="form.anggota.push('')">+ Tambah Anggota</button>
-        </div>
 
-        <div class="form-row-full form-actions">
-          <button type="submit" class="btn-save" :disabled="saving">
-            {{ saving ? 'Menyimpan…' : (form.editId ? 'Update Registrasi' : 'Simpan Registrasi') }}
-          </button>
-          <button type="button" class="btn-cancel" @click="resetForm">Batal</button>
+            <!-- Perorangan: nama peserta -->
+            <div v-if="form.cabang && !isTeam" class="form-row-full">
+              <label class="form-label">Nama Peserta <span class="req">*</span></label>
+              <input v-model="form.nama" class="tcr-input" placeholder="Nama lengkap peserta" />
+            </div>
+
+            <!-- Tim: nama regu + nama ketua -->
+            <div v-if="form.cabang && isTeam" class="form-row-2">
+              <div>
+                <label class="form-label">Nama Tim / Regu <span class="req">*</span></label>
+                <input v-model="form.namaRegu" class="tcr-input" placeholder="cth: Tim Merah Putih, Blok Anggrek" />
+              </div>
+              <div>
+                <label class="form-label">Nama Ketua Tim <span class="req">*</span></label>
+                <input v-model="form.namaKetua" class="tcr-input" placeholder="Nama lengkap ketua tim" />
+              </div>
+            </div>
+
+            <!-- Tim: daftar anggota -->
+            <div v-if="form.cabang && isTeam" class="form-row-full">
+              <label class="form-label">Daftar Nama Anggota <span class="req">*</span></label>
+              <div class="anggota-list">
+                <div v-for="(_, i) in form.anggota" :key="i" class="anggota-row">
+                  <span class="anggota-num">{{ i + 1 }}</span>
+                  <input v-model="form.anggota[i]" class="tcr-input" :placeholder="`Nama anggota ke-${i + 1}`" />
+                  <button v-if="form.anggota.length > 1" type="button" class="anggota-remove" @click="form.anggota.splice(i, 1)">×</button>
+                </div>
+              </div>
+              <button type="button" class="anggota-add" @click="form.anggota.push('')">+ Tambah Anggota</button>
+            </div>
+
+            <div class="form-row-full form-actions">
+              <button type="submit" class="btn-save" :disabled="saving">
+                {{ saving ? 'Menyimpan…' : (form.editId ? 'Update Registrasi' : 'Simpan Registrasi') }}
+              </button>
+              <button type="button" class="btn-cancel" @click="resetForm">Batal</button>
+            </div>
+          </form>
         </div>
-      </form>
+      </div>
 
       <!-- Bulk action bar -->
       <Transition name="bulk-bar">
@@ -135,28 +143,30 @@
                 <td class="td-check" @click.stop>
                   <input type="checkbox" class="row-check" :value="r.id" v-model="selectedIds" />
                 </td>
-                <td class="td-num">{{ (page-1)*PER_PAGE + i + 1 }}</td>
-                <td>
+                <td class="td-num td-idx">{{ (page-1)*PER_PAGE + i + 1 }}</td>
+                <td class="td-nama">
                   <div class="td-bold">{{ r.namaRegu || r.namaKetua || r.nama || '—' }}</div>
                   <div v-if="isTimReg(r) && r.namaRegu && r.namaKetua" class="td-sub">Ketua: {{ r.namaKetua }}</div>
                   <div v-if="isTimReg(r) && r.anggota?.length" class="td-sub">{{ r.anggota.length }} anggota</div>
                 </td>
-                <td>
+                <td class="td-status">
                   <span class="status-chip" :class="statusCls(r.status)">{{ statusLabel(r.status) }}</span>
                 </td>
-                <td>
+                <td class="td-tipe">
                   <span class="tipe-chip" :class="isTimReg(r) ? 'chip-tim' : 'chip-pers'">
                     {{ isTimReg(r) ? '👥 Tim' : '🙋 Pers.' }}
                   </span>
+                  <span class="cabang-badge td-cabang-mobile">{{ r.cabang }}</span>
                 </td>
-                <td><span class="cabang-badge">{{ r.cabang }}</span></td>
-                <td>{{ r.blokRumah || '-' }}</td>
-                <td><a :href="`https://wa.me/${r.wa}`" target="_blank" class="wa-link" @click.stop>{{ r.wa }}</a></td>
-                <td>{{ formatDate(r.tglDate || r.createdAt) }}</td>
-                <td>
+                <td class="td-cabang"><span class="cabang-badge">{{ r.cabang }}</span></td>
+                <td class="td-blok">{{ r.blokRumah || '-' }}</td>
+                <td class="td-wa"><a :href="`https://wa.me/${r.wa}`" target="_blank" class="wa-link" @click.stop>{{ r.wa }}</a></td>
+                <td class="td-tgl">{{ formatDate(r.tglDate || r.createdAt) }}</td>
+                <td class="td-aksi">
                   <div class="action-group" @click.stop>
                     <button @click="openForm(r)" class="btn-edit">Edit</button>
                     <button @click="hapus(r)" class="btn-del">Hapus</button>
+                    <span class="chevron" :class="{ open: expandedId === r.id }">›</span>
                   </div>
                 </td>
               </tr>
@@ -348,7 +358,6 @@ function openForm(r = null) {
   }
   showForm.value = true
   expandedId.value = null
-  window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
 function resetForm() {
@@ -439,10 +448,14 @@ onMounted(() => { regStore.fetch(); kategoriStore.fetch(); koridorStore.fetch() 
 .section-header  { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:24px; flex-wrap:wrap; }
 .section-eyebrow { font:700 13px/1 'Plus Jakarta Sans'; letter-spacing:.12em; text-transform:uppercase; color:#9A6B12; }
 .section-title   { font:800 28px/1.05 Archivo; color:#1A1613; margin:8px 0 0; }
-.header-actions  { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
-.search-input    { width:220px; }
-.btn-export { padding:10px 18px; border:1.5px solid #2E7D52; border-radius:10px; background:#fff; color:#2E7D52; font:700 13px/1 'Plus Jakarta Sans'; cursor:pointer; white-space:nowrap; transition:background .15s; }
-.btn-export:hover { background:#E7F2EB; }
+/* modal */
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:1000; display:flex; align-items:center; justify-content:center; padding:16px; }
+.modal-card    { background:#fff; border-radius:20px; width:100%; max-width:640px; max-height:90vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,.25); }
+.modal-hd      { display:flex; align-items:center; justify-content:space-between; padding:20px 24px 0; }
+.modal-ttl     { font:800 18px/1.2 Archivo; color:#1A1613; margin:0; }
+.modal-x       { width:32px; height:32px; border-radius:50%; border:none; background:#F0EBE2; color:#5A534B; font:700 16px/1 Archivo; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.modal-x:hover { background:#E2DCD2; }
+.modal-bd      { padding:20px 24px 24px; display:flex; flex-direction:column; gap:16px; }
 
 /* Inline form */
 .inline-form    { background:#FAF8F3; border:1px solid #E2DCD2; border-radius:16px; padding:22px; margin-bottom:24px; display:flex; flex-direction:column; gap:18px; }
@@ -508,6 +521,7 @@ onMounted(() => { regStore.fetch(); kategoriStore.fetch(); koridorStore.fetch() 
 .tipe-chip  { display:inline-flex; padding:4px 10px; border-radius:6px; font:600 11px/1 'Plus Jakarta Sans'; white-space:nowrap; }
 .chip-tim   { background:#EEF2FF; color:#4338CA; }
 .chip-pers  { background:#FEF3C7; color:#92400E; }
+.td-cabang-mobile { display:none; }
 
 .action-group { display:flex; gap:6px; }
 .btn-edit { padding:6px 14px; border:1px solid #E2DCD2; border-radius:8px; background:#fff; color:#1A1613; font:600 12px/1 'Plus Jakarta Sans'; cursor:pointer; }
@@ -542,6 +556,11 @@ onMounted(() => { regStore.fetch(); kategoriStore.fetch(); koridorStore.fetch() 
 .toast.error   .toast-icon { background:rgba(0,0,0,.15); }
 .toast-enter-active, .toast-leave-active { transition:all .25s ease; }
 .toast-enter-from, .toast-leave-to { opacity:0; transform:translateY(12px); }
+.chevron { display:inline-block; font-size:18px; color:#C4BDB2; line-height:1; transition:transform .2s; user-select:none; }
+.chevron.open { transform:rotate(90deg); }
+.detail-actions { display:flex; gap:8px; padding-top:14px; border-top:1px solid #E2DCD2; margin-top:2px; }
+.detail-actions .btn-edit,
+.detail-actions .btn-del { flex:1; padding:10px; text-align:center; font-size:13px; border-radius:10px; }
 
 @media(max-width:900px) {
   .form-row-main { grid-template-columns:1fr 1fr; }
@@ -564,16 +583,48 @@ onMounted(() => { regStore.fetch(); kategoriStore.fetch(); koridorStore.fetch() 
   .form-label { font-size: 12px; margin-bottom: 6px; }
   .btn-save, .btn-cancel { padding: 9px 12px; font-size: 12px; border-radius: 8px; }
   .btn-edit, .btn-del { padding: 5px 10px; font-size: 11px; border-radius: 6px; }
-  .data-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-  .data-table { min-width: 520px; }
-  .data-table th { padding: 9px 10px; font-size: 10px; }
-  .data-table td { padding: 9px 10px; font-size: 12px; }
   .td-bold { font-size: 12px; }
   .td-num { font-size: 11px; }
-  .empty { padding: 18px 12px; font-size: 12px; }
-  .header-actions { gap: 8px; width: 100%; }
-  .search-input { width: 100%; min-width: 0; }
-  .btn-export { padding: 8px 12px; font-size: 12px; }
+
+  /* ── Mobile card layout ── */
+  .data-table-wrap { border: none; background: transparent; overflow: visible; border-radius: 0; }
+  .data-table { display: block; }
+  .data-table thead { display: none; }
+  .data-table tbody { display: flex; flex-direction: column; gap: 8px; }
+  .data-row {
+    display: grid !important;
+    grid-template-columns: auto 1fr auto;
+    grid-template-areas:
+      "chk nama   status"
+      "chk badges aksi"
+      "chk info   info";
+    column-gap: 8px; row-gap: 4px;
+    background: #fff; border: 1px solid #ECE7DE;
+    border-radius: 14px; padding: 10px 12px;
+    cursor: pointer;
+  }
+  .row-expanded { border-radius: 14px 14px 0 0 !important; border-bottom-color: transparent !important; }
+  .row-selected { background: #FEF3F4 !important; }
+  .data-row td { padding: 0 !important; border: none !important; background: transparent !important; vertical-align: middle !important; }
+  .td-idx { display: none !important; }
+  .td-check  { grid-area: chk; align-self: start; padding-top: 2px !important; }
+  .td-nama   { grid-area: nama; align-self: center; }
+  .td-status { grid-area: status; align-self: center; display: flex; justify-content: flex-end; }
+  .td-tipe   { grid-area: badges; align-self: center; display: flex; align-items: center; gap: 6px; }
+  .td-cabang { display: none !important; }
+  .td-blok   { display: none !important; }
+  .td-wa     { display: none !important; }
+  .td-tgl    { display: none !important; }
+  .td-aksi   { grid-area: aksi; align-self: center; display: flex; justify-content: flex-end; }
+  .td-cabang-mobile { display: inline-flex !important; }
+
+  .detail-row { display: block !important; }
+  .detail-row td { display: block !important; padding: 0 !important; border: none !important; }
+  .data-table tbody .detail-row {
+    border: 1px solid #ECE7DE !important; border-top: none !important;
+    border-radius: 0 0 14px 14px; background: #FAF8F3; margin-top: -8px;
+  }
+  .empty { display: block !important; text-align: center !important; padding: 18px 12px !important; font-size: 12px !important; }
   .bulk-bar { padding: 10px 12px; gap: 8px; }
   .bulk-count { font-size: 12px; }
   .bulk-btn { padding: 6px 10px; font-size: 11px; }
