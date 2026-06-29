@@ -54,25 +54,26 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { computed, ref } from 'vue'
 import { useAuthStore } from '@/stores/useAuth'
 const authStore = useAuthStore()
-const route = useRoute()
 const isNavOpen = ref(false)
 
-const navItems = [
-  { name: 'admin-dashboard',  icon: '📊', label: 'Dashboard' },
-  { name: 'admin-kategori',   icon: '🏷️', label: 'Lomba' },
-  { name: 'admin-jadwal',     icon: '📅', label: 'Jadwal' },
-  { name: 'admin-hasil',      icon: '🏆', label: 'Hasil' },
-  { name: 'admin-registrasi', icon: '📋', label: 'Registrasi' },
-  { name: 'admin-users',      icon: '👥', label: 'Data User' },
+const ALL_NAV = [
+  { name: 'admin-dashboard',  icon: '📊', label: 'Dashboard',      roles: ['admin', 'panitia'] },
+  { name: 'admin-tipe',       icon: '🎨', label: 'Tipe Lomba',     roles: ['admin'] },
+  { name: 'admin-kategori',   icon: '🏷️', label: 'Kategori Lomba', roles: ['admin'] },
+  { name: 'admin-jadwal',     icon: '📅', label: 'Jadwal',         roles: ['admin', 'panitia'] },
+  { name: 'admin-klasemen',   icon: '🥇', label: 'Klasemen',       roles: ['admin', 'panitia'] },
+  { name: 'admin-registrasi', icon: '📋', label: 'Registrasi',     roles: ['admin', 'panitia'] },
+  { name: 'admin-koridor',    icon: '🏘️', label: 'Koridor',        roles: ['admin'] },
+  { name: 'admin-lokasi',     icon: '📍', label: 'Lokasi',         roles: ['admin'] },
+  { name: 'admin-users',      icon: '👥', label: 'Data User',      roles: ['admin'] },
 ]
 
-watch(() => route.name, () => {
-  isNavOpen.value = false
-})
+const navItems = computed(() =>
+  ALL_NAV.filter(item => item.roles.includes(authStore.userRole))
+)
 </script>
 
 <style scoped>

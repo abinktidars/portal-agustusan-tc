@@ -1,5 +1,31 @@
 <template>
   <main class="adm-main">
+
+    <!-- Panel Hak Akses -->
+    <div class="adm-section hak-section">
+      <div class="section-eyebrow">Referensi</div>
+      <h2 class="section-title" style="margin:8px 0 20px;">Hak Akses per Role</h2>
+      <div class="hak-table-wrap">
+        <table class="hak-table">
+          <thead>
+            <tr>
+              <th>Menu</th>
+              <th class="th-role">Admin</th>
+              <th class="th-role">Panitia</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="item in HAK_AKSES" :key="item.menu">
+              <td class="menu-col">{{ item.menu }}</td>
+              <td class="role-col"><span :class="item.admin ? 'ck ck-yes' : 'ck ck-no'">{{ item.admin ? '✓' : '—' }}</span></td>
+              <td class="role-col"><span :class="item.panitia ? 'ck ck-yes' : 'ck ck-no'">{{ item.panitia ? '✓' : '—' }}</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="hak-note">Role <strong>Warga</strong> tidak memiliki akses ke panel admin.</p>
+    </div>
+
     <div class="adm-section">
       <div class="section-header">
         <div>
@@ -96,6 +122,18 @@ import { exportToExcel } from '@/utils/exportExcel'
 
 const ROLE_LABEL = { admin:'Admin', panitia:'Panitia', warga:'Warga' }
 
+const HAK_AKSES = [
+  { menu: '📊 Dashboard',      admin: true,  panitia: true  },
+  { menu: '🎨 Tipe Lomba',     admin: true,  panitia: false },
+  { menu: '🏷️ Kategori Lomba', admin: true,  panitia: false },
+  { menu: '📅 Jadwal',         admin: true,  panitia: true  },
+  { menu: '🥇 Klasemen',       admin: true,  panitia: true  },
+  { menu: '📋 Registrasi',     admin: true,  panitia: true  },
+  { menu: '🏘️ Koridor',        admin: true,  panitia: false },
+  { menu: '📍 Lokasi',         admin: true,  panitia: false },
+  { menu: '👥 Data User',      admin: true,  panitia: false },
+]
+
 const users     = ref([])
 const loading   = ref(false)
 const saving    = ref(false)
@@ -171,7 +209,7 @@ onMounted(fetchUsers)
 </script>
 
 <style scoped>
-.adm-main    { max-width:1180px; margin:0 auto; padding:34px 22px 70px; }
+.adm-main    { max-width:1180px; margin:0 auto; padding:34px 22px 70px; display:flex; flex-direction:column; gap:24px; }
 .adm-section { background:#fff; border:1px solid #ECE7DE; border-radius:20px; padding:28px; }
 .section-header { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:24px; flex-wrap:wrap; }
 .section-eyebrow{ font:700 13px/1 'Plus Jakarta Sans'; letter-spacing:.12em; text-transform:uppercase; color:#CE1126; }
@@ -204,4 +242,20 @@ onMounted(fetchUsers)
 .search-input   { width:220px; }
 .btn-export     { padding:10px 18px; border:1.5px solid #2E7D52; border-radius:10px; background:#fff; color:#2E7D52; font:700 13px/1 'Plus Jakarta Sans'; cursor:pointer; white-space:nowrap; transition:background .15s; }
 .btn-export:hover { background:#E7F2EB; }
+
+/* Hak Akses panel */
+.hak-section    { margin-bottom:24px; }
+.hak-table-wrap { border:1px solid #ECE7DE; border-radius:14px; overflow:hidden; display:inline-block; min-width:360px; }
+.hak-table      { border-collapse:collapse; font:500 13px/1.5 'Plus Jakarta Sans'; }
+.hak-table thead tr { background:#FAF8F3; border-bottom:2px solid #ECE7DE; }
+.hak-table th   { padding:10px 18px; text-align:left; font:700 12px/1 'Plus Jakarta Sans'; color:#7A7368; letter-spacing:.06em; text-transform:uppercase; }
+.th-role        { text-align:center; min-width:90px; }
+.hak-table td   { padding:11px 18px; border-bottom:1px solid #F0EBE2; }
+.hak-table tbody tr:last-child td { border-bottom:none; }
+.menu-col       { font:600 13px/1 'Plus Jakarta Sans'; color:#1A1613; }
+.role-col       { text-align:center; }
+.ck             { display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:50%; font:700 13px/1 Archivo; }
+.ck-yes         { background:#E7F2EB; color:#2E7D52; }
+.ck-no          { background:#F5F2ED; color:#C9C2B6; }
+.hak-note       { font:500 12px/1.5 'Plus Jakarta Sans'; color:#9A9389; margin-top:12px; }
 </style>

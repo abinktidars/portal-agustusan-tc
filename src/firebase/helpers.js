@@ -19,7 +19,22 @@ const fmtTgl = (tglStr) => {
 // ── JADWAL ────────────────────────────────────────────
 export async function getJadwal() {
   const snap = await getDocs(query(collection(db, 'jadwal'), orderBy('tgl')))
-  return snap.docs.map(d => ({ id: d.id, ...d.data(), tgl: fmtTgl(d.data().tgl), tglDate: fmt(d.data().tgl) }))
+  return snap.docs.map(d => {
+    const data       = d.data()
+    const mulaiRaw   = data.tglMulai || data.tgl
+    const selesaiRaw = data.tglSelesai || data.tgl
+    return {
+      id: d.id,
+      ...data,
+      tgl:            fmtTgl(mulaiRaw),
+      tglMulai:       fmtTgl(mulaiRaw),
+      tglSelesai:     fmtTgl(selesaiRaw),
+      tglDate:        fmt(mulaiRaw),
+      tglSelesaiDate: fmt(selesaiRaw),
+      tglMulaiRaw:    mulaiRaw,
+      tglSelesaiRaw:  selesaiRaw,
+    }
+  })
 }
 export const addJadwal    = (data) => addDoc(collection(db, 'jadwal'), { ...data, createdAt: new Date() })
 export const updateJadwal = (id, data) => updateDoc(doc(db, 'jadwal', id), data)
@@ -59,19 +74,15 @@ export async function getLomba() {
   }
 }
 
-// ── KLASEMEN ──────────────────────────────────────────
-export async function getKlasemen() {
-  const snap = await getDocs(collection(db, 'klasemen'))
-  return snap.docs
-    .map(d => ({ id: d.id, ...d.data() }))
-    .sort((a, b) => (b.poin || 0) - (a.poin || 0))
-}
-export async function upsertKlasemen(nama, data) {
-  const q = query(collection(db, 'klasemen'), where('nama', '==', nama))
-  const snap = await getDocs(q)
-  if (snap.empty) return setDoc(doc(collection(db, 'klasemen')), { nama, ...data })
-  return updateDoc(snap.docs[0].ref, data)
-}
+// ── KLASEMEN PER KATEGORI ─────────────────────────────
+export const getKlasemen = () =>
+  getDocs(collection(db, 'klasemen')).then(s => s.docs.map(d => ({ id: d.id, ...d.data() })))
+
+export const setKlasemenKategori = (kategoriId, data) =>
+  setDoc(doc(db, 'klasemen', kategoriId), { ...data, updatedAt: new Date() }, { merge: true })
+
+export const deleteKlasemenKategori = (kategoriId) =>
+  deleteDoc(doc(db, 'klasemen', kategoriId))
 
 // ── REGISTRASI ────────────────────────────────────────
 export async function getRegistrasi() {
@@ -80,7 +91,21 @@ export async function getRegistrasi() {
     .map(d => ({ id: d.id, ...d.data(), tglDate: fmt(d.data().createdAt) }))
     .sort((a, b) => (b.tglDate || 0) - (a.tglDate || 0))
 }
-export const addRegistrasi = (data) => addDoc(collection(db, 'registrasi'), { ...data, createdAt: new Date() })
+export const addRegistrasi    = (data) => addDoc(collection(db, 'registrasi'), { ...data, createdAt: new Date() })
+export const updateRegistrasi = (id, data) => updateDoc(doc(db, 'registrasi', id), data)
+export const deleteRegistrasi = (id) => deleteDoc(doc(db, 'registrasi', id))
+
+// ── KORIDOR ───────────────────────────────────────────
+export const getKoridor    = () => getDocs(query(collection(db, 'koridor'), orderBy('urutan'))).then(s => s.docs.map(d => ({ id: d.id, ...d.data() })))
+export const addKoridor    = (data) => addDoc(collection(db, 'koridor'), { ...data, createdAt: new Date() })
+export const updateKoridor = (id, data) => updateDoc(doc(db, 'koridor', id), data)
+export const deleteKoridor = (id) => deleteDoc(doc(db, 'koridor', id))
+
+// ── LOKASI ────────────────────────────────────────────
+export const getLokasi    = () => getDocs(query(collection(db, 'lokasi'), orderBy('urutan'))).then(s => s.docs.map(d => ({ id: d.id, ...d.data() })))
+export const addLokasi    = (data) => addDoc(collection(db, 'lokasi'), { ...data, createdAt: new Date() })
+export const updateLokasi = (id, data) => updateDoc(doc(db, 'lokasi', id), data)
+export const deleteLokasi = (id) => deleteDoc(doc(db, 'lokasi', id))
 
 // ── USERS ─────────────────────────────────────────────
 export const getUsers = () =>

@@ -9,10 +9,9 @@
         <div style="position:relative;">
           <div class="hero-badge">11 Juli – 31 Agustus 2026</div>
           <h1 class="hero-title">Semarak<br>Kemerdekaan <span style="color:#F4C36B;">ke-81</span></h1>
-          <p class="hero-desc">Portal bersama warga Teras Country Residence. Cek jadwal &amp; hasil pertandingan, klasemen antar koridor, dan daftar lomba, semua di satu tempat. </p>
+          <p class="hero-desc">Portal bersama warga Teras Country Residence. Cek jadwal &amp; hasil pertandingan, klasemen, dan daftar lomba — semua di satu tempat.</p>
           <div class="hero-actions">
             <button class="btn-white" @click="$router.push({ name: 'registrasi' })">Daftar Lomba Sekarang</button>
-            <!-- <button class="btn-outline" @click="$router.push({ name: 'jadwal' })">Lihat Jadwal</button> -->
           </div>
         </div>
       </div>
@@ -22,44 +21,44 @@
         <div class="cd-label">Menuju Opening</div>
         <div class="cd-title">Opening Acara<br><span style="color:#F4C36B;">Sabtu, 11 Juli 2026</span></div>
         <div class="cd-grid">
-          <div class="cd-box" v-for="(val, lbl) in countdown" :key="lbl" :style="lbl==='Detik'?'color:#F4C36B':''">
-            <div class="cd-num" :style="lbl==='Detik'?'color:#F4C36B':''">{{ val }}</div>
+          <div class="cd-box" v-for="(val, lbl) in countdown" :key="lbl">
+            <div class="cd-num" :style="lbl === 'Detik' ? 'color:#F4C36B' : ''">{{ val }}</div>
             <div class="cd-unit">{{ lbl }}</div>
           </div>
         </div>
-        <!-- <div class="cd-stats">
+        <div class="cd-stats">
           <div class="cd-stat-box">
-            <div class="cd-stat-val">{{ jadwalStore.CABANG_LIST.length }}</div>
+            <div class="cd-stat-val">{{ kategoriStore.list.length || '—' }}</div>
             <div class="cd-stat-lbl">Cabang Lomba</div>
           </div>
           <div class="cd-stat-box">
-            <div class="cd-stat-val">{{ regStore.list.length }}</div>
+            <div class="cd-stat-val">{{ regStore.list.length || '—' }}</div>
             <div class="cd-stat-lbl">Tim Terdaftar</div>
           </div>
           <div class="cd-stat-box">
-            <div class="cd-stat-val">5</div>
-            <div class="cd-stat-lbl">Koridor Bertanding</div>
+            <div class="cd-stat-val">{{ koridorStore.list.length || '—' }}</div>
+            <div class="cd-stat-lbl">Koridor</div>
           </div>
-        </div> -->
+        </div>
       </div>
     </section>
 
     <!-- Quick links -->
     <section class="quick-grid">
       <button class="quick-card" @click="$router.push({ name: 'jadwal' })">
-        <div class="quick-icon" style="background:#FBEAEC;color:#CE1126;">J</div>
+        <div class="quick-icon" style="background:#FBEAEC;color:#CE1126;">📅</div>
         <div class="quick-title">Jadwal Pertandingan</div>
         <div class="quick-desc">Filter per cabang &amp; status, lengkap lokasi dan jam.</div>
       </button>
       <button class="quick-card" @click="$router.push({ name: 'hasil' })">
-        <div class="quick-icon" style="background:#E7F2EB;color:#2E7D52;">H</div>
+        <div class="quick-icon" style="background:#E7F2EB;color:#2E7D52;">🏆</div>
         <div class="quick-title">Hasil Pertandingan</div>
-        <div class="quick-desc">Skor terbaru &amp; pemenang tiap cabang.</div>
+        <div class="quick-desc">Skor terbaru &amp; pemenang tiap cabang lomba.</div>
       </button>
       <button class="quick-card" @click="$router.push({ name: 'klasemen' })">
-        <div class="quick-icon" style="background:#FBF1DD;color:#9A6B12;">K</div>
-        <div class="quick-title">Klasemen Koridor</div>
-        <div class="quick-desc">Perolehan medali &amp; poin antar Koridor.</div>
+        <div class="quick-icon" style="background:#FBF1DD;color:#9A6B12;">🥇</div>
+        <div class="quick-title">Klasemen</div>
+        <div class="quick-desc">Perolehan juara per kategori lomba.</div>
       </button>
     </section>
 
@@ -70,11 +69,17 @@
         <h2 class="section-title">Jadwal Terdekat</h2>
         <button class="link-btn" @click="$router.push({ name: 'jadwal' })">Lihat semua →</button>
       </div>
-      <div class="jadwal-list">
-        <div v-for="j in jadwalStore.upcoming" :key="j.id" class="jadwal-row">
+
+      <div v-if="jadwalStore.loading" class="jadwal-list">
+        <div v-for="n in 3" :key="n" class="skeleton-row"></div>
+      </div>
+
+      <div v-else-if="jadwalStore.upcoming.length" class="jadwal-list">
+        <div v-for="j in jadwalStore.upcoming" :key="j.id" class="jadwal-row"
+          @click="$router.push({ name: 'jadwal' })" role="button" tabindex="0">
           <div class="jadwal-date">
-            <div class="jadwal-tgl">{{ j.tgl }}</div>
-            <div class="jadwal-jam">{{ j.jam }}</div>
+            <div class="jadwal-tgl">{{ j.tglMulai || j.tgl }}</div>
+            <div class="jadwal-jam">{{ j.jamMulai || j.jam }}</div>
           </div>
           <div class="divider-v"></div>
           <div class="jadwal-info">
@@ -82,53 +87,93 @@
               <span class="dot" :style="{ background: katColor(j.kat) }"></span>
               <span class="jadwal-cabang">{{ j.cabang }}</span>
             </div>
-            <div class="jadwal-sub">{{ j.peserta }} · {{ j.lokasi || j.venue }}</div>
+            <div class="jadwal-sub">
+              <span v-if="j.babak" class="jadwal-babak">{{ j.babak }}</span>
+              {{ lokasiNama(j) }}
+            </div>
           </div>
           <StatusBadge :status="j.status" />
         </div>
       </div>
+
+      <div v-else class="empty-section">
+        Belum ada jadwal pertandingan yang akan datang.
+      </div>
     </section>
 
-    <!-- Klasemen top 3 -->
+    <!-- Hasil terbaru -->
     <section style="margin-top:44px;">
-      <div class="section-eyebrow" style="color:#9A6B12;">Klasemen Sementara</div>
-      <h2 class="section-title" style="margin:9px 0 20px;">3 Koridor Teratas</h2>
-      <div class="klasemen-grid">
-        <div v-for="k in klasemenStore.top3" :key="k.nama" class="klasemen-card" :style="{ borderTopColor: k.accent }">
-          <div style="display:flex;align-items:center;justify-content:space-between;">
-            <div class="kl-rank" :style="{ color: k.accent }">#{{ k.rank }}</div>
-            <div class="kl-poin">{{ k.poin }}<span class="kl-poin-lbl"> poin</span></div>
+      <div class="section-eyebrow" style="color:#2E7D52;">Hasil Pertandingan</div>
+      <div class="section-header-row">
+        <h2 class="section-title">Terbaru</h2>
+        <button class="link-btn" @click="$router.push({ name: 'hasil' })">Lihat semua →</button>
+      </div>
+
+      <div v-if="hasilStore.loading" class="hasil-grid">
+        <div v-for="n in 3" :key="n" class="skeleton-card"></div>
+      </div>
+
+      <div v-else-if="hasilStore.list.length" class="hasil-grid">
+        <div v-for="h in hasilStore.list.slice(0, 3)" :key="h.id" class="hasil-card">
+          <div class="hasil-head">
+            <span class="dot" :style="{ background: katColor(h.kat) }"></span>
+            <span class="hasil-cabang">{{ h.cabang }}</span>
+            <span class="hasil-tgl">{{ h.tgl }}</span>
           </div>
-          <div class="kl-nama">{{ k.nama }}</div>
-          <div class="kl-medals">
-            <span>🥇 {{ k.emas }}</span>
-            <span>🥈 {{ k.perak }}</span>
-            <span>🥉 {{ k.perunggu }}</span>
-          </div>
+
+          <!-- Beregu -->
+          <template v-if="!isPerorangan(h)">
+            <div class="skor-row">
+              <div class="tim">{{ h.timA }}</div>
+              <div class="skor">{{ h.skor }}</div>
+              <div class="tim tim-r">{{ h.timB }}</div>
+            </div>
+            <div v-if="h.juara" class="juara-chip">🏆 {{ h.juara }}</div>
+          </template>
+
+          <!-- Perorangan -->
+          <template v-else>
+            <div class="podium-mini">
+              <div v-if="h.juara1" class="podium-item">🥇 <span>{{ h.juara1 }}</span></div>
+              <div v-if="h.juara2" class="podium-item">🥈 <span>{{ h.juara2 }}</span></div>
+              <div v-if="h.juara3" class="podium-item">🥉 <span>{{ h.juara3 }}</span></div>
+            </div>
+          </template>
         </div>
+      </div>
+
+      <div v-else class="empty-section">
+        Hasil pertandingan belum tersedia.
       </div>
     </section>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useJadwalStore }    from '@/stores/useJadwal'
-import { useKlasemenStore }  from '@/stores/useKlasemen'
+import { useHasilStore }     from '@/stores/useHasil'
 import { useRegistrasiStore } from '@/stores/useRegistrasi'
+import { useKategoriStore }  from '@/stores/useKategori'
+import { useKoridorStore }   from '@/stores/useKoridor'
+import { useLokasiStore }    from '@/stores/useLokasi'
 import StatusBadge from '@/components/StatusBadge.vue'
 
 const jadwalStore   = useJadwalStore()
-const klasemenStore = useKlasemenStore()
+const hasilStore    = useHasilStore()
 const regStore      = useRegistrasiStore()
+const kategoriStore = useKategoriStore()
+const koridorStore  = useKoridorStore()
+const lokasiStore   = useLokasiStore()
 
+// Countdown ke opening
 const TARGET = new Date('2026-07-11T08:00:00+07:00').getTime()
 const now    = ref(Date.now())
 let timer
 
 const countdown = computed(() => {
   let t = TARGET - now.value; if (t < 0) t = 0
-  const pad = n => String(n).padStart(2,'0')
+  const pad = n => String(n).padStart(2, '0')
   return {
     Hari:  Math.floor(t / 86400000),
     Jam:   pad(Math.floor(t / 3600000) % 24),
@@ -137,101 +182,160 @@ const countdown = computed(() => {
   }
 })
 
-const katColor = (k) => ({ Olahraga:'#CE1126', Tradisional:'#C0871C', 'E-Sport':'#2D5B8A', Acara:'#2E7D52' })[k] || '#CE1126'
+const katColor = (k) => ({
+  Olahraga:    '#CE1126',
+  Tradisional: '#C0871C',
+  'E-Sport':   '#2D5B8A',
+  Acara:       '#2E7D52',
+})[k] || '#CE1126'
+
+const lokasiNama = (j) => {
+  if (j.lokasiId) return lokasiStore.list.find(l => l.id === j.lokasiId)?.nama || j.lokasi || j.venue || ''
+  return j.lokasi || j.venue || ''
+}
+
+function isPerorangan(h) {
+  return !!(h.juara1 || h.juara2 || h.juara3) || h.jenis === 'Perorangan'
+}
 
 onMounted(() => {
   jadwalStore.fetch()
-  klasemenStore.fetch()
+  hasilStore.fetch()
   regStore.fetch()
+  kategoriStore.fetch()
+  koridorStore.fetch()
+  lokasiStore.fetch()
   timer = setInterval(() => { now.value = Date.now() }, 1000)
 })
 onUnmounted(() => clearInterval(timer))
 </script>
 
 <style scoped>
+/* ── Hero ───────────────────────────────── */
 .hero-grid { display:grid; grid-template-columns:1.15fr .85fr; gap:16px; align-items:stretch; }
 .hero-card {
-  background: #CE1126; border-radius: 10px; padding: 24px;
-  display: flex; flex-direction: column; justify-content: center;
-  position: relative; overflow: hidden;
+  background:#CE1126; border-radius:10px; padding:24px;
+  display:flex; flex-direction:column; justify-content:center;
+  position:relative; overflow:hidden;
 }
 .hero-bg-circle {
-  position: absolute; top: -50px; right: -50px; width: 220px; height: 220px;
-  border-radius: 50%; background: repeating-linear-gradient(45deg,rgba(255,255,255,.16) 0 14px,transparent 14px 28px);
+  position:absolute; top:-50px; right:-50px; width:220px; height:220px;
+  border-radius:50%; background:repeating-linear-gradient(45deg,rgba(255,255,255,.16) 0 14px,transparent 14px 28px);
 }
 .hero-bg-stripe {
-  position: absolute; bottom: 0; left: 0; right: 0; height: 5px;
-  background: repeating-linear-gradient(90deg,#fff 0 15px,transparent 15px 30px); opacity: .5;
+  position:absolute; bottom:0; left:0; right:0; height:5px;
+  background:repeating-linear-gradient(90deg,#fff 0 15px,transparent 15px 30px); opacity:.5;
 }
 .hero-badge {
-  display: inline-flex; align-items: center; gap: 8px; padding: 7px 14px;
-  border-radius: 999px; background: rgba(255,255,255,.18); color: #fff;
-  font: 700 12px/1 'Plus Jakarta Sans'; letter-spacing: .04em;
+  display:inline-flex; align-items:center; gap:8px; padding:7px 14px;
+  border-radius:999px; background:rgba(255,255,255,.18); color:#fff;
+  font:700 12px/1 'Plus Jakarta Sans'; letter-spacing:.04em;
 }
-.hero-title { margin: 18px 0 0; font: 900 42px/.98 Archivo; letter-spacing: -.02em; color: #fff; }
-.hero-desc  { margin: 18px 0 0; font: 500 17px/1.6 'Plus Jakarta Sans'; color: rgba(255,255,255,.9); max-width: 46ch; }
-.hero-actions { display: flex; gap: 12px; margin-top: 26px; flex-wrap: wrap; }
-.btn-white   { padding: 14px 24px; border: none; border-radius: 8px; background: #fff; color: #CE1126; font: 800 15px/1 'Plus Jakarta Sans'; cursor: pointer; box-shadow: 0 8px 20px rgba(0,0,0,.18); }
-.btn-outline { padding: 14px 24px; border: 1.5px solid rgba(255,255,255,.7); border-radius: 8px; background: transparent; color: #fff; font: 700 15px/1 'Plus Jakarta Sans'; cursor: pointer; }
+.hero-title   { margin:18px 0 0; font:900 42px/.98 Archivo; letter-spacing:-.02em; color:#fff; }
+.hero-desc    { margin:18px 0 0; font:500 17px/1.6 'Plus Jakarta Sans'; color:rgba(255,255,255,.9); max-width:46ch; }
+.hero-actions { display:flex; gap:12px; margin-top:26px; flex-wrap:wrap; }
+.btn-white    { padding:14px 24px; border:none; border-radius:8px; background:#fff; color:#CE1126; font:800 15px/1 'Plus Jakarta Sans'; cursor:pointer; box-shadow:0 8px 20px rgba(0,0,0,.18); }
 
-.countdown-card { background: #1A1613; border-radius: 10px; padding: 32px; color: #fff; display: flex; flex-direction: column; }
-.cd-label { font: 700 12px/1 'Plus Jakarta Sans'; letter-spacing: .14em; text-transform: uppercase; color: #E0A82E; }
-.cd-title { font: 800 20px/1.2 Archivo; margin-top: 8px; }
-.cd-grid  { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-top: 22px; }
-.cd-box   { background: rgba(255,255,255,.08); border-radius: 14px; padding: 14px 6px; text-align: center; }
-.cd-num   { font: 800 30px/1 Archivo; }
-.cd-unit  { font: 600 10px/1 'Plus Jakarta Sans'; letter-spacing: .08em; text-transform: uppercase; color: #B8B0A6; margin-top: 6px; }
-.cd-stats { display: flex; gap: 10px; margin-top: auto; padding-top: 22px; }
-.cd-stat-box { flex: 1; background: rgba(255,255,255,.06); border-radius: 12px; padding: 12px; text-align: center; }
-.cd-stat-val { font: 800 22px/1 Archivo; color: #F4C36B; }
-.cd-stat-lbl { font: 600 10px/1.2 'Plus Jakarta Sans'; color: #B8B0A6; margin-top: 5px; }
+/* ── Countdown ──────────────────────────── */
+.countdown-card { background:#1A1613; border-radius:10px; padding:32px; color:#fff; display:flex; flex-direction:column; }
+.cd-label { font:700 12px/1 'Plus Jakarta Sans'; letter-spacing:.14em; text-transform:uppercase; color:#E0A82E; }
+.cd-title { font:800 20px/1.2 Archivo; margin-top:8px; }
+.cd-grid  { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-top:22px; }
+.cd-box   { background:rgba(255,255,255,.08); border-radius:14px; padding:14px 6px; text-align:center; }
+.cd-num   { font:800 30px/1 Archivo; }
+.cd-unit  { font:600 10px/1 'Plus Jakarta Sans'; letter-spacing:.08em; text-transform:uppercase; color:#B8B0A6; margin-top:6px; }
+.cd-stats { display:flex; gap:10px; margin-top:20px; }
+.cd-stat-box { flex:1; background:rgba(255,255,255,.06); border-radius:12px; padding:12px; text-align:center; }
+.cd-stat-val { font:800 22px/1 Archivo; color:#F4C36B; }
+.cd-stat-lbl { font:600 10px/1.2 'Plus Jakarta Sans'; color:#B8B0A6; margin-top:5px; }
 
-.quick-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; margin-top: 16px; }
+/* ── Quick links ────────────────────────── */
+.quick-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:16px; }
 .quick-card {
-  text-align: left; background: #fff; border: 1.5px solid #F0D3D7; border-radius: 8px;
-  padding: 22px; cursor: pointer; transition: border-color .15s, transform .15s;
+  text-align:left; background:#fff; border:1.5px solid #F0D3D7; border-radius:8px;
+  padding:22px; cursor:pointer; transition:border-color .15s, transform .15s;
 }
-.quick-card:hover { border-color: #CE1126; transform: translateY(-2px); }
-.quick-icon  { width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font: 800 18px/1 Archivo; }
-.quick-title { font: 800 18px/1.1 Archivo; margin-top: 14px; color: #1A1613; }
-.quick-desc  { font: 500 13px/1.5 'Plus Jakarta Sans'; color: #7A7368; margin-top: 6px; }
+.quick-card:hover { border-color:#CE1126; transform:translateY(-2px); }
+.quick-icon  { width:42px; height:42px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:20px; }
+.quick-title { font:800 18px/1.1 Archivo; margin-top:14px; color:#1A1613; }
+.quick-desc  { font:500 13px/1.5 'Plus Jakarta Sans'; color:#7A7368; margin-top:6px; }
 
-.section-eyebrow { font: 700 13px/1 'Plus Jakarta Sans'; letter-spacing: .12em; text-transform: uppercase; color: #CE1126; }
-.section-title   { font: 800 30px/1.05 Archivo; color: #1A1613; letter-spacing: -.01em; margin: 9px 0 0; }
-.section-header-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
-.link-btn { background: transparent; border: none; color: #CE1126; font: 700 14px/1 'Plus Jakarta Sans'; cursor: pointer; }
+/* ── Section headers ────────────────────── */
+.section-eyebrow  { font:700 13px/1 'Plus Jakarta Sans'; letter-spacing:.12em; text-transform:uppercase; color:#CE1126; }
+.section-title    { font:800 30px/1.05 Archivo; color:#1A1613; letter-spacing:-.01em; margin:9px 0 0; }
+.section-header-row { display:flex; align-items:flex-end; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:20px; }
+.link-btn { background:transparent; border:none; color:#CE1126; font:700 14px/1 'Plus Jakarta Sans'; cursor:pointer; }
 
-.jadwal-list  { display: flex; flex-direction: column; gap: 12px; }
-.jadwal-row   { display: flex; align-items: center; gap: 16px; background: #fff; border: 1.5px solid #F0D3D7; border-radius: 8px; padding: 16px 18px; flex-wrap: wrap; }
-.jadwal-date  { flex: 0 0 auto; text-align: center; min-width: 64px; }
-.jadwal-tgl   { font: 800 15px/1 Archivo; color: #CE1126; }
-.jadwal-jam   { font: 600 13px/1 'Plus Jakarta Sans'; color: #7A7368; margin-top: 5px; }
-.divider-v    { width: 1px; align-self: stretch; background: #ECE7DE; }
-.jadwal-info  { flex: 1; min-width: 160px; }
-.jadwal-cabang{ font: 700 15px/1.2 'Plus Jakarta Sans'; color: #1A1613; }
-.jadwal-sub   { font: 500 13px/1.4 'Plus Jakarta Sans'; color: #7A7368; margin-top: 4px; }
-.dot          { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+/* ── Skeleton ───────────────────────────── */
+.skeleton-row {
+  height:76px; border-radius:8px;
+  background:linear-gradient(90deg,#F0EBE2 25%,#E8E2DA 50%,#F0EBE2 75%);
+  background-size:200% 100%; animation:shimmer 1.4s infinite;
+}
+.skeleton-card {
+  height:130px; border-radius:8px;
+  background:linear-gradient(90deg,#F0EBE2 25%,#E8E2DA 50%,#F0EBE2 75%);
+  background-size:200% 100%; animation:shimmer 1.4s infinite;
+}
+@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
 
-.klasemen-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; }
-.klasemen-card { background: #fff; border: 1.5px solid #F0D3D7; border-radius: 8px; padding: 22px; border-top: 4px solid; }
-.kl-rank  { font: 900 34px/1 Archivo; }
-.kl-poin  { font: 800 26px/1 Archivo; color: #1A1613; }
-.kl-poin-lbl { font: 600 12px/1 'Plus Jakarta Sans'; color: #7A7368; }
-.kl-nama  { font: 800 18px/1.2 Archivo; color: #1A1613; margin-top: 14px; }
-.kl-medals{ display: flex; gap: 14px; margin-top: 12px; font: 600 13px/1 'Plus Jakarta Sans'; color: #7A7368; }
+/* ── Jadwal terdekat ────────────────────── */
+.jadwal-list  { display:flex; flex-direction:column; gap:12px; }
+.jadwal-row   {
+  display:flex; align-items:center; gap:16px; background:#fff;
+  border:1.5px solid #F0D3D7; border-radius:8px; padding:16px 18px; flex-wrap:wrap;
+  cursor:pointer; transition:border-color .15s;
+}
+.jadwal-row:hover { border-color:#CE1126; }
+.jadwal-date  { flex:0 0 auto; text-align:center; min-width:64px; }
+.jadwal-tgl   { font:800 15px/1 Archivo; color:#CE1126; }
+.jadwal-jam   { font:600 13px/1 'Plus Jakarta Sans'; color:#7A7368; margin-top:5px; }
+.divider-v    { width:1px; align-self:stretch; background:#ECE7DE; }
+.jadwal-info  { flex:1; min-width:160px; }
+.jadwal-cabang{ font:700 15px/1.2 'Plus Jakarta Sans'; color:#1A1613; }
+.jadwal-sub   { font:500 12px/1.4 'Plus Jakarta Sans'; color:#7A7368; margin-top:4px; display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+.jadwal-babak { font:700 10px/1 'Plus Jakarta Sans'; letter-spacing:.05em; text-transform:uppercase; color:#2D5B8A; background:#E7EEF6; border-radius:4px; padding:2px 7px; }
+.dot          { width:9px; height:9px; border-radius:50%; display:inline-block; flex-shrink:0; }
 
+/* ── Hasil terbaru ──────────────────────── */
+.hasil-grid  { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
+.hasil-card  { background:#fff; border:1.5px solid #F0D3D7; border-radius:8px; padding:18px; display:flex; flex-direction:column; gap:12px; }
+.hasil-head  { display:flex; align-items:center; gap:8px; }
+.hasil-cabang{ font:700 14px/1.2 'Plus Jakarta Sans'; color:#1A1613; flex:1; min-width:0; }
+.hasil-tgl   { font:500 11px/1 'Plus Jakarta Sans'; color:#9A9389; white-space:nowrap; }
+
+.skor-row    { display:flex; align-items:center; justify-content:center; gap:10px; }
+.tim         { flex:1; font:700 13px/1.3 'Plus Jakarta Sans'; color:#5A534B; text-align:right; }
+.tim-r       { text-align:left; }
+.skor        { flex-shrink:0; font:900 22px/1 Archivo; color:#CE1126; background:#FBEAEC; border-radius:10px; padding:7px 12px; }
+.juara-chip  { font:700 13px/1 'Plus Jakarta Sans'; color:#2E7D52; background:#E7F2EB; border-radius:8px; padding:8px 12px; }
+
+.podium-mini { display:flex; flex-direction:column; gap:7px; background:#FAF8F3; border-radius:8px; padding:10px 12px; }
+.podium-item { display:flex; align-items:center; gap:8px; font:600 13px/1.3 'Plus Jakarta Sans'; color:#1A1613; }
+.podium-item span { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+/* ── Empty ──────────────────────────────── */
+.empty-section {
+  padding:32px; border:1.5px dashed #E0D8CE; border-radius:10px;
+  text-align:center; color:#9A9389; font:500 14px/1 'Plus Jakarta Sans';
+}
+
+/* ── Responsive ─────────────────────────── */
+@media(max-width:1023px) {
+  .hasil-grid { grid-template-columns:repeat(2,1fr); }
+}
 @media(max-width:767px) {
-  .hero-grid, .quick-grid, .klasemen-grid { grid-template-columns: 1fr !important; }
-  .hero-grid { gap: 16px; }
-  .hero-title { font-size: 34px !important; }
-  .hero-desc { font-size: 15px; }
-  .hero-card { padding: 20px; }
-  .countdown-card { padding: 20px; }
-  .cd-grid { grid-template-columns: repeat(2,1fr); }
-  .section-title { font-size: 24px; }
-  .jadwal-row { padding: 14px; gap: 10px; }
-  .quick-grid { margin-top: 12px; gap: 10px; }
-  .quick-card { padding: 16px; }
-  .klasemen-card { padding: 16px; }
+  .hero-grid, .quick-grid { grid-template-columns:1fr !important; }
+  .hero-grid { gap:16px; }
+  .hero-title { font-size:34px !important; }
+  .hero-desc { font-size:15px; }
+  .hero-card { padding:20px; }
+  .countdown-card { padding:20px; }
+  .cd-grid { grid-template-columns:repeat(2,1fr); }
+  .section-title { font-size:24px; }
+  .jadwal-row { padding:14px; gap:10px; }
+  .quick-grid { margin-top:12px; gap:10px; }
+  .quick-card { padding:16px; }
+  .hasil-grid { grid-template-columns:1fr; }
 }
 </style>

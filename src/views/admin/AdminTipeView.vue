@@ -198,7 +198,7 @@ async function submit() {
 
 async function hapus(t) {
   await kategoriStore.fetch()
-  const terpakai = kategoriStore.list.filter(k => k.tipe === t.nama)
+  const terpakai = kategoriStore.list.filter(k => k.tipeId === t.id || k.tipe === t.nama)
   if (terpakai.length) {
     const namaKat = terpakai.map(k => k.nama).join(', ')
     showToast(`Tidak bisa dihapus — digunakan oleh ${terpakai.length} kategori: ${namaKat}.`, 'error')

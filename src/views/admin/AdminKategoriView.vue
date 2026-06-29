@@ -30,9 +30,9 @@
           </div>
           <div>
             <label class="form-label">Tipe <span class="req">*</span></label>
-            <select v-model="form.tipe" class="tcr-input">
+            <select v-model="form.tipeId" class="tcr-input">
               <option value="">Pilih tipe...</option>
-              <option v-for="t in tipeStore.list" :key="t.id" :value="t.nama">{{ t.nama }}</option>
+              <option v-for="t in tipeStore.list" :key="t.id" :value="t.id">{{ t.nama }}</option>
             </select>
           </div>
           <div>
@@ -86,12 +86,12 @@
                 <td class="td-num">{{ (page-1)*PER_PAGE + i + 1 }}</td>
                 <td>
                   <div style="display:flex;align-items:center;gap:8px;">
-                    <span class="dot" :style="{ background: tipeColor(k.tipe) }"></span>
+                    <span class="dot" :style="{ background: resolveWarna(k) }"></span>
                     <span class="td-bold">{{ k.nama }}</span>
                   </div>
                 </td>
                 <td>
-                  <span class="tipe-badge" :style="{ background: tipeBg(k.tipe), color: tipeColor(k.tipe) }">{{ k.tipe }}</span>
+                  <span class="tipe-badge" :style="{ background: resolveBg(k), color: resolveWarna(k) }">{{ resolveTipe(k) }}</span>
                 </td>
                 <td>
                   <span class="jenis-badge" :class="k.jenis === 'Beregu' ? 'jenis-beregu' : 'jenis-perorangan'">
@@ -175,7 +175,7 @@ function doExport() {
     { label: 'Peraturan', field: 'peraturan' },
   ], 'kategori-lomba')
 }
-const form  = reactive({ nama:'', tipe:'', jenis:'Beregu', urutan:1, deskripsi:'', peraturan:'', editId:null })
+const form  = reactive({ nama:'', tipeId:'', jenis:'Beregu', urutan:1, deskripsi:'', peraturan:'', editId:null })
 const toast = reactive({ show:false, msg:'', type:'success' })
 let toastTimer = null
 
@@ -185,8 +185,10 @@ function showToast(msg, type = 'success') {
   toastTimer = setTimeout(() => { toast.show = false }, 3000)
 }
 
-const tipeColor = (t) => tipeStore.warna(t)
-const tipeBg    = (t) => tipeStore.bg(t)
+// Resolve dari tipeId — fallback ke k.tipe hanya untuk data lama yang belum punya tipeId
+function resolveTipe(k)  { return tipeStore.namaById(k.tipeId)  || k.tipe || '—' }
+function resolveWarna(k) { return tipeStore.warnaById(k.tipeId) || tipeStore.warna(k.tipe) }
+function resolveBg(k)    { return tipeStore.bgById(k.tipeId)    || tipeStore.bg(k.tipe) }
 
 function parseRules(text) {
   return text.split('\n').map(l => l.replace(/^\d+\.\s*/, '').trim()).filter(Boolean)
@@ -198,25 +200,30 @@ function toggleDetail(id) {
 
 async function openForm(k = null) {
   await tipeStore.fetch()
-  const defaultTipe = tipeStore.list[0]?.nama || ''
-  k ? Object.assign(form, { nama:k.nama, tipe:k.tipe, jenis:k.jenis||'Beregu', urutan:k.urutan||1, deskripsi:k.deskripsi||'', peraturan:k.peraturan||'', editId:k.id })
-    : Object.assign(form, { nama:'', tipe:defaultTipe, jenis:'Beregu', urutan:store.list.length+1, deskripsi:'', peraturan:'', editId:null })
+  const defaultTipeId = tipeStore.list[0]?.id || ''
+  if (k) {
+    // Backward compat: data lama mungkin belum punya tipeId, cari dari nama
+    const resolvedId = k.tipeId || tipeStore.list.find(t => t.nama === k.tipe)?.id || ''
+    Object.assign(form, { nama:k.nama, tipeId:resolvedId, jenis:k.jenis||'Beregu', urutan:k.urutan||1, deskripsi:k.deskripsi||'', peraturan:k.peraturan||'', editId:k.id })
+  } else {
+    Object.assign(form, { nama:'', tipeId:defaultTipeId, jenis:'Beregu', urutan:store.list.length+1, deskripsi:'', peraturan:'', editId:null })
+  }
   showForm.value = true
   expandedId.value = null
 }
 
 function resetForm() {
   showForm.value = false
-  Object.assign(form, { nama:'', tipe:'', jenis:'Beregu', urutan:1, deskripsi:'', peraturan:'', editId:null })
+  Object.assign(form, { nama:'', tipeId:'', jenis:'Beregu', urutan:1, deskripsi:'', peraturan:'', editId:null })
 }
 
 async function submit() {
   if (!form.nama.trim()) { showToast('Nama lomba wajib diisi.', 'error'); return }
-  if (!form.tipe)        { showToast('Tipe lomba wajib dipilih.', 'error'); return }
+  if (!form.tipeId)      { showToast('Tipe lomba wajib dipilih.', 'error'); return }
   const isEdit = !!form.editId
   const p = {
     nama:      form.nama.trim(),
-    tipe:      form.tipe,
+    tipeId:    form.tipeId,
     jenis:     form.jenis,
     urutan:    form.urutan || 1,
     deskripsi: form.deskripsi.trim(),

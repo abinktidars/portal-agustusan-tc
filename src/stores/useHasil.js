@@ -18,10 +18,9 @@ export const useHasilStore = defineStore('hasil', () => {
   async function fetch() {
     loading.value = true
     try {
-      const data = await fb.getHasil()
-      list.value = data.length ? data : FALLBACK
+      list.value = await fb.getHasil()
     } catch {
-      list.value = FALLBACK
+      list.value = []
     } finally {
       loading.value = false
     }
@@ -31,10 +30,18 @@ export const useHasilStore = defineStore('hasil', () => {
     await fb.addHasil(data)
     await fetch()
   }
+  async function addBatch(records) {
+    await Promise.all(records.map(r => fb.addHasil(r)))
+    await fetch()
+  }
+  async function update(id, data) {
+    await fb.updateHasil(id, data)
+    await fetch()
+  }
   async function remove(id) {
     await fb.deleteHasil(id)
     await fetch()
   }
 
-  return { list, loading, fetch, add, remove }
+  return { list, loading, fetch, add, addBatch, update, remove }
 })
