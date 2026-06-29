@@ -258,4 +258,42 @@ onMounted(fetchUsers)
 .ck-yes         { background:#E7F2EB; color:#2E7D52; }
 .ck-no          { background:#F5F2ED; color:#C9C2B6; }
 .hak-note       { font:500 12px/1.5 'Plus Jakarta Sans'; color:#9A9389; margin-top:12px; }
+
+@media (max-width: 767px) {
+  .adm-main { padding: 16px 12px 50px; gap: 14px; }
+  .adm-section { padding: 14px; border-radius: 14px; }
+  .section-header { gap: 10px; margin-bottom: 12px; }
+  .section-title { font-size: 18px; margin: 4px 0 0; }
+  .section-eyebrow { font-size: 11px; letter-spacing: .08em; }
+  .inline-form { padding: 12px; gap: 10px; grid-template-columns: 1fr; }
+  .form-label { font-size: 12px; margin-bottom: 6px; }
+  .btn-save, .btn-cancel { padding: 9px 12px; font-size: 12px; border-radius: 8px; }
+  .btn-edit, .btn-del { padding: 5px 10px; font-size: 11px; border-radius: 6px; }
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .reg-table { min-width: 480px; }
+  .reg-table th { padding: 9px 10px; font-size: 10px; }
+  .reg-table td { padding: 9px 10px; font-size: 12px; }
+  .td-bold { font-size: 12px; }
+  .td-num { font-size: 11px; }
+  .empty { padding: 18px 12px; font-size: 12px; }
+  .header-actions { gap: 8px; width: 100%; }
+  .search-input { width: 100%; min-width: 0; }
+  .btn-export { padding: 8px 12px; font-size: 12px; }
+  .role-chip { font-size: 10px; padding: 3px 8px; }
+  .hak-section { margin-bottom: 14px; }
+  .hak-table-wrap { min-width: unset; width: 100%; }
+  .hak-table th { padding: 8px 12px; font-size: 10px; }
+  .hak-table td { padding: 9px 12px; font-size: 12px; }
+  .menu-col { font-size: 12px; }
+  .hak-note { font-size: 11px; }
+  .error-box { font-size: 12px; padding: 10px 12px; }
+}
+
+@media (min-width: 768px) {
+  .adm-main { padding: 28px 20px 70px; }
+  .adm-section { padding: 24px; border-radius: 20px; }
+  .section-title { font-size: 26px; }
+  .section-header { gap: 16px; margin-bottom: 20px; }
+  .btn-save, .btn-cancel { padding: 12px; font-size: 13px; }
+}
 </style>

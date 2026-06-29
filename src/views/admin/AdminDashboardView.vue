@@ -7,19 +7,86 @@
   </Transition>
 
   <main class="adm-main">
-    <div class="adm-page-header">
-      <h1 class="adm-page-title">Dashboard</h1>
-      <p class="adm-page-desc">Ringkasan data Semarak Kemerdekaan ke-81 Teras Country Residence</p>
-    </div>
 
-    <div class="stats-grid">
-      <div v-for="s in statCards" :key="s.label" class="stat-card">
-        <div class="stat-icon">{{ s.icon }}</div>
-        <div class="stat-val" :style="{ color: s.color }">{{ s.value }}</div>
-        <div class="stat-label">{{ s.label }}</div>
-        <div class="stat-sub">{{ s.sub }}</div>
+    <!-- Shortcut Menu Utama -->
+    <div class="shortcut-section">
+      <div class="shortcut-title">Menu Utama</div>
+      <div class="shortcut-grid-main">
+        
+        <!-- Atur Registrasi -->
+        <RouterLink :to="{ name: 'admin-registrasi' }" class="shortcut-card registrasi-card">
+          <div class="shortcut-icon">📋</div>
+          <div class="shortcut-content">
+            <div class="shortcut-label">Data Registrasi</div>
+            <div class="shortcut-count">{{ regStore.list.length }} pendaftar</div>
+          </div>
+        </RouterLink>
+        
+        <!-- Atur Lomba -->
+        <RouterLink :to="{ name: 'admin-lomba' }" class="shortcut-card lomba-card">
+          <div class="shortcut-icon">🏅</div>
+          <div class="shortcut-content">
+            <div class="shortcut-label">Atur Lomba</div>
+            <div class="shortcut-count">{{ kategoriStore.list.length }} lomba</div>
+          </div>
+        </RouterLink>
+
+
+        <!-- Kelola Jadwal -->
+        <RouterLink :to="{ name: 'admin-jadwal' }" class="shortcut-card jadwal-card">
+          <div class="shortcut-icon">📅</div>
+          <div class="shortcut-content">
+            <div class="shortcut-label">Atur Jadwal</div>
+            <div class="shortcut-count">{{ jadwalStore.list.length }} jadwal</div>
+          </div>
+        </RouterLink>
+
+
+        <!-- Atur Hasil -->
+        <RouterLink :to="{ name: 'admin-hasil' }" class="shortcut-card hasil-card">
+          <div class="shortcut-icon">🏆</div>
+          <div class="shortcut-content">
+            <div class="shortcut-label">Atur Hasil</div>
+            <div class="shortcut-count">{{ allHasil.length }} hasil</div>
+          </div>
+        </RouterLink>
+      </div>
+
+      <!-- Lihat Semua Menu -->
+      <div class="shortcut-grid-extra">
+        <button @click="showAllMenu = true" class="shortcut-card menu-all-card">
+          <div class="shortcut-icon">📂</div>
+          <div class="shortcut-content">
+            <div class="shortcut-label">Lihat Semua</div>
+            <div class="shortcut-count">Menu Lengkap</div>
+          </div>
+          <span class="shortcut-arrow">→</span>
+        </button>
       </div>
     </div>
+
+    <!-- Modal Semua Menu -->
+    <Transition name="modal">
+      <div v-if="showAllMenu" class="menu-all-modal" @click.self="showAllMenu = false">
+        <div class="menu-all-content">
+          <div class="menu-all-header">
+            <h3 class="menu-all-title">Semua Menu Navigasi</h3>
+            <button @click="showAllMenu = false" class="menu-close-btn">✕</button>
+          </div>
+          <div class="menu-all-grid">
+            <RouterLink
+              v-for="item in allMenuItems"
+              :key="item.name"
+              :to="{ name: item.name }"
+              class="menu-all-item"
+              @click="showAllMenu = false">
+              <span class="menu-item-icon">{{ item.icon }}</span>
+              <span class="menu-item-label">{{ item.label }}</span>
+            </RouterLink>
+          </div>
+        </div>
+      </div>
+    </Transition>
 
     <div class="row-2">
       <div class="adm-section">
@@ -65,11 +132,7 @@
           <h2 class="section-title-lg">Hasil Pertandingan</h2>
         </div>
         <div class="header-actions">
-          <input v-model="search" type="text" class="tcr-input search-input" placeholder="Cari hasil..." />
-          <button v-if="pendingSync.length" class="btn-sync" :disabled="migrating" @click="migrasiData">
-            {{ migrating ? 'Menyinkronkan...' : `Simpan ke Firebase (${pendingSync.length})` }}
-          </button>
-          <button class="btn-export" @click="doExport">Export Excel</button>
+          <RouterLink :to="{ name: 'admin-hasil' }" class="link-btn">Lihat semua →</RouterLink>
         </div>
       </div>
 
@@ -101,9 +164,13 @@
             <div v-if="h.juara" class="juara-display">🏆 {{ h.juara }}</div>
           </template>
 
-          <div class="item-actions">
+          <div class="item-actions" @click.stop>
             <button @click.stop="selectedHasil = h" class="btn-detail">Lihat Detail</button>
-            <button @click.stop="hapus(h)" class="btn-del">Hapus</button>
+            <template v-if="deleteId === h.id">
+              <button @click.stop="confirmHapus(h)" class="btn-confirm-del">Ya, Hapus</button>
+              <button @click.stop="cancelHapus" class="btn-cancel-sm">Batal</button>
+            </template>
+            <button v-else @click.stop="requestHapus(h)" class="btn-del">Hapus</button>
           </div>
         </div>
         <div v-if="!filtered.length" class="empty" style="grid-column:1/-1;">{{ search ? 'Tidak ada hasil pencarian' : 'Belum ada hasil pertandingan' }}</div>
@@ -210,8 +277,11 @@ function doExport() {
   ], 'hasil-pertandingan')
 }
 
-function hapus(h) {
-  if (!confirm(`Hapus hasil "${h.cabang}"?`)) return
+const deleteId = ref(null)
+function requestHapus(h) { deleteId.value = h.id }
+function cancelHapus()    { deleteId.value = null }
+function confirmHapus(h) {
+  deleteId.value = null
   if (h._source === 'jadwal') {
     jadwalStore.update(h.id, { hasilPertandingan: null, pemenang: null, juara1: null, juara2: null, juara3: null })
   } else {
@@ -227,6 +297,19 @@ function showToast(msg, type = 'success') {
   toast.msg = msg; toast.type = type; toast.show = true
   toastTimer = setTimeout(() => { toast.show = false }, 3500)
 }
+
+// --- shortcut menu utama ---
+const showAllMenu = ref(false)
+const allMenuItems = [
+  { name: 'admin-dashboard',  icon: '📊', label: 'Dashboard',      roles: ['admin', 'panitia'] },
+  { name: 'admin-lomba',      icon: '🏅', label: 'Lomba',          roles: ['admin'] },
+  { name: 'admin-jadwal',     icon: '📅', label: 'Jadwal',         roles: ['admin', 'panitia'] },
+  { name: 'admin-hasil',      icon: '🏆', label: 'Hasil',          roles: ['admin', 'panitia'] },
+  { name: 'admin-klasemen',   icon: '🥇', label: 'Klasemen',       roles: ['admin', 'panitia'] },
+  { name: 'admin-registrasi', icon: '📋', label: 'Registrasi',     roles: ['admin', 'panitia'] },
+  { name: 'admin-lokasi',     icon: '📍', label: 'Lokasi',         roles: ['admin'] },
+  { name: 'admin-users',      icon: '👥', label: 'Data User',      roles: ['admin'] },
+]
 
 // --- migrasi data lama ke koleksi hasil ---
 const migrating   = ref(false)
@@ -343,11 +426,11 @@ onMounted(() => {
 .stat-label { font:700 13px/1.1 'Plus Jakarta Sans'; color:#1A1613; }
 .stat-sub   { grid-column:2; font:500 12px/1.3 'Plus Jakarta Sans'; color:#9A9389; margin-top:-2px; }
 
-.row-2 { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+.row-2 { display:grid; grid-template-columns:1fr; gap:14px; }
 .adm-section { background:#fff; border:1px solid #ECE7DE; border-radius:20px; padding:24px; }
 .section-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; }
 .section-title  { font:800 18px/1 Archivo; color:#1A1613; margin:0; }
-.link-btn       { font:600 13px/1 'Plus Jakarta Sans'; color:#CE1126; text-decoration:none; }
+.link-btn       { font:600 13px/1 'Plus Jakarta Sans'; color:#CE1126; text-decoration:none; white-space: nowrap;}
 
 .mini-list { display:flex; flex-direction:column; gap:8px; }
 .mini-row  {
@@ -365,6 +448,319 @@ onMounted(() => {
 
 .empty { text-align:center; padding:20px; color:#9A9389; font:500 13px/1 'Plus Jakarta Sans'; }
 
+.hasil-section .section-header { gap: 12px; align-items: flex-start; flex-wrap: wrap; }
+.hasil-section {margin-top: 16px;}
+.section-eyebrow { font:700 11px/1 'Plus Jakarta Sans'; letter-spacing:.1em; text-transform:uppercase; color:#2E7D52; }
+.section-title-lg { font:800 24px/1.05 Archivo; color:#1A1613; margin:6px 0 0; }
+
+.header-actions { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.search-input { width:100%; min-width:220px; }
+.btn-sync,
+.btn-export {
+  padding:10px 14px;
+  border-radius:10px;
+  font:700 12px/1 'Plus Jakarta Sans';
+  white-space:nowrap;
+  cursor:pointer;
+}
+.btn-sync {
+  border:1.5px solid #2D5B8A;
+  background:#2D5B8A;
+  color:#fff;
+}
+.btn-sync:disabled { opacity:.65; cursor:not-allowed; }
+.btn-export {
+  border:1.5px solid #2E7D52;
+  background:#fff;
+  color:#2E7D52;
+}
+
+.card-grid { display:grid; grid-template-columns:1fr; gap:12px; }
+.item-card {
+  background:#FAF8F3;
+  border:1px solid #E2DCD2;
+  border-radius:14px;
+  padding:14px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+.item-card-header { display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
+.item-nama {
+  font:800 14px/1.2 Archivo;
+  color:#1A1613;
+  max-width:170px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.item-tgl { font:600 11px/1 'Plus Jakarta Sans'; color:#9A9389; white-space:nowrap; }
+.dot { width:9px; height:9px; border-radius:50%; display:inline-block; flex-shrink:0; }
+
+.podium-compact {
+  background:#fff;
+  border:1px solid #F0EBE2;
+  border-radius:10px;
+  padding:9px 10px;
+  display:flex;
+  flex-direction:column;
+  gap:7px;
+}
+.podium-row {
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:8px;
+  align-items:center;
+  font:600 13px/1.25 'Plus Jakarta Sans';
+  color:#1A1613;
+}
+.podium-emas-sm { font-weight:800; color:#9A6B12; }
+.podium-perak-sm { color:#5A6372; }
+.podium-perunggu-sm { color:#8A5D3B; }
+
+.skor-display {
+  background:#fff;
+  border:1px solid #F0EBE2;
+  border-radius:10px;
+  padding:9px 10px;
+  display:grid;
+  grid-template-columns:1fr auto 1fr;
+  align-items:center;
+  gap:8px;
+}
+.skor-display > span:first-child,
+.skor-display > span:last-child {
+  font:700 12px/1.2 'Plus Jakarta Sans';
+  color:#5A534B;
+  text-align:center;
+  word-break:break-word;
+}
+.skor-num {
+  font:900 18px/1 Archivo;
+  color:#CE1126;
+  background:#FBEAEC;
+  border-radius:8px;
+  padding:4px 10px;
+}
+.tim-menang { color:#2E7D52 !important; font-weight:800 !important; }
+
+.juara-display {
+  background:#E7F2EB;
+  color:#2E7D52;
+  border-radius:8px;
+  padding:8px 10px;
+  text-align:center;
+  font:700 12px/1.35 'Plus Jakarta Sans';
+}
+
+.item-actions { display:flex; gap:8px; margin-top:auto; flex-wrap:wrap; }
+.btn-detail,
+.btn-del,
+.btn-confirm-del,
+.btn-cancel-sm {
+  flex:1;
+  padding:9px 10px;
+  border-radius:9px;
+  font:700 12px/1 'Plus Jakarta Sans';
+  cursor:pointer;
+  white-space:nowrap;
+}
+.btn-detail { border:1px solid #E2DCD2; background:#fff; color:#1A1613; }
+.btn-del { border:1px solid #FBEAEC; background:#FBEAEC; color:#CE1126; }
+.btn-confirm-del { border:1px solid #CE1126; background:#CE1126; color:#fff; }
+.btn-cancel-sm { border:1px solid #E2DCD2; background:#fff; color:#5A534B; }
+
+/* Shortcut Section */
+.shortcut-section {
+  margin-bottom:20px;
+}
+.shortcut-title {
+  font:700 13px/1 'Plus Jakarta Sans';
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  color:#9A9389;
+  margin-bottom:12px;
+  padding:0 4px;
+}
+.shortcut-grid-main {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:4px;
+  margin-bottom:14px;
+}
+.shortcut-grid-extra {
+  display:grid;
+  grid-template-columns:1fr;
+  gap:12px;
+}
+.shortcut-grid {
+  display:grid;
+  grid-template-columns:1fr;
+  gap:12px;
+}
+.shortcut-card {
+  background:#fff;
+  border:1.5px solid #ECE7DE;
+  border-radius:14px;
+  padding:8px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  text-decoration:none;
+  color:inherit;
+  cursor:pointer;
+  transition:all .2s ease;
+  position:relative;
+  min-height:80px;
+}
+.shortcut-card:hover {
+  border-color:#CE1126;
+  box-shadow:0 4px 12px rgba(206,17,38,.1);
+  transform:translateY(-2px);
+}
+.shortcut-card:active {
+  transform:translateY(0);
+}
+.shortcut-icon {
+  font-size:28px;
+  flex-shrink:0;
+  line-height:1;
+}
+.shortcut-content {
+  flex:1;
+}
+.shortcut-label {
+  font:800 14px/1.2 Archivo;
+  color:#1A1613;
+  margin-bottom:3px;
+}
+.shortcut-count {
+  font:500 12px/1 'Plus Jakarta Sans';
+  color:#9A9389;
+}
+.shortcut-arrow {
+  font-size:18px;
+  color:#CE1126;
+  flex-shrink:0;
+  opacity:0;
+  transition:opacity .2s ease, transform .2s ease;
+}
+.shortcut-card:hover .shortcut-arrow {
+  opacity:1;
+  transform:translateX(4px);
+}
+
+/* Card variasi warna untuk type menu */
+.jadwal-card { border-color:#D4E4F7; background:linear-gradient(135deg, #fff 0%, #F0F6FC 100%); }
+.jadwal-card:hover { border-color:#2D5B8A; box-shadow:0 4px 12px rgba(45,91,138,.12); }
+.lomba-card { border-color:#FFF4E0; background:linear-gradient(135deg, #fff 0%, #FFFAF0 100%); }
+.lomba-card:hover { border-color:#D4A017; box-shadow:0 4px 12px rgba(212,160,23,.12); }
+.registrasi-card { border-color:#FFF0F3; background:linear-gradient(135deg, #fff 0%, #FFF9FB 100%); }
+.registrasi-card:hover { border-color:#CE1126; box-shadow:0 4px 12px rgba(206,17,38,.12); }
+.hasil-card { border-color:#E7F2EB; background:linear-gradient(135deg, #fff 0%, #F5FAF8 100%); }
+.hasil-card:hover { border-color:#2E7D52; box-shadow:0 4px 12px rgba(46,125,82,.12); }
+.menu-all-card { border-color:#F9F1E0; background:linear-gradient(135deg, #fff 0%, #FEFAF2 100%); }
+.menu-all-card:hover { border-color:#9A6B12; box-shadow:0 4px 12px rgba(154,107,18,.12); }
+
+/* Modal Semua Menu */
+.modal-enter-active,
+.modal-leave-active {
+  transition:opacity .2s ease;
+}
+.modal-enter-from,
+.modal-leave-to {
+  opacity:0;
+}
+
+.menu-all-modal {
+  position:fixed;
+  top:0;
+  left:0;
+  right:0;
+  bottom:0;
+  background:rgba(26,22,19,.5);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:100;
+  padding:16px;
+}
+.menu-all-content {
+  background:#fff;
+  border-radius:20px;
+  width:100%;
+  max-width:500px;
+  max-height:80vh;
+  overflow-y:auto;
+  box-shadow:0 20px 60px rgba(0,0,0,.2);
+}
+.menu-all-header {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:20px 20px 16px;
+  border-bottom:1px solid #ECE7DE;
+}
+.menu-all-title {
+  font:800 18px/1 Archivo;
+  color:#1A1613;
+  margin:0;
+}
+.menu-close-btn {
+  width:32px;
+  height:32px;
+  border-radius:8px;
+  border:1px solid #E2DCD2;
+  background:#fff;
+  color:#1A1613;
+  font:700 20px/1 'Plus Jakarta Sans';
+  cursor:pointer;
+  padding:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transition:all .2s ease;
+}
+.menu-close-btn:hover {
+  background:#FAF8F3;
+  border-color:#CE1126;
+}
+.menu-all-grid {
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:12px;
+  padding:20px;
+}
+.menu-all-item {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:8px;
+  padding:16px 12px;
+  background:#FAF8F3;
+  border:1px solid #E2DCD2;
+  border-radius:12px;
+  text-decoration:none;
+  color:#1A1613;
+  transition:all .2s ease;
+  cursor:pointer;
+}
+.menu-all-item:hover {
+  border-color:#CE1126;
+  background:#fff;
+  box-shadow:0 4px 12px rgba(206,17,38,.1);
+  transform:translateY(-2px);
+}
+.menu-item-icon {
+  font-size:32px;
+  line-height:1;
+}
+.menu-item-label {
+  font:700 13px/1.2 'Plus Jakarta Sans';
+  text-align:center;
+  color:#1A1613;
+}
+
 @media (min-width: 768px) {
   .adm-main { padding:28px 20px 70px; }
   .adm-page-header { margin-bottom:24px; }
@@ -377,8 +773,23 @@ onMounted(() => {
   .stat-val { font-size:36px; margin-bottom:4px; }
   .stat-sub { grid-column:auto; margin-top:4px; }
 
+  .shortcut-grid-main { grid-template-columns:repeat(2,1fr); gap:14px; }
+  .shortcut-card { padding:18px; }
+  .shortcut-label { font-size:15px; }
+
+  .row-2 { grid-template-columns:1fr 1fr; gap:20px; }
   .section-header { align-items:center; margin-bottom:18px; }
   .section-title { font-size:18px; }
+  .section-title-lg { font-size:28px; }
+  .search-input { width:220px; }
+  .card-grid { grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:14px; }
+  .item-card { padding:16px; }
+  .item-nama { max-width:220px; font-size:15px; }
+  .item-tgl { font-size:12px; }
+  .btn-sync,
+  .btn-export,
+  .btn-detail,
+  .btn-del { font-size:13px; }
 }
 
 @media (min-width: 1100px) {

@@ -553,4 +553,41 @@ onMounted(() => { regStore.fetch(); kategoriStore.fetch(); koridorStore.fetch() 
   .detail-cols   { grid-template-columns:1fr; }
   .action-group  { flex-wrap:wrap; }
 }
+
+@media (max-width: 767px) {
+  .adm-main { padding: 16px 12px 50px; }
+  .adm-section { padding: 14px; border-radius: 14px; }
+  .section-header { gap: 10px; margin-bottom: 12px; }
+  .section-title { font-size: 18px; margin: 4px 0 0; }
+  .section-eyebrow { font-size: 11px; letter-spacing: .08em; }
+  .inline-form { padding: 12px; gap: 10px; }
+  .form-label { font-size: 12px; margin-bottom: 6px; }
+  .btn-save, .btn-cancel { padding: 9px 12px; font-size: 12px; border-radius: 8px; }
+  .btn-edit, .btn-del { padding: 5px 10px; font-size: 11px; border-radius: 6px; }
+  .data-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .data-table { min-width: 520px; }
+  .data-table th { padding: 9px 10px; font-size: 10px; }
+  .data-table td { padding: 9px 10px; font-size: 12px; }
+  .td-bold { font-size: 12px; }
+  .td-num { font-size: 11px; }
+  .empty { padding: 18px 12px; font-size: 12px; }
+  .header-actions { gap: 8px; width: 100%; }
+  .search-input { width: 100%; min-width: 0; }
+  .btn-export { padding: 8px 12px; font-size: 12px; }
+  .bulk-bar { padding: 10px 12px; gap: 8px; }
+  .bulk-count { font-size: 12px; }
+  .bulk-btn { padding: 6px 10px; font-size: 11px; }
+  .detail-panel { padding: 14px 12px; gap: 12px; }
+  .detail-label { font-size: 10px; margin-bottom: 6px; }
+  .detail-val { font-size: 12px; }
+  .anggota-add { font-size: 12px; padding: 8px 12px; }
+}
+
+@media (min-width: 768px) {
+  .adm-main { padding: 28px 20px 70px; }
+  .adm-section { padding: 24px; border-radius: 20px; }
+  .section-title { font-size: 26px; }
+  .section-header { gap: 16px; margin-bottom: 20px; }
+  .btn-save, .btn-cancel { padding: 12px; font-size: 13px; }
+}
 </style>

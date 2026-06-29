@@ -222,4 +222,33 @@ onMounted(async () => {
 
 .empty-tipe   { font: 500 13px/1 'Plus Jakarta Sans'; color: #C9C2B6; padding: 16px 0 8px; }
 .empty-global { font: 500 14px/1.5 'Plus Jakarta Sans'; color: #9A9389; padding: 48px 0; text-align: center; }
+
+@media (max-width: 767px) {
+  .adm-main { padding: 16px 12px 50px; }
+  .adm-section { padding: 14px; border-radius: 14px; }
+  .section-header { gap: 10px; margin-bottom: 14px; }
+  .section-title { font-size: 18px; margin: 4px 0 0; }
+  .section-eyebrow { font-size: 11px; letter-spacing: .08em; }
+  .info-note { font-size: 12px; padding: 8px 12px; }
+  .tipe-block { margin-bottom: 20px; }
+  .tipe-header { padding: 8px 12px; margin-bottom: 8px; }
+  .tipe-nama { font-size: 13px; }
+  .tipe-count { font-size: 11px; }
+  .kat-table th { padding: 9px 10px; font-size: 10px; }
+  .kat-table td { padding: 9px 10px; }
+  .kat-nama-cell { font-size: 12px; min-width: 100px; }
+  .juara-nama { font-size: 12px; }
+  .jenis-badge { font-size: 9px; padding: 2px 6px; }
+  .babak-badge { font-size: 10px; padding: 2px 6px; }
+  .empty-tipe { font-size: 12px; }
+  .empty-global { padding: 28px 0; font-size: 12px; }
+  .loading-text { font-size: 12px; }
+}
+
+@media (min-width: 768px) {
+  .adm-main { padding: 28px 20px 70px; }
+  .adm-section { padding: 24px; border-radius: 20px; }
+  .section-title { font-size: 26px; }
+  .section-header { gap: 16px; margin-bottom: 24px; }
+}
 </style>

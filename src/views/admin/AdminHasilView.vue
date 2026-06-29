@@ -301,4 +301,37 @@ onMounted(() => {
 .search-input   { width:220px; }
 .btn-export     { padding:10px 18px; border:1.5px solid #2E7D52; border-radius:10px; background:#fff; color:#2E7D52; font:700 13px/1 'Plus Jakarta Sans'; cursor:pointer; white-space:nowrap; transition:background .15s; }
 .btn-export:hover { background:#E7F2EB; }
+
+@media (max-width: 767px) {
+  .adm-main { padding: 16px 12px 50px; }
+  .adm-section { padding: 14px; border-radius: 14px; }
+  .section-header { gap: 10px; margin-bottom: 12px; }
+  .section-title { font-size: 18px; margin: 4px 0 0; }
+  .section-eyebrow { font-size: 11px; letter-spacing: .08em; }
+  .inline-form { padding: 12px; gap: 10px; grid-template-columns: 1fr; }
+  .form-label { font-size: 12px; margin-bottom: 6px; }
+  .btn-save, .btn-cancel { padding: 9px 12px; font-size: 12px; border-radius: 8px; }
+  .btn-del { padding: 5px 10px; font-size: 11px; border-radius: 6px; }
+  .empty { padding: 18px 12px; font-size: 12px; }
+  .header-actions { gap: 8px; width: 100%; }
+  .search-input { width: 100%; min-width: 0; }
+  .btn-export { padding: 8px 12px; font-size: 12px; }
+  .item-card { padding: 12px; }
+  .item-nama { font-size: 13px; }
+  .item-tgl { font-size: 11px; }
+  .card-grid { gap: 10px; }
+  .item-actions { gap: 6px; }
+  .podium-nama { font-size: 12px; }
+  .skor-tim { font-size: 12px; }
+  .skor-val { font-size: 16px; padding: 4px 8px; }
+  .juara-display { font-size: 11px; padding: 6px 10px; }
+}
+
+@media (min-width: 768px) {
+  .adm-main { padding: 28px 20px 70px; }
+  .adm-section { padding: 24px; border-radius: 20px; }
+  .section-title { font-size: 26px; }
+  .section-header { gap: 16px; margin-bottom: 20px; }
+  .btn-save, .btn-cancel { padding: 12px; font-size: 13px; }
+}
 </style>

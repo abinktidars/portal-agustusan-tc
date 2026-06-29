@@ -5,7 +5,7 @@
       <div class="flag-bar"></div>
 
       <div class="admin-topbar">
-        <div class="admin-brand">
+        <div class="admin-brand" @click="goToDashboard">
           <div class="admin-icon">⚙️</div>
           <div>
             <div class="admin-sub">Admin Panel</div>
@@ -55,18 +55,23 @@
 
 <script setup>
 import { computed, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/useAuth'
+const router = useRouter()
 const authStore = useAuthStore()
 const isNavOpen = ref(false)
 
+const goToDashboard = () => {
+  router.push({ name: 'admin-dashboard' })
+}
+
 const ALL_NAV = [
   { name: 'admin-dashboard',  icon: '📊', label: 'Dashboard',      roles: ['admin', 'panitia'] },
-  { name: 'admin-tipe',       icon: '🎨', label: 'Tipe Lomba',     roles: ['admin'] },
-  { name: 'admin-kategori',   icon: '🏷️', label: 'Kategori Lomba', roles: ['admin'] },
+  { name: 'admin-lomba',      icon: '🏅', label: 'Lomba',          roles: ['admin'] },
   { name: 'admin-jadwal',     icon: '📅', label: 'Jadwal',         roles: ['admin', 'panitia'] },
+  { name: 'admin-hasil',      icon: '🏆', label: 'Hasil',          roles: ['admin', 'panitia'] },
   { name: 'admin-klasemen',   icon: '🥇', label: 'Klasemen',       roles: ['admin', 'panitia'] },
   { name: 'admin-registrasi', icon: '📋', label: 'Registrasi',     roles: ['admin', 'panitia'] },
-  { name: 'admin-koridor',    icon: '🏘️', label: 'Koridor',        roles: ['admin'] },
   { name: 'admin-lokasi',     icon: '📍', label: 'Lokasi',         roles: ['admin'] },
   { name: 'admin-users',      icon: '👥', label: 'Data User',      roles: ['admin'] },
 ]
@@ -89,7 +94,7 @@ const navItems = computed(() =>
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
 }
 .admin-brand {
-  display: flex; align-items: center; gap: 12px;
+  display: flex; align-items: center; gap: 12px; cursor: pointer;
 }
 .admin-actions {
   display: flex;

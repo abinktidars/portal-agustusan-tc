@@ -21,7 +21,7 @@
             <option v-for="k in kategoriStore.list" :key="k.id" :value="k.nama">{{ k.nama }} ({{ k.tipe || k.jenis }})</option>
           </select>
           <p v-if="!kategoriStore.list.length" class="hint">
-            Belum ada kategori. <RouterLink :to="{ name:'admin-kategori' }">Tambah di sini →</RouterLink>
+            Belum ada kategori. <RouterLink :to="{ name:'admin-lomba' }">Tambah di sini →</RouterLink>
           </p>
         </div>
 
@@ -150,9 +150,22 @@
               :class="j.hasilPertandingan ? 'btn-hasil-edit' : 'btn-hasil-catat'">
               {{ j.hasilPertandingan ? 'Edit Hasil' : 'Catat Hasil' }}
             </button>
-            <template v-if="!j.hasilPertandingan">
+            <!-- Tombol hapus hasil (jika ada hasil) -->
+            <template v-if="j.hasilPertandingan">
+              <template v-if="deleteResultId === j.id">
+                <button @click="confirmHapusHasil(j)" class="btn-confirm-del">Ya, Hapus</button>
+                <button @click="cancelHapusHasil" class="btn-cancel-sm">Batal</button>
+              </template>
+              <button v-else @click="requestHapusHasil(j)" class="btn-del">Hapus Hasil</button>
+            </template>
+            <!-- Tombol edit & hapus jadwal (jika tidak ada hasil) -->
+            <template v-else>
               <button @click="openForm(j)" class="btn-edit">Edit</button>
-              <button @click="hapus(j)" class="btn-del">Hapus</button>
+              <template v-if="deleteId === j.id">
+                <button @click="confirmHapus(j)" class="btn-confirm-del">Ya, Hapus</button>
+                <button @click="cancelHapus" class="btn-cancel-sm">Batal</button>
+              </template>
+              <button v-else @click="requestHapus(j)" class="btn-del">Hapus</button>
             </template>
           </div>
         </div>
@@ -427,7 +440,10 @@ function resetForm() {
 }
 
 async function submit() {
-  if (!form.cabang || !form.tglMulai || !form.jamMulai || !form.jamSelesai) return
+  if (!form.cabang || !form.tglMulai || !form.jamMulai || !form.jamSelesai) {
+    alert('Kategori, Tanggal, dan Jam wajib diisi!')
+    return
+  }
   const { editId, lokasiId, lokasiManual, ...rest } = form
 
   let finalLokasiId = lokasiId === '__manual__' ? null : (lokasiId || null)
@@ -453,14 +469,23 @@ async function submit() {
     tgl:      form.tglMulai,
     tglSelesai: form.tglSelesai || form.tglMulai,
     lokasiId: finalLokasiId,
-    lokasi:   '',
   }
   editId ? await jadwalStore.update(editId, payload) : await jadwalStore.add(payload)
   resetForm()
 }
 
-function hapus(j) {
-  if (confirm(`Hapus jadwal "${j.cabang}" (${j.tgl})?`)) jadwalStore.remove(j.id)
+const deleteId = ref(null)
+const deleteResultId = ref(null)
+
+function requestHapus(j) { deleteId.value = j.id }
+function cancelHapus()    { deleteId.value = null }
+function confirmHapus(j)  { deleteId.value = null; jadwalStore.remove(j.id) }
+
+function requestHapusHasil(j) { deleteResultId.value = j.id }
+function cancelHapusHasil()    { deleteResultId.value = null }
+function confirmHapusHasil(j) {
+  deleteResultId.value = null
+  jadwalStore.update(j.id, { hasilPertandingan: null, pemenang: null, juara1: null, juara2: null, juara3: null })
 }
 
 function openHasilForm(j) {
@@ -618,6 +643,8 @@ onMounted(() => { tipeStore.fetch(); kategoriStore.fetch(); jadwalStore.fetch();
 .btn-hasil-catat:hover { background:#2E7D52; color:#fff; }
 .btn-hasil-edit        { padding:6px 12px; border:1.5px solid #C0871C; border-radius:8px; background:#FBF1DD; color:#C0871C; font:700 12px/1 'Plus Jakarta Sans'; cursor:pointer; transition:background .15s; white-space:nowrap; }
 .btn-hasil-edit:hover  { background:#C0871C; color:#fff; }
+.btn-confirm-del { padding:6px 10px; border:1px solid #CE1126; border-radius:7px; background:#CE1126; color:#fff; font:700 11px/1 'Plus Jakarta Sans'; cursor:pointer; white-space:nowrap; }
+.btn-cancel-sm   { padding:6px 10px; border:1px solid #E2DCD2; border-radius:7px; background:#fff; color:#5A534B; font:700 11px/1 'Plus Jakarta Sans'; cursor:pointer; white-space:nowrap; }
 
 .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.45); display:flex; align-items:center; justify-content:center; z-index:999; padding:20px; }
 .modal-box     { background:#fff; border-radius:18px; padding:28px; width:100%; max-width:460px; box-shadow:0 8px 40px rgba(0,0,0,.22); }
@@ -636,4 +663,42 @@ onMounted(() => { tipeStore.fetch(); kategoriStore.fetch(); jadwalStore.fetch();
 .score-vs-sep   { font:800 18px/1 Archivo; color:#9A9389; flex-shrink:0; }
 .auto-pemenang  { background:#DCF0E5; border-radius:10px; padding:10px 14px; font:600 14px/1.4 'Plus Jakarta Sans'; color:#1E5C38; text-align:center; }
 .auto-seri      { background:#FBF1DD; color:#7A5C00; }
+
+@media (max-width: 767px) {
+  .adm-main { padding: 16px 12px 50px; }
+  .adm-section { padding: 14px; border-radius: 14px; }
+  .section-header { gap: 10px; margin-bottom: 12px; }
+  .section-title { font-size: 18px; margin: 4px 0 0; }
+  .section-eyebrow { font-size: 11px; letter-spacing: .08em; }
+  .inline-form { padding: 12px; gap: 10px; grid-template-columns: 1fr; }
+  .form-label { font-size: 12px; margin-bottom: 6px; }
+  .btn-save, .btn-cancel { padding: 9px 12px; font-size: 12px; border-radius: 8px; }
+  .btn-edit, .btn-del { padding: 5px 10px; font-size: 11px; border-radius: 6px; }
+  .empty { padding: 18px 12px; font-size: 12px; }
+  .header-actions { gap: 8px; width: 100%; }
+  .search-input { width: 100%; min-width: 0; }
+  .btn-export { padding: 8px 12px; font-size: 12px; }
+  .filter-bar { gap: 8px; margin-bottom: 14px; }
+  .filter-count { font-size: 12px; }
+  .peserta-vs-row { flex-direction: column; gap: 6px; }
+  .vs-sep { text-align: center; }
+  .peserta-chip { padding: 6px 10px; font-size: 12px; }
+  .item-card { padding: 12px; }
+  .item-nama { font-size: 13px; }
+  .item-meta, .item-sub { font-size: 12px; }
+  .card-grid { gap: 10px; }
+  .item-actions { gap: 6px; }
+  .modal-box { padding: 16px 14px; border-radius: 14px; }
+  .modal-title { font-size: 16px; }
+  .modal-sub { font-size: 12px; margin-bottom: 14px; }
+  .score-input { font-size: 22px; padding: 10px 6px; }
+}
+
+@media (min-width: 768px) {
+  .adm-main { padding: 28px 20px 70px; }
+  .adm-section { padding: 24px; border-radius: 20px; }
+  .section-title { font-size: 26px; }
+  .section-header { gap: 16px; margin-bottom: 20px; }
+  .btn-save, .btn-cancel { padding: 12px; font-size: 13px; }
+}
 </style>

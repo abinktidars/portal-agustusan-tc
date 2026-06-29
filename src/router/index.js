@@ -24,10 +24,12 @@ const router = createRouter({
       children: [
         { path: '',           name: 'admin-login',      component: () => import('@/views/admin/AdminLoginView.vue') },
         { path: 'dashboard',  name: 'admin-dashboard',  component: () => import('@/views/admin/AdminDashboardView.vue'),  meta: { requiresAuth: true, roles: ['admin', 'panitia'] } },
+        { path: 'lomba',      name: 'admin-lomba',      component: () => import('@/views/admin/AdminLombaView.vue'),      meta: { requiresAuth: true, roles: ['admin'] } },
         { path: 'tipe',       name: 'admin-tipe',       component: () => import('@/views/admin/AdminTipeView.vue'),       meta: { requiresAuth: true, roles: ['admin'] } },
         { path: 'kategori',   name: 'admin-kategori',   component: () => import('@/views/admin/AdminKategoriView.vue'),   meta: { requiresAuth: true, roles: ['admin'] } },
         { path: 'jadwal',     name: 'admin-jadwal',     component: () => import('@/views/admin/AdminJadwalView.vue'),     meta: { requiresAuth: true, roles: ['admin', 'panitia'] } },
-        { path: 'hasil',      name: 'admin-hasil',      component: () => import('@/views/admin/AdminHasilView.vue'),      meta: { requiresAuth: true, roles: ['admin', 'panitia'] } },
+        { path: 'hasil',      name: 'admin-hasil',      component: () => import('@/views/admin/AdminHasilPertandinganView.vue'), meta: { requiresAuth: true, roles: ['admin', 'panitia'] } },
+        { path: 'hasil-manual', name: 'admin-hasil-manual', component: () => import('@/views/admin/AdminHasilView.vue'),  meta: { requiresAuth: true, roles: ['admin', 'panitia'] } },
         { path: 'klasemen',   name: 'admin-klasemen',   component: () => import('@/views/admin/AdminKlasemenView.vue'),   meta: { requiresAuth: true, roles: ['admin', 'panitia'] } },
         { path: 'registrasi', name: 'admin-registrasi', component: () => import('@/views/admin/AdminRegistrasiView.vue'), meta: { requiresAuth: true, roles: ['admin', 'panitia'] } },
         { path: 'koridor',    name: 'admin-koridor',    component: () => import('@/views/admin/AdminKoridorView.vue'),    meta: { requiresAuth: true, roles: ['admin'] } },
