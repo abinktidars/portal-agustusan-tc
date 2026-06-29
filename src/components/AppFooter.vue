@@ -16,7 +16,7 @@
         <div class="footer-heading">Kontak Panitia</div>
         <div class="footer-text">
           <p>
-            Andi (Ketua): +62 815-7410-9182<br>
+            Andie Hans (Ketua): +62 815-7410-9182<br>
             Ashwin (Wakil): +62 819-0303-1903<br>
           </p>
         </div>
