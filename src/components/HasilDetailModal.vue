@@ -41,6 +41,10 @@
                     <div v-if="isMenang(hasil.timB)" class="vs-winner-tag">🏆 Menang</div>
                   </div>
                 </div>
+                <div v-if="formatSetDetails(hasil.setDetails)" class="set-detail-card">
+                  <div class="set-detail-label">Detail Set</div>
+                  <div class="set-detail-val">{{ formatSetDetails(hasil.setDetails) }}</div>
+                </div>
                 <div v-if="hasil.juara" class="pemenang-card">
                   <div class="pemenang-crown">🏆</div>
                   <div class="pemenang-info">
@@ -145,6 +149,12 @@ const katBg    = (k) => ({ Olahraga: '#FBEAEC', Tradisional: '#FBF1DD', 'E-Sport
 
 const isMenang = (tim) => props.hasil?.juara && tim && props.hasil.juara === tim
 
+function formatSetDetails(setDetails) {
+  if (!setDetails) return ''
+  if (Array.isArray(setDetails)) return setDetails.filter(Boolean).join(', ')
+  return String(setDetails)
+}
+
 const juaraPodium = computed(() => {
   if (!props.hasil) return []
   const h = props.hasil
@@ -229,6 +239,24 @@ const juaraPodium = computed(() => {
 }
 .vs-label { font: 700 11px/1 'Plus Jakarta Sans'; letter-spacing: .12em; color: #9A9389; }
 .skor-big { font: 900 26px/1 Archivo; color: #CE1126; min-width: 64px; text-align: center; }
+
+.set-detail-card {
+  background: #FBF1DD;
+  border: 1px solid #F3D7A2;
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+.set-detail-label {
+  font: 700 11px/1 'Plus Jakarta Sans';
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: #9A7A2E;
+  margin-bottom: 6px;
+}
+.set-detail-val {
+  font: 700 14px/1.35 'Plus Jakarta Sans';
+  color: #1A1613;
+}
 
 /* Hasil bebas */
 .hasil-card {

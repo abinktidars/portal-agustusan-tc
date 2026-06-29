@@ -45,6 +45,7 @@
               <span class="skor-num">{{ h.skor || '—' }}</span>
               <span :class="{ 'tim-menang': h.juara === h.timB }">{{ h.timB || '—' }}</span>
             </div>
+            <div v-if="formatSetDetails(h.setDetails)" class="set-detail-display">Set: {{ formatSetDetails(h.setDetails) }}</div>
             <div v-if="h.juara" class="juara-display">🏆 {{ h.juara }}</div>
           </template>
 
@@ -94,6 +95,7 @@ function mapJadwalToHasil(j) {
     juara1: j.juara1 || '',
     juara2: j.juara2 || '',
     juara3: j.juara3 || '',
+    setDetails: j.setDetails || null,
     timA: '',
     timB: '',
     skor: '',
@@ -145,6 +147,12 @@ watch(search, () => {
   page.value = 1
 })
 
+function formatSetDetails(setDetails) {
+  if (!setDetails) return ''
+  if (Array.isArray(setDetails)) return setDetails.filter(Boolean).join(', ')
+  return String(setDetails)
+}
+
 function doExport() {
   exportToExcel(
     filtered.value,
@@ -167,7 +175,7 @@ function cancelHapus()    { deleteId.value = null }
 function confirmHapus(h) {
   deleteId.value = null
   if (h._source === 'jadwal') {
-    jadwalStore.update(h.id, { hasilPertandingan: null, pemenang: null, juara1: null, juara2: null, juara3: null })
+    jadwalStore.update(h.id, { hasilPertandingan: null, pemenang: null, juara1: null, juara2: null, juara3: null, setDetails: null })
   } else {
     hasilStore.remove(h.id)
   }
@@ -208,6 +216,7 @@ function buildHasilRecord(j) {
     juara1: j.juara1 || '',
     juara2: j.juara2 || '',
     juara3: j.juara3 || '',
+    setDetails: j.setDetails || null,
     timA: '',
     timB: '',
     skor: '',
@@ -455,6 +464,15 @@ onMounted(() => {
   padding: 8px 10px;
   text-align: center;
   font: 700 12px/1.35 'Plus Jakarta Sans';
+}
+
+.set-detail-display {
+  background: #fbf1dd;
+  color: #7a5c00;
+  border-radius: 8px;
+  padding: 7px 10px;
+  text-align: center;
+  font: 700 11px/1.35 'Plus Jakarta Sans';
 }
 
 .item-actions {

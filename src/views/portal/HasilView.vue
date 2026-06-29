@@ -4,7 +4,16 @@
     <h2 class="page-title">Skor &amp; Pemenang</h2>
 
     <div class="hasil-grid">
-      <div v-for="h in hasilStore.list" :key="h.id" class="hasil-card">
+      <div
+        v-for="h in hasilStore.list"
+        :key="h.id"
+        class="hasil-card"
+        role="button"
+        tabindex="0"
+        @click="openDetail(h)"
+        @keydown.enter.prevent="openDetail(h)"
+        @keydown.space.prevent="openDetail(h)"
+      >
         <div class="hasil-header">
           <div style="display:flex;align-items:center;gap:8px;min-width:0;">
             <span class="dot" :style="{ background: katColor(h.kat) }"></span>
@@ -24,6 +33,7 @@
             <div class="skor">{{ h.skor }}</div>
             <div class="tim tim-right">{{ h.timB }}</div>
           </div>
+          <div v-if="formatSetDetails(h.setDetails)" class="set-row-detail">Set: {{ formatSetDetails(h.setDetails) }}</div>
           <div class="juara-row">
             <span class="juara-label">🏆 Juara:</span>
             <span class="juara-nama">{{ h.juara }}</span>
@@ -53,14 +63,50 @@
         Belum ada hasil pertandingan yang dicatat.
       </div>
     </div>
+
+    <div v-if="selectedHasil" class="modal-overlay" @click.self="closeDetail">
+      <div class="modal-box">
+        <div class="modal-head">
+          <div>
+            <div class="modal-title">Detail Hasil Pertandingan</div>
+            <div class="modal-sub">{{ selectedHasil.cabang }} · {{ selectedHasil.tgl }}</div>
+          </div>
+          <button class="btn-close" type="button" @click="closeDetail">Tutup</button>
+        </div>
+
+        <template v-if="!isPerorangan(selectedHasil)">
+          <div class="modal-score-row">
+            <div class="modal-team">{{ selectedHasil.timA || '-' }}</div>
+            <div class="modal-score">{{ selectedHasil.skor || '-' }}</div>
+            <div class="modal-team modal-team-right">{{ selectedHasil.timB || '-' }}</div>
+          </div>
+          <div v-if="formatSetDetails(selectedHasil.setDetails)" class="modal-set-detail">
+            Set: {{ formatSetDetails(selectedHasil.setDetails) }}
+          </div>
+          <div class="modal-juara">
+            <span class="modal-label">Pemenang</span>
+            <strong>{{ selectedHasil.juara || '-' }}</strong>
+          </div>
+        </template>
+
+        <template v-else>
+          <div class="modal-podium">
+            <div v-if="selectedHasil.juara1" class="modal-podium-item">🥇 {{ selectedHasil.juara1 }}</div>
+            <div v-if="selectedHasil.juara2" class="modal-podium-item">🥈 {{ selectedHasil.juara2 }}</div>
+            <div v-if="selectedHasil.juara3" class="modal-podium-item">🥉 {{ selectedHasil.juara3 }}</div>
+          </div>
+        </template>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useHasilStore } from '@/stores/useHasil'
 
 const hasilStore = useHasilStore()
+const selectedHasil = ref(null)
 
 const katColor = (k) => ({
   Olahraga:    '#CE1126',
@@ -71,6 +117,12 @@ const katColor = (k) => ({
 
 function isPerorangan(h) {
   return !!(h.juara1 || h.juara2 || h.juara3) || h.jenis === 'Perorangan'
+}
+
+function formatSetDetails(setDetails) {
+  if (!setDetails) return ''
+  if (Array.isArray(setDetails)) return setDetails.filter(Boolean).join(', ')
+  return String(setDetails)
 }
 
 function getHari(tanggal) {
@@ -92,6 +144,14 @@ function getHari(tanggal) {
   return new Intl.DateTimeFormat('id-ID', { weekday: 'long' }).format(date)
 }
 
+function openDetail(hasil) {
+  selectedHasil.value = hasil
+}
+
+function closeDetail() {
+  selectedHasil.value = null
+}
+
 onMounted(() => hasilStore.fetch())
 </script>
 
@@ -103,7 +163,11 @@ onMounted(() => hasilStore.fetch())
 .hasil-card {
   background: #fff; border: 1.5px solid #F0D3D7; border-radius: 8px; padding: 22px;
   display: flex; flex-direction: column; gap: 0;
+  cursor: pointer;
+  transition: box-shadow .15s ease, border-color .15s ease;
 }
+.hasil-card:hover { border-color: #CE1126; box-shadow: 0 8px 24px rgba(206, 17, 38, .12); }
+.hasil-card:focus-visible { outline: 3px solid rgba(206, 17, 38, .25); outline-offset: 2px; }
 .hasil-header {
   display: flex; align-items: flex-start; justify-content: space-between;
   gap: 10px; flex-wrap: wrap; margin-bottom: 16px;
@@ -129,6 +193,15 @@ onMounted(() => hasilStore.fetch())
   flex-shrink: 0; font: 900 26px/1 Archivo; color: #CE1126;
   background: #FBEAEC; border-radius: 12px; padding: 8px 14px; white-space: nowrap;
 }
+.set-row-detail {
+  margin: 0 0 10px;
+  text-align: center;
+  font: 700 12px/1.3 'Plus Jakarta Sans';
+  color: #7A5C00;
+  background: #FBF1DD;
+  border-radius: 10px;
+  padding: 7px 10px;
+}
 .juara-row {
   display: flex; align-items: center; flex-wrap: wrap; gap: 4px;
   background: #E7F2EB; border-radius: 10px; padding: 9px 12px;
@@ -151,6 +224,112 @@ onMounted(() => hasilStore.fetch())
   font: 500 14px/1.5 'Plus Jakarta Sans'; color: #9A9389;
 }
 
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, .5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 50;
+}
+
+.modal-box {
+  width: 100%;
+  max-width: 560px;
+  background: #fff;
+  border-radius: 14px;
+  border: 1px solid #E2DCD2;
+  padding: 18px;
+}
+
+.modal-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.modal-title { font: 800 20px/1.1 Archivo; color: #1A1613; }
+.modal-sub { margin-top: 6px; font: 600 12px/1 'Plus Jakarta Sans'; color: #7A7368; }
+
+.btn-close {
+  border: 1px solid #E2DCD2;
+  background: #fff;
+  color: #5A534B;
+  border-radius: 8px;
+  padding: 7px 12px;
+  font: 700 12px/1 'Plus Jakarta Sans';
+  cursor: pointer;
+}
+
+.modal-score-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.modal-team {
+  flex: 1;
+  text-align: right;
+  font: 700 15px/1.3 'Plus Jakarta Sans';
+  color: #5A534B;
+  min-width: 0;
+  word-break: break-word;
+}
+
+.modal-team-right { text-align: left; }
+
+.modal-score {
+  flex-shrink: 0;
+  font: 900 28px/1 Archivo;
+  color: #CE1126;
+  background: #FBEAEC;
+  border-radius: 12px;
+  padding: 9px 14px;
+}
+
+.modal-set-detail {
+  margin-top: 12px;
+  text-align: center;
+  font: 700 13px/1.35 'Plus Jakarta Sans';
+  color: #7A5C00;
+  background: #FBF1DD;
+  border-radius: 10px;
+  padding: 8px 10px;
+}
+
+.modal-juara {
+  margin-top: 12px;
+  background: #E7F2EB;
+  color: #1A1613;
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.modal-label { font: 700 12px/1 'Plus Jakarta Sans'; color: #2E7D52; }
+
+.modal-podium {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: #FAF8F3;
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.modal-podium-item {
+  font: 700 14px/1.4 'Plus Jakarta Sans';
+  color: #1A1613;
+}
+
 @media(max-width:767px) {
   .hasil-grid { grid-template-columns: 1fr; }
   .page-title { font-size: 26px; }
@@ -161,5 +340,9 @@ onMounted(() => hasilStore.fetch())
   .podium-icon{ font-size: 18px; }
   .podium-nama{ font-size: 13px; }
   .hari       { font-size: 10px; padding: 3px 7px; }
+  .modal-box { padding: 14px; }
+  .modal-title { font-size: 18px; }
+  .modal-score { font-size: 22px; }
+  .modal-team { font-size: 13px; }
 }
 </style>

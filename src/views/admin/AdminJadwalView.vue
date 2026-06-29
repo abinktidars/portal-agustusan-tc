@@ -144,6 +144,7 @@
             🏆 <strong>{{ j.hasilPertandingan }}</strong>
             <span v-if="j.pemenang"> · Pemenang: <strong>{{ j.pemenang }}</strong></span>
           </div>
+          <div v-if="formatSetDetails(j.setDetails)" class="item-set-detail">Set: {{ formatSetDetails(j.setDetails) }}</div>
           <div class="item-actions" @click.stop>
             <button v-if="j.status === 'Berlangsung' || j.status === 'Selesai'"
               @click="openHasilForm(j)"
@@ -190,22 +191,47 @@
 
       <!-- Mode VS: input skor per tim -->
       <template v-if="isVsMatch">
-        <label class="form-label">Skor <span class="req">*</span></label>
-        <div class="score-row">
-          <div class="score-team">
-            <div class="score-team-name">{{ teamNames[0] }}</div>
-            <input v-model="hasilForm.skorA" type="number" min="0" class="score-input" placeholder="0" />
+        <div v-if="isVoliMatch" class="set-section">
+          <div class="set-title">Detail Set (maks 3 set)</div>
+          <div v-for="(setItem, idx) in visibleVoliSets" :key="idx" class="set-row">
+            <div class="set-label">Set {{ idx + 1 }}</div>
+            <input v-model="setItem.skorA" type="number" min="0" class="set-input" :placeholder="teamNames[0] || 'Tim A'" />
+            <span class="set-sep">-</span>
+            <input v-model="setItem.skorB" type="number" min="0" class="set-input" :placeholder="teamNames[1] || 'Tim B'" />
           </div>
-          <div class="score-vs-sep">VS</div>
-          <div class="score-team">
-            <div class="score-team-name">{{ teamNames[1] }}</div>
-            <input v-model="hasilForm.skorB" type="number" min="0" class="score-input" placeholder="0" />
+          <div class="set-hint">Isi set 1 dan 2 dulu. Set 3 otomatis muncul jika skor set sementara 1-1.</div>
+          <label class="form-label" style="margin-top:12px;">Skor Akhir (Otomatis)</label>
+          <div class="score-row score-row-readonly">
+            <div class="score-team">
+              <div class="score-team-name">{{ teamNames[0] }}</div>
+              <input :value="voliMatchScore.menangA" type="number" min="0" class="score-input" placeholder="0" readonly />
+            </div>
+            <div class="score-vs-sep">VS</div>
+            <div class="score-team">
+              <div class="score-team-name">{{ teamNames[1] }}</div>
+              <input :value="voliMatchScore.menangB" type="number" min="0" class="score-input" placeholder="0" readonly />
+            </div>
           </div>
+          <div v-if="voliSetSummary" class="set-summary">Set: {{ voliSetSummary }}</div>
         </div>
+        <template v-else>
+          <label class="form-label">Skor Akhir <span class="req">*</span></label>
+          <div class="score-row">
+            <div class="score-team">
+              <div class="score-team-name">{{ teamNames[0] }}</div>
+              <input v-model="hasilForm.skorA" type="number" min="0" class="score-input" placeholder="0" />
+            </div>
+            <div class="score-vs-sep">VS</div>
+            <div class="score-team">
+              <div class="score-team-name">{{ teamNames[1] }}</div>
+              <input v-model="hasilForm.skorB" type="number" min="0" class="score-input" placeholder="0" />
+            </div>
+          </div>
+        </template>
         <div v-if="autoPemenang" class="auto-pemenang">
           🏆 Pemenang: <strong>{{ autoPemenang }}</strong>
         </div>
-        <div v-else-if="hasilForm.skorA !== '' && hasilForm.skorB !== ''" class="auto-pemenang auto-seri">
+        <div v-else-if="(isVoliMatch && parsedVoliSets.length === 3) || (!isVoliMatch && hasilForm.skorA !== '' && hasilForm.skorB !== '')" class="auto-pemenang auto-seri">
           🤝 Seri / Draw
         </div>
       </template>
@@ -248,7 +274,7 @@
 
       <div style="display:flex;gap:10px;margin-top:18px;">
         <button @click="saveHasil" class="btn-save"
-          :disabled="isVsMatch ? (hasilForm.skorA === '' || hasilForm.skorB === '') : isPerorangan ? !hasilForm.juara1.trim() : !hasilForm.hasilPertandingan">
+          :disabled="!canSaveHasil">
           Simpan Hasil
         </button>
         <button @click="closeHasilModal" class="btn-cancel">Batal</button>
@@ -285,20 +311,115 @@ const selectedJadwal = ref(null)
 
 const showHasilModal = ref(false)
 const hasilTarget    = ref(null)
-const hasilForm      = reactive({ hasilPertandingan: '', pemenang: '', skorA: '', skorB: '', juara1: '', juara2: '', juara3: '' })
+const hasilForm      = reactive({
+  hasilPertandingan: '',
+  pemenang: '',
+  skorA: '',
+  skorB: '',
+  juara1: '',
+  juara2: '',
+  juara3: '',
+  sets: [
+    { skorA: '', skorB: '' },
+    { skorA: '', skorB: '' },
+    { skorA: '', skorB: '' },
+  ],
+})
 
 const isVsMatch   = computed(() => !!hasilTarget.value?.peserta?.includes(' vs '))
 const isPerorangan = computed(() => hasilTarget.value?.jenis === 'Perorangan' && !isVsMatch.value)
+const isVoliMatch = computed(() => {
+  const cabang = (hasilTarget.value?.cabang || '').toLowerCase()
+  return isVsMatch.value && (cabang.includes('voli') || cabang.includes('volly'))
+})
 const teamNames   = computed(() => {
   if (!isVsMatch.value) return []
   return hasilTarget.value.peserta.split(' vs ').map(s => s.trim())
 })
+const parsedVoliSets = computed(() =>
+  hasilForm.sets
+    .map((s, idx) => ({
+      idx,
+      aRaw: String(s.skorA).trim(),
+      bRaw: String(s.skorB).trim(),
+    }))
+    .filter(s => s.aRaw !== '' && s.bRaw !== '')
+    .map(s => ({ idx: s.idx, a: Number(s.aRaw), b: Number(s.bRaw) }))
+    .filter(s => Number.isFinite(s.a) && Number.isFinite(s.b))
+)
+const hasPartialVoliSet = computed(() =>
+  hasilForm.sets.some(s => {
+    const a = String(s.skorA).trim()
+    const b = String(s.skorB).trim()
+    return (a && !b) || (!a && b)
+  })
+)
+const firstTwoVoliSets = computed(() => parsedVoliSets.value.filter(s => s.idx < 2))
+const firstTwoVoliComplete = computed(() => firstTwoVoliSets.value.length === 2)
+const firstTwoVoliScore = computed(() => {
+  let menangA = 0
+  let menangB = 0
+  for (const setItem of firstTwoVoliSets.value) {
+    if (setItem.a > setItem.b) menangA++
+    if (setItem.b > setItem.a) menangB++
+  }
+  return { menangA, menangB }
+})
+const voliNeedsThirdSet = computed(() =>
+  isVoliMatch.value
+  && firstTwoVoliComplete.value
+  && firstTwoVoliScore.value.menangA === 1
+  && firstTwoVoliScore.value.menangB === 1
+)
+const visibleVoliSets = computed(() =>
+  (voliNeedsThirdSet.value ? hasilForm.sets.slice(0, 3) : hasilForm.sets.slice(0, 2))
+)
+const hasPartialVisibleVoliSet = computed(() =>
+  visibleVoliSets.value.some(s => {
+    const a = String(s.skorA).trim()
+    const b = String(s.skorB).trim()
+    return (a && !b) || (!a && b)
+  })
+)
+const voliSetSummary = computed(() => parsedVoliSets.value.map(s => `${s.a}-${s.b}`).join(', '))
+const voliMatchScore = computed(() => {
+  let menangA = 0
+  let menangB = 0
+  for (const setItem of parsedVoliSets.value) {
+    if (setItem.a > setItem.b) menangA++
+    if (setItem.b > setItem.a) menangB++
+  }
+  return { menangA, menangB }
+})
 const autoPemenang = computed(() => {
-  if (!isVsMatch.value || hasilForm.skorA === '' || hasilForm.skorB === '') return ''
+  if (!isVsMatch.value) return ''
+  if (isVoliMatch.value && parsedVoliSets.value.length) {
+    if (voliMatchScore.value.menangA > voliMatchScore.value.menangB) return teamNames.value[0]
+    if (voliMatchScore.value.menangB > voliMatchScore.value.menangA) return teamNames.value[1]
+    return ''
+  }
+  if (hasilForm.skorA === '' || hasilForm.skorB === '') return ''
   const a = Number(hasilForm.skorA), b = Number(hasilForm.skorB)
   if (a > b) return teamNames.value[0]
   if (b > a) return teamNames.value[1]
   return ''
+})
+const canSaveHasil = computed(() => {
+  if (isVsMatch.value) {
+    if (!isVoliMatch.value) return hasilForm.skorA !== '' && hasilForm.skorB !== ''
+    if (!firstTwoVoliComplete.value) return false
+    if (hasPartialVisibleVoliSet.value) return false
+    if (voliNeedsThirdSet.value) return parsedVoliSets.value.length === 3
+    return true
+  }
+  if (isPerorangan.value) return !!hasilForm.juara1.trim()
+  return !!hasilForm.hasilPertandingan.trim()
+})
+watch(voliNeedsThirdSet, (needsThird) => {
+  if (!needsThird) {
+    hasilForm.sets[2].skorA = ''
+    hasilForm.sets[2].skorB = ''
+  }
 })
 const pesertaSuggestions = computed(() => {
   const p = hasilTarget.value?.peserta
@@ -485,7 +606,40 @@ function requestHapusHasil(j) { deleteResultId.value = j.id }
 function cancelHapusHasil()    { deleteResultId.value = null }
 function confirmHapusHasil(j) {
   deleteResultId.value = null
-  jadwalStore.update(j.id, { hasilPertandingan: null, pemenang: null, juara1: null, juara2: null, juara3: null })
+  jadwalStore.update(j.id, {
+    hasilPertandingan: null,
+    pemenang: null,
+    juara1: null,
+    juara2: null,
+    juara3: null,
+    setDetails: null,
+  })
+}
+
+function resetVoliSets() {
+  hasilForm.sets.forEach(setItem => {
+    setItem.skorA = ''
+    setItem.skorB = ''
+  })
+}
+
+function formatSetDetails(setDetails) {
+  if (!setDetails) return ''
+  if (Array.isArray(setDetails)) return setDetails.filter(Boolean).join(', ')
+  return String(setDetails)
+}
+
+function hydrateVoliSets(setDetails) {
+  resetVoliSets()
+  const values = Array.isArray(setDetails)
+    ? setDetails
+    : (setDetails ? String(setDetails).split(',') : [])
+  values.slice(0, 3).forEach((v, idx) => {
+    const m = String(v).match(/(\d+)\s*[–\-]\s*(\d+)/)
+    if (!m) return
+    hasilForm.sets[idx].skorA = m[1]
+    hasilForm.sets[idx].skorB = m[2]
+  })
 }
 
 function openHasilForm(j) {
@@ -497,9 +651,13 @@ function openHasilForm(j) {
   hasilForm.juara1              = j.juara1    || ''
   hasilForm.juara2              = j.juara2    || ''
   hasilForm.juara3              = j.juara3    || ''
+  resetVoliSets()
   if (j.peserta?.includes(' vs ') && j.hasilPertandingan) {
     const m = j.hasilPertandingan.match(/(\d+)\s*[–\-]\s*(\d+)/)
     if (m) { hasilForm.skorA = m[1]; hasilForm.skorB = m[2] }
+    if ((j.cabang || '').toLowerCase().includes('voli') || (j.cabang || '').toLowerCase().includes('volly')) {
+      hydrateVoliSets(j.setDetails)
+    }
   } else if (j.jenis !== 'Perorangan') {
     hasilForm.hasilPertandingan = j.hasilPertandingan || ''
   }
@@ -516,6 +674,7 @@ function closeHasilModal() {
   hasilForm.juara1            = ''
   hasilForm.juara2            = ''
   hasilForm.juara3            = ''
+  resetVoliSets()
 }
 
 async function saveHasil() {
@@ -535,8 +694,35 @@ async function saveHasil() {
   }
 
   if (isVsMatch.value) {
-    if (hasilForm.skorA === '' || hasilForm.skorB === '') return
-    const a = Number(hasilForm.skorA), b = Number(hasilForm.skorB)
+    let a = 0
+    let b = 0
+    let setDetails = []
+
+    if (isVoliMatch.value) {
+      if (hasPartialVisibleVoliSet.value) {
+        alert('Detail set voli harus diisi lengkap (kiri-kanan).')
+        return
+      }
+      if (!firstTwoVoliComplete.value) {
+        alert('Isi set 1 dan set 2 untuk pertandingan voli.')
+        return
+      }
+      if (voliNeedsThirdSet.value && parsedVoliSets.value.length !== 3) {
+        alert('Karena skor set sementara 1-1, isi set 3 untuk pertandingan voli.')
+        return
+      }
+      a = voliMatchScore.value.menangA
+      b = voliMatchScore.value.menangB
+      setDetails = parsedVoliSets.value.map(s => `${s.a}-${s.b}`)
+      hasilForm.skorA = String(a)
+      hasilForm.skorB = String(b)
+      extra = { ...extra, setDetails }
+    } else {
+      if (hasilForm.skorA === '' || hasilForm.skorB === '') return
+      a = Number(hasilForm.skorA)
+      b = Number(hasilForm.skorB)
+    }
+
     hasil    = `${teamNames.value[0]} ${a} – ${b} ${teamNames.value[1]}`
     pemenang = autoPemenang.value || 'Seri'
     Object.assign(hasilRecord, {
@@ -544,6 +730,7 @@ async function saveHasil() {
       timB:  teamNames.value[1],
       skor:  `${a} – ${b}`,
       juara: pemenang,
+      ...(extra.setDetails ? { setDetails: extra.setDetails } : {}),
     })
   } else if (isPerorangan.value) {
     if (!hasilForm.juara1.trim()) return
@@ -572,7 +759,7 @@ async function saveHasil() {
   }
 
   // Simpan ke jadwal (perilaku lama, tetap dipertahankan)
-  await jadwalStore.update(j.id, { hasilPertandingan: hasil, pemenang, ...extra })
+  await jadwalStore.update(j.id, { hasilPertandingan: hasil, pemenang, setDetails: null, ...extra })
 
   // Simpan ke koleksi hasil (baru)
   await hasilStore.fetch()  // refresh dulu agar list terkini
@@ -639,6 +826,7 @@ onMounted(() => { tipeStore.fetch(); kategoriStore.fetch(); jadwalStore.fetch();
 .btn-export:hover { background:#E7F2EB; }
 
 .item-hasil { font:600 12px/1.4 'Plus Jakarta Sans'; color:#1E5C38; background:#DCF0E5; border-radius:8px; padding:7px 10px; margin-bottom:6px; }
+.item-set-detail { font:600 11px/1.35 'Plus Jakarta Sans'; color:#7A5C00; background:#FBF1DD; border-radius:8px; padding:6px 10px; margin-bottom:6px; }
 .btn-hasil-catat       { padding:6px 12px; border:1.5px solid #2E7D52; border-radius:8px; background:#E7F2EB; color:#2E7D52; font:700 12px/1 'Plus Jakarta Sans'; cursor:pointer; transition:background .15s; white-space:nowrap; }
 .btn-hasil-catat:hover { background:#2E7D52; color:#fff; }
 .btn-hasil-edit        { padding:6px 12px; border:1.5px solid #C0871C; border-radius:8px; background:#FBF1DD; color:#C0871C; font:700 12px/1 'Plus Jakarta Sans'; cursor:pointer; transition:background .15s; white-space:nowrap; }
@@ -660,9 +848,21 @@ onMounted(() => { tipeStore.fetch(); kategoriStore.fetch(); jadwalStore.fetch();
 .score-team-name{ font:700 12px/1.4 'Plus Jakarta Sans'; color:#5A534B; margin-bottom:8px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .score-input    { width:100%; text-align:center; font:800 32px/1 Archivo; color:#CE1126; border:2px solid #E2DCD2; border-radius:12px; padding:12px 8px; background:#FAF8F3; outline:none; }
 .score-input:focus { border-color:#CE1126; background:#fff; }
+.score-row-readonly .score-input { background:#F1ECE2; color:#7A7368; border-color:#D8D0C1; cursor:not-allowed; }
+.score-row-readonly .score-input:focus { background:#F1ECE2; border-color:#D8D0C1; }
 .score-vs-sep   { font:800 18px/1 Archivo; color:#9A9389; flex-shrink:0; }
 .auto-pemenang  { background:#DCF0E5; border-radius:10px; padding:10px 14px; font:600 14px/1.4 'Plus Jakarta Sans'; color:#1E5C38; text-align:center; }
 .auto-seri      { background:#FBF1DD; color:#7A5C00; }
+.set-section    { margin:-2px 0 12px; background:#FAF8F3; border:1px solid #E2DCD2; border-radius:12px; padding:10px; }
+.set-title      { font:700 12px/1 'Plus Jakarta Sans'; color:#1A1613; margin-bottom:8px; }
+.set-row        { display:grid; grid-template-columns:52px 1fr auto 1fr; align-items:center; gap:8px; margin-bottom:8px; }
+.set-row:last-child { margin-bottom:0; }
+.set-label      { font:700 11px/1 'Plus Jakarta Sans'; color:#7A7368; letter-spacing:.04em; text-transform:uppercase; }
+.set-input      { width:100%; text-align:center; font:700 14px/1 'Plus Jakarta Sans'; color:#1A1613; border:1.5px solid #E2DCD2; border-radius:8px; padding:8px 6px; background:#fff; outline:none; }
+.set-input:focus{ border-color:#CE1126; }
+.set-sep        { font:800 14px/1 Archivo; color:#9A9389; }
+.set-hint       { font:500 11px/1.35 'Plus Jakarta Sans'; color:#9A9389; margin-top:4px; }
+.set-summary    { margin-top:6px; font:700 11px/1.35 'Plus Jakarta Sans'; color:#7A5C00; background:#FBF1DD; border-radius:8px; padding:6px 8px; }
 
 @media (max-width: 767px) {
   .adm-main { padding: 16px 12px 50px; }
