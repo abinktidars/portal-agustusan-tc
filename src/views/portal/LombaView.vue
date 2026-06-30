@@ -39,9 +39,10 @@
         <div class="lomba-nama">{{ kat.nama }}</div>
         <div class="lomba-desc">{{ kat.deskripsi || 'Deskripsi lomba belum diisi.' }}</div>
 
-        <button class="ketentuan-btn" @click="openModal(kat)">
-          Lihat Ketentuan &amp; Persyaratan
-        </button>
+        <div class="card-actions">
+          <button class="daftar-btn" @click="goRegistrasi(kat)">Daftar</button>
+          <button class="ketentuan-btn" @click="openModal(kat)">Lihat Ketentuan</button>
+        </div>
       </div>
     </div>
 
@@ -94,11 +95,13 @@
 
 <script setup>
 import { ref, computed, onMounted, nextTick } from 'vue'
+import { useRouter } from 'vue-router'
 import { useKategoriStore } from '@/stores/useKategori'
 import { useTipeStore }     from '@/stores/useTipe'
 
 const kategoriStore = useKategoriStore()
 const tipeStore     = useTipeStore()
+const router        = useRouter()
 
 const activeTipe  = ref('semua')
 const selected    = ref(null)
@@ -148,6 +151,11 @@ async function selectTipe(id, i) {
 function openModal(kat)  { selected.value = kat }
 function closeModal()    { selected.value = null }
 
+function goRegistrasi(kat) {
+  const cabang = kat?.nama || ''
+  router.push({ name: 'registrasi', query: cabang ? { cabang } : {} })
+}
+
 onMounted(async () => {
   await Promise.all([kategoriStore.fetch(), tipeStore.fetch()])
   await nextTick()
@@ -186,9 +194,16 @@ onMounted(async () => {
 .jenis-p    { background: #FBF1DD; color: #C0871C; }
 .lomba-nama { font: 800 19px/1.15 Archivo; color: #1A1613; }
 .lomba-desc { font: 500 13px/1.5 'Plus Jakarta Sans'; color: #7A7368; margin-top: 8px; flex: 1; }
+.card-actions { margin-top: 18px; display: flex; gap: 8px; }
+.daftar-btn {
+  flex: 1; padding: 9px 10px; border: 1.5px solid #CE1126; border-radius: 8px;
+  background: #CE1126; color: #fff; font: 700 12px/1 'Plus Jakarta Sans';
+  cursor: pointer; transition: all .15s;
+}
+.daftar-btn:hover { filter: brightness(.95); }
 .ketentuan-btn {
-  margin-top: 18px; padding: 11px; border: 1.5px solid #CE1126; border-radius: 10px;
-  background: transparent; color: #CE1126; font: 700 13px/1 'Plus Jakarta Sans';
+  flex: 1; padding: 9px 10px; border: 1.5px solid #CE1126; border-radius: 8px;
+  background: transparent; color: #CE1126; font: 700 12px/1 'Plus Jakarta Sans';
   cursor: pointer; transition: all .15s;
 }
 .ketentuan-btn:hover { background: #CE1126; color: #fff; }
