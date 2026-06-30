@@ -16,56 +16,64 @@
         </div>
         <div class="header-actions">
           <input v-model="search" type="text" class="tcr-input search-input" placeholder="Cari kategori..." />
-          <button class="btn-export" @click="doExport">Export Excel</button>
+          <button class="btn-export" @click="doExport"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>Export Excel</button>
           <button class="tcr-btn-red" @click="openForm()">+ Tambah Kategori</button>
         </div>
       </div>
 
-      <!-- FORM -->
-      <form v-if="showForm" @submit.prevent="submit" class="inline-form">
-        <div class="form-row-4">
-          <div>
-            <label class="form-label">Nama Lomba <span class="req">*</span></label>
-            <input v-model="form.nama" type="text" class="tcr-input" placeholder="cth: Voli Putra" />
+      <!-- Modal Form -->
+      <div v-if="showForm" class="modal-overlay" @click.self="resetForm">
+        <div class="modal-card">
+          <div class="modal-hd">
+            <h3 class="modal-ttl">{{ form.editId ? 'Edit' : 'Tambah' }} Kategori</h3>
+            <button type="button" class="modal-x" @click="resetForm">✕</button>
           </div>
-          <div>
-            <label class="form-label">Tipe <span class="req">*</span></label>
-            <select v-model="form.tipeId" class="tcr-input">
-              <option value="">Pilih tipe...</option>
-              <option v-for="t in tipeStore.list" :key="t.id" :value="t.id">{{ t.nama }}</option>
-            </select>
-          </div>
-          <div>
-            <label class="form-label">Jenis <span class="req">*</span></label>
-            <select v-model="form.jenis" class="tcr-input">
-              <option value="Beregu">Beregu</option>
-              <option value="Perorangan">Perorangan</option>
-            </select>
-          </div>
-          <div>
-            <label class="form-label">Urutan Tampil</label>
-            <input v-model.number="form.urutan" type="number" min="1" class="tcr-input" />
-          </div>
-        </div>
+          <form @submit.prevent="submit" class="modal-bd">
+            <div class="form-row-4">
+              <div>
+                <label class="form-label">Nama Lomba <span class="req">*</span></label>
+                <input v-model="form.nama" type="text" class="tcr-input" placeholder="cth: Voli Putra" />
+              </div>
+              <div>
+                <label class="form-label">Tipe <span class="req">*</span></label>
+                <select v-model="form.tipeId" class="tcr-input">
+                  <option value="">Pilih tipe...</option>
+                  <option v-for="t in tipeStore.list" :key="t.id" :value="t.id">{{ t.nama }}</option>
+                </select>
+              </div>
+              <div>
+                <label class="form-label">Jenis <span class="req">*</span></label>
+                <select v-model="form.jenis" class="tcr-input">
+                  <option value="Beregu">Beregu</option>
+                  <option value="Perorangan">Perorangan</option>
+                </select>
+              </div>
+              <div>
+                <label class="form-label">Urutan Tampil</label>
+                <input v-model.number="form.urutan" type="number" min="1" class="tcr-input" />
+              </div>
+            </div>
 
-        <div class="form-row-full">
-          <label class="form-label">Deskripsi Lomba</label>
-          <textarea v-model="form.deskripsi" class="tcr-input tcr-textarea" rows="3"
-            placeholder="Jelaskan singkat tentang cabang lomba ini..."></textarea>
-        </div>
+            <div class="form-row-full">
+              <label class="form-label">Deskripsi Lomba</label>
+              <textarea v-model="form.deskripsi" class="tcr-input tcr-textarea" rows="3"
+                placeholder="Jelaskan singkat tentang cabang lomba ini..."></textarea>
+            </div>
 
-        <div class="form-row-full">
-          <label class="form-label">Peraturan &amp; Syarat Ketentuan</label>
-          <div class="rules-hint">Gunakan baris baru untuk setiap poin peraturan</div>
-          <textarea v-model="form.peraturan" class="tcr-input tcr-textarea" rows="8"
-            placeholder="1. Peserta wajib hadir 15 menit sebelum pertandingan&#10;2. Setiap tim terdiri dari maksimal 6 orang&#10;3. Pakaian olahraga wajib digunakan&#10;..."></textarea>
-        </div>
+            <div class="form-row-full">
+              <label class="form-label">Peraturan &amp; Syarat Ketentuan</label>
+              <div class="rules-hint">Gunakan baris baru untuk setiap poin peraturan</div>
+              <textarea v-model="form.peraturan" class="tcr-input tcr-textarea" rows="8"
+                placeholder="1. Peserta wajib hadir 15 menit sebelum pertandingan&#10;2. Setiap tim terdiri dari maksimal 6 orang&#10;3. Pakaian olahraga wajib digunakan&#10;..."></textarea>
+            </div>
 
-        <div class="form-row-full form-actions">
-          <button type="submit" class="btn-save">{{ form.editId ? 'Update Kategori' : 'Simpan Kategori' }}</button>
-          <button type="button" class="btn-cancel" @click="resetForm">Batal</button>
+            <div class="form-row-full form-actions">
+              <button type="submit" class="btn-save">{{ form.editId ? 'Update Kategori' : 'Simpan Kategori' }}</button>
+              <button type="button" class="btn-cancel" @click="resetForm">Batal</button>
+            </div>
+          </form>
         </div>
-      </form>
+      </div>
 
       <!-- TABLE -->
       <div class="data-table-wrap">
@@ -83,26 +91,27 @@
           <tbody>
             <template v-for="(k, i) in paginated" :key="k.id">
               <tr class="data-row" :class="{ 'row-expanded': expandedId === k.id }" @click="toggleDetail(k.id)">
-                <td class="td-num">{{ (page-1)*PER_PAGE + i + 1 }}</td>
-                <td>
+                <td class="td-num td-idx">{{ (page-1)*PER_PAGE + i + 1 }}</td>
+                <td class="td-nama">
                   <div style="display:flex;align-items:center;gap:8px;">
                     <span class="dot" :style="{ background: resolveWarna(k) }"></span>
                     <span class="td-bold">{{ k.nama }}</span>
                   </div>
                 </td>
-                <td>
+                <td class="td-tipe">
                   <span class="tipe-badge" :style="{ background: resolveBg(k), color: resolveWarna(k) }">{{ resolveTipe(k) }}</span>
                 </td>
-                <td>
+                <td class="td-jenis">
                   <span class="jenis-badge" :class="k.jenis === 'Beregu' ? 'jenis-beregu' : 'jenis-perorangan'">
                     {{ k.jenis || '—' }}
                   </span>
                 </td>
-                <td class="td-num">{{ k.urutan }}</td>
-                <td>
+                <td class="td-num td-urutan">{{ k.urutan }}</td>
+                <td class="td-aksi">
                   <div class="action-group" @click.stop>
                     <button @click="openForm(k)" class="btn-edit">Edit</button>
                     <button @click="hapus(k)" class="btn-del">Hapus</button>
+                    <span class="chevron" :class="{ open: expandedId === k.id }">›</span>
                   </div>
                 </td>
               </tr>
@@ -259,6 +268,15 @@ onActivated(()  => { tipeStore.fetch() })
 .section-eyebrow { font:700 13px/1 'Plus Jakarta Sans'; letter-spacing:.12em; text-transform:uppercase; color:#2D5B8A; }
 .section-title   { font:800 28px/1.05 Archivo; color:#1A1613; margin:8px 0 0; }
 
+/* modal */
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:1000; display:flex; align-items:center; justify-content:center; padding:16px; }
+.modal-card    { background:#fff; border-radius:20px; width:100%; max-width:600px; max-height:90vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,.25); }
+.modal-hd      { display:flex; align-items:center; justify-content:space-between; padding:20px 24px 0; }
+.modal-ttl     { font:800 18px/1.2 Archivo; color:#1A1613; margin:0; }
+.modal-x       { width:32px; height:32px; border-radius:50%; border:none; background:#F0EBE2; color:#5A534B; font:700 16px/1 Archivo; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.modal-x:hover { background:#E2DCD2; }
+.modal-bd      { padding:20px 24px 24px; display:flex; flex-direction:column; gap:16px; }
+
 /* form */
 .inline-form    { background:#FAF8F3; border:1px solid #E2DCD2; border-radius:16px; padding:22px; margin-bottom:24px; display:flex; flex-direction:column; gap:18px; }
 .form-row-4     { display:grid; grid-template-columns:2fr 1fr 1fr 1fr; gap:16px; }
@@ -307,8 +325,45 @@ onActivated(()  => { tipeStore.fetch() })
 .empty { text-align:center; padding:32px; color:#9A9389; font:500 14px/1 'Plus Jakarta Sans'; }
 
 @media(max-width:767px) {
-  .form-row-4 { grid-template-columns:1fr 1fr; }
-  .action-group { flex-wrap:wrap; }
+  .adm-main { padding: 16px 12px 50px; }
+  .adm-section { padding: 14px; border-radius: 14px; }
+  .section-header { gap: 10px; margin-bottom: 12px; }
+  .section-title { font-size: 18px; margin: 4px 0 0; }
+  .section-eyebrow { font-size: 11px; }
+  .form-row-4 { grid-template-columns: 1fr 1fr; }
+  .action-group { flex-wrap: wrap; }
+  .btn-edit, .btn-del { padding: 5px 10px; font-size: 11px; border-radius: 6px; }
+  .inline-form { padding: 12px; gap: 10px; }
+  .form-label { font-size: 12px; margin-bottom: 6px; }
+  .btn-save, .btn-cancel { padding: 9px 12px; font-size: 12px; border-radius: 8px; }
+
+  /* ── Mobile card layout ── */
+  .data-table-wrap { border: none; background: transparent; overflow: visible; border-radius: 0; }
+  .data-table { display: block; }
+  .data-table thead { display: none; }
+  .data-table tbody { display: flex; flex-direction: column; gap: 8px; }
+  .data-row {
+    display: grid !important;
+    grid-template-columns: 1fr auto;
+    grid-template-areas: "nama tipe" "jenis aksi";
+    column-gap: 10px; row-gap: 6px;
+    background: #fff; border: 1px solid #ECE7DE;
+    border-radius: 14px; padding: 12px; cursor: pointer;
+  }
+  .row-expanded { border-radius: 14px 14px 0 0 !important; border-bottom-color: transparent !important; }
+  .data-row td { padding: 0 !important; border: none !important; background: transparent !important; vertical-align: middle !important; }
+  .td-idx, .td-urutan { display: none !important; }
+  .td-nama { grid-area: nama; align-self: center; }
+  .td-tipe { grid-area: tipe; align-self: center; display: flex; justify-content: flex-end; }
+  .td-jenis { grid-area: jenis; align-self: center; }
+  .td-aksi { grid-area: aksi; align-self: center; display: flex; justify-content: flex-end; }
+  .detail-row { display: block !important; }
+  .detail-row td { display: block !important; padding: 0 !important; border: none !important; }
+  .data-table tbody .detail-row {
+    border: 1px solid #ECE7DE !important; border-top: none !important;
+    border-radius: 0 0 14px 14px; background: #FAF8F3; margin-top: -8px;
+  }
+  .empty { display: block !important; text-align: center !important; padding: 18px 12px !important; font-size: 12px !important; }
 }
 
 /* toast */
@@ -327,8 +382,9 @@ onActivated(()  => { tipeStore.fetch() })
 
 .toast-enter-active, .toast-leave-active { transition: all .25s ease; }
 .toast-enter-from, .toast-leave-to { opacity:0; transform:translateY(12px); }
-.header-actions { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
-.search-input   { width:220px; }
-.btn-export     { padding:10px 18px; border:1.5px solid #2E7D52; border-radius:10px; background:#fff; color:#2E7D52; font:700 13px/1 'Plus Jakarta Sans'; cursor:pointer; white-space:nowrap; transition:background .15s; }
-.btn-export:hover { background:#E7F2EB; }
+.chevron { display:inline-block; font-size:18px; color:#C4BDB2; line-height:1; transition:transform .2s; user-select:none; }
+.chevron.open { transform:rotate(90deg); }
+.detail-actions { display:flex; gap:8px; padding-top:14px; border-top:1px solid #E2DCD2; margin-top:2px; }
+.detail-actions .btn-edit,
+.detail-actions .btn-del { flex:1; padding:10px; text-align:center; font-size:13px; border-radius:10px; }
 </style>

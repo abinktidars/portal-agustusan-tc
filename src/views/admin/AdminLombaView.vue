@@ -21,30 +21,39 @@
         <button class="tcr-btn-red" @click="openTipeForm()">+ Tambah Tipe</button>
       </div>
 
-      <form v-if="showTipeForm" @submit.prevent="submitTipe" class="inline-form form-3">
-        <div>
-          <label class="form-label">Nama Tipe <span class="req">*</span></label>
-          <input v-model="tipeForm.nama" type="text" class="tcr-input" placeholder="cth: Olahraga" />
-        </div>
-        <div>
-          <label class="form-label">Warna <span class="req">*</span></label>
-          <div class="color-field">
-            <input v-model="tipeForm.warna" type="color" class="color-picker" />
-            <input v-model="tipeForm.warna" type="text" class="tcr-input" placeholder="#CE1126" />
+      <!-- Modal Form Tipe -->
+      <div v-if="showTipeForm" class="modal-overlay" @click.self="resetTipeForm">
+        <div class="modal-card">
+          <div class="modal-hd">
+            <h3 class="modal-ttl">{{ tipeForm.editId ? 'Edit' : 'Tambah' }} Tipe</h3>
+            <button type="button" class="modal-x" @click="resetTipeForm">✕</button>
           </div>
+          <form @submit.prevent="submitTipe" class="modal-bd">
+            <div>
+              <label class="form-label">Nama Tipe <span class="req">*</span></label>
+              <input v-model="tipeForm.nama" type="text" class="tcr-input" placeholder="cth: Olahraga" />
+            </div>
+            <div>
+              <label class="form-label">Warna <span class="req">*</span></label>
+              <div class="color-field">
+                <input v-model="tipeForm.warna" type="color" class="color-picker" />
+                <input v-model="tipeForm.warna" type="text" class="tcr-input" placeholder="#CE1126" />
+              </div>
+            </div>
+            <div>
+              <label class="form-label">Urutan</label>
+              <input v-model.number="tipeForm.urutan" type="number" min="1" class="tcr-input" />
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn-save">{{ tipeForm.editId ? 'Update' : 'Simpan' }} Tipe</button>
+              <button type="button" class="btn-cancel" @click="resetTipeForm">Batal</button>
+            </div>
+          </form>
         </div>
-        <div>
-          <label class="form-label">Urutan</label>
-          <input v-model.number="tipeForm.urutan" type="number" min="1" class="tcr-input" />
-        </div>
-        <div class="form-actions">
-          <button type="submit" class="btn-save">{{ tipeForm.editId ? 'Update' : 'Simpan' }} Tipe</button>
-          <button type="button" class="btn-cancel" @click="resetTipeForm">Batal</button>
-        </div>
-      </form>
+      </div>
 
       <div class="data-table-wrap">
-        <table class="data-table">
+        <table class="data-table tipe-table">
           <thead>
             <tr>
               <th style="width: 52px">#</th>
@@ -55,23 +64,39 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(t, i) in tipeStore.list" :key="t.id">
-              <td class="td-num">{{ i + 1 }}</td>
-              <td>
-                <div class="tipe-cell">
-                  <span class="dot" :style="{ background: t.warna }"></span>
-                  <span class="td-bold">{{ t.nama }}</span>
-                </div>
-              </td>
-              <td><code class="color-code">{{ t.warna }}</code></td>
-              <td class="td-num">{{ t.urutan || '-' }}</td>
-              <td>
-                <div class="action-group">
-                  <button class="btn-edit" @click="openTipeForm(t)">Edit</button>
-                  <button class="btn-del" @click="hapusTipe(t)">Hapus</button>
-                </div>
-              </td>
-            </tr>
+            <template v-for="(t, i) in tipeStore.list" :key="t.id">
+              <tr class="data-row" :class="{ 'row-expanded': expandedTipeId === t.id }" @click="toggleTipeDetail(t.id)">
+                <td class="td-num td-idx">{{ i + 1 }}</td>
+                <td class="td-tipe-nama">
+                  <div class="tipe-cell">
+                    <span class="dot" :style="{ background: t.warna }"></span>
+                    <span class="td-bold">{{ t.nama }}</span>
+                  </div>
+                </td>
+                <td class="td-tipe-warna"><code class="color-code">{{ t.warna }}</code></td>
+                <td class="td-num td-tipe-urutan">{{ t.urutan || '-' }}</td>
+                <td class="td-tipe-aksi">
+                  <div class="action-group" @click.stop>
+                    <button class="btn-edit" @click="openTipeForm(t)">Edit</button>
+                    <button class="btn-del" @click="hapusTipe(t)">Hapus</button>
+                    <span class="chevron" :class="{ open: expandedTipeId === t.id }">›</span>
+                  </div>
+                </td>
+              </tr>
+              <tr v-if="expandedTipeId === t.id" class="detail-row">
+                <td colspan="5">
+                  <div class="detail-panel">
+                    <div class="detail-block">
+                      <div class="detail-label">Warna</div>
+                      <div style="display:flex;align-items:center;gap:8px;margin-top:6px;">
+                        <span class="dot" :style="{ background: t.warna }"></span>
+                        <code class="color-code">{{ t.warna }}</code>
+                      </div>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            </template>
             <tr v-if="!tipeStore.list.length">
               <td colspan="5" class="empty">Belum ada tipe lomba.</td>
             </tr>
@@ -89,45 +114,56 @@
         <button class="tcr-btn-red" @click="openKategoriForm()">+ Tambah Lomba</button>
       </div>
 
-      <form v-if="showKategoriForm" @submit.prevent="submitKategori" class="inline-form form-4">
-        <div>
-          <label class="form-label">Nama Lomba <span class="req">*</span></label>
-          <input v-model="kategoriForm.nama" type="text" class="tcr-input" placeholder="cth: Voli Putra" />
+      <!-- Modal Form Lomba -->
+      <div v-if="showKategoriForm" class="modal-overlay" @click.self="resetKategoriForm">
+        <div class="modal-card">
+          <div class="modal-hd">
+            <h3 class="modal-ttl">{{ kategoriForm.editId ? 'Edit' : 'Tambah' }} Lomba</h3>
+            <button type="button" class="modal-x" @click="resetKategoriForm">✕</button>
+          </div>
+          <form @submit.prevent="submitKategori" class="modal-bd">
+            <div class="modal-form-grid">
+              <div>
+                <label class="form-label">Nama Lomba <span class="req">*</span></label>
+                <input v-model="kategoriForm.nama" type="text" class="tcr-input" placeholder="cth: Voli Putra" />
+              </div>
+              <div>
+                <label class="form-label">Tipe <span class="req">*</span></label>
+                <select v-model="kategoriForm.tipeId" class="tcr-input">
+                  <option value="">Pilih tipe...</option>
+                  <option v-for="t in tipeStore.list" :key="t.id" :value="t.id">{{ t.nama }}</option>
+                </select>
+              </div>
+              <div>
+                <label class="form-label">Jenis <span class="req">*</span></label>
+                <select v-model="kategoriForm.jenis" class="tcr-input">
+                  <option value="Beregu">Beregu</option>
+                  <option value="Perorangan">Perorangan</option>
+                </select>
+              </div>
+              <div>
+                <label class="form-label">Urutan</label>
+                <input v-model.number="kategoriForm.urutan" type="number" min="1" class="tcr-input" />
+              </div>
+            </div>
+            <div>
+              <label class="form-label">Deskripsi</label>
+              <textarea v-model="kategoriForm.deskripsi" class="tcr-input tcr-textarea" rows="2"></textarea>
+            </div>
+            <div>
+              <label class="form-label">Peraturan</label>
+              <textarea v-model="kategoriForm.peraturan" class="tcr-input tcr-textarea" rows="4"></textarea>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn-save">{{ kategoriForm.editId ? 'Update' : 'Simpan' }} Lomba</button>
+              <button type="button" class="btn-cancel" @click="resetKategoriForm">Batal</button>
+            </div>
+          </form>
         </div>
-        <div>
-          <label class="form-label">Tipe <span class="req">*</span></label>
-          <select v-model="kategoriForm.tipeId" class="tcr-input">
-            <option value="">Pilih tipe...</option>
-            <option v-for="t in tipeStore.list" :key="t.id" :value="t.id">{{ t.nama }}</option>
-          </select>
-        </div>
-        <div>
-          <label class="form-label">Jenis <span class="req">*</span></label>
-          <select v-model="kategoriForm.jenis" class="tcr-input">
-            <option value="Beregu">Beregu</option>
-            <option value="Perorangan">Perorangan</option>
-          </select>
-        </div>
-        <div>
-          <label class="form-label">Urutan</label>
-          <input v-model.number="kategoriForm.urutan" type="number" min="1" class="tcr-input" />
-        </div>
-        <div class="form-span-all">
-          <label class="form-label">Deskripsi</label>
-          <textarea v-model="kategoriForm.deskripsi" class="tcr-input tcr-textarea" rows="2"></textarea>
-        </div>
-        <div class="form-span-all">
-          <label class="form-label">Peraturan</label>
-          <textarea v-model="kategoriForm.peraturan" class="tcr-input tcr-textarea" rows="4"></textarea>
-        </div>
-        <div class="form-actions form-span-all">
-          <button type="submit" class="btn-save">{{ kategoriForm.editId ? 'Update' : 'Simpan' }} Lomba</button>
-          <button type="button" class="btn-cancel" @click="resetKategoriForm">Batal</button>
-        </div>
-      </form>
+      </div>
 
       <div class="data-table-wrap">
-        <table class="data-table">
+        <table class="data-table kat-table">
           <thead>
             <tr>
               <th style="width: 52px">#</th>
@@ -139,25 +175,41 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(k, i) in kategoriStore.list" :key="k.id">
-              <td class="td-num">{{ i + 1 }}</td>
-              <td class="td-bold">{{ k.nama }}</td>
-              <td>
-                <span class="tipe-badge" :style="{ background: tipeStore.bgById(k.tipeId) || '#F0EBE2', color: tipeStore.warnaById(k.tipeId) || '#5A534B' }">
-                  {{ tipeStore.namaById(k.tipeId) || k.tipe || '-' }}
-                </span>
-              </td>
-              <td>
-                <span class="jenis-badge" :class="k.jenis === 'Beregu' ? 'jenis-beregu' : 'jenis-perorangan'">{{ k.jenis || '-' }}</span>
-              </td>
-              <td class="td-num">{{ k.urutan || '-' }}</td>
-              <td>
-                <div class="action-group">
-                  <button class="btn-edit" @click="openKategoriForm(k)">Edit</button>
-                  <button class="btn-del" @click="hapusKategori(k)">Hapus</button>
-                </div>
-              </td>
-            </tr>
+            <template v-for="(k, i) in kategoriStore.list" :key="k.id">
+              <tr class="data-row" :class="{ 'row-expanded': expandedKatId === k.id }" @click="toggleKatDetail(k.id)">
+                <td class="td-num td-idx">{{ i + 1 }}</td>
+                <td class="td-bold td-kat-nama">{{ k.nama }}</td>
+                <td class="td-kat-tipe">
+                  <span class="tipe-badge" :style="{ background: tipeStore.bgById(k.tipeId) || '#F0EBE2', color: tipeStore.warnaById(k.tipeId) || '#5A534B' }">
+                    {{ tipeStore.namaById(k.tipeId) || k.tipe || '-' }}
+                  </span>
+                </td>
+                <td class="td-kat-jenis">
+                  <span class="jenis-badge" :class="k.jenis === 'Beregu' ? 'jenis-beregu' : 'jenis-perorangan'">{{ k.jenis || '-' }}</span>
+                </td>
+                <td class="td-num td-kat-urutan">{{ k.urutan || '-' }}</td>
+                <td class="td-kat-aksi">
+                  <div class="action-group" @click.stop>
+                    <button class="btn-edit" @click="openKategoriForm(k)">Edit</button>
+                    <button class="btn-del" @click="hapusKategori(k)">Hapus</button>
+                    <span class="chevron" :class="{ open: expandedKatId === k.id }">›</span>
+                  </div>
+                </td>
+              </tr>
+              <tr v-if="expandedKatId === k.id" class="detail-row">
+                <td colspan="6">
+                  <div class="detail-panel">
+                    <div v-if="k.deskripsi" class="detail-block">
+                      <div class="detail-label">Deskripsi</div>
+                      <p class="detail-text">{{ k.deskripsi }}</p>
+                    </div>
+                    <div v-if="!k.deskripsi" class="detail-empty">
+                      Belum ada deskripsi. Klik Edit untuk menambahkan.
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            </template>
             <tr v-if="!kategoriStore.list.length">
               <td colspan="6" class="empty">Belum ada nama lomba.</td>
             </tr>
@@ -189,6 +241,8 @@ function showToast(msg, type = 'success') {
   }, 3000)
 }
 
+const expandedTipeId = ref(null)
+const expandedKatId  = ref(null)
 const showTipeForm = ref(false)
 const tipeForm = reactive({ nama: '', warna: '#CE1126', urutan: 1, editId: null })
 
@@ -204,6 +258,14 @@ function openTipeForm(t = null) {
 function resetTipeForm() {
   showTipeForm.value = false
   Object.assign(tipeForm, { nama: '', warna: '#CE1126', urutan: 1, editId: null })
+}
+
+function toggleTipeDetail(id) {
+  expandedTipeId.value = expandedTipeId.value === id ? null : id
+}
+
+function toggleKatDetail(id) {
+  expandedKatId.value = expandedKatId.value === id ? null : id
 }
 
 async function submitTipe() {
@@ -341,6 +403,14 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:1000; display:flex; align-items:center; justify-content:center; padding:16px; }
+.modal-card    { background:#fff; border-radius:20px; width:100%; max-width:600px; max-height:90vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,.25); }
+.modal-hd      { display:flex; align-items:center; justify-content:space-between; padding:20px 24px 0; }
+.modal-ttl     { font:800 18px/1.2 Archivo; color:#1A1613; margin:0; }
+.modal-x       { width:32px; height:32px; border-radius:50%; border:none; background:#F0EBE2; color:#5A534B; font:700 16px/1 Archivo; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.modal-x:hover { background:#E2DCD2; }
+.modal-bd      { padding:20px 24px 24px; display:flex; flex-direction:column; gap:16px; }
+.modal-form-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; }
 .adm-main {
   max-width: 1180px;
   margin: 0 auto;
@@ -470,15 +540,13 @@ onMounted(() => {
 .data-table-wrap {
   border: 1px solid #ECE7DE;
   border-radius: 12px;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
+  overflow: hidden;
   background: #fff;
 }
 
 .data-table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 480px;
 }
 
 .data-table thead tr {
@@ -505,31 +573,71 @@ onMounted(() => {
   border-bottom: none;
 }
 
+.data-row { cursor: pointer; }
+.data-row:hover td { background: #FAF8F3; }
+.row-expanded td { background: #F0EDE6 !important; }
+.detail-row td { padding: 0 !important; border-bottom: 2px solid #E2DCD2; }
+.detail-panel  { padding: 16px 20px; background: #F7F4EE; display: flex; flex-direction: column; gap: 14px; }
+.detail-block  { }
+.detail-label  { display:block; font: 700 11px/1 'Plus Jakarta Sans'; letter-spacing: .1em; text-transform: uppercase; color: #9A9389; margin-bottom: 8px; }
+.detail-text   { font: 500 13px/1.6 'Plus Jakarta Sans'; color: #1A1613; margin: 0; }
+.detail-empty  { font: 500 13px/1 'Plus Jakarta Sans'; color: #9A9389; font-style: italic; }
+.chevron { display: inline-block; font-size: 18px; color: #C4BDB2; line-height: 1; transition: transform .2s; user-select: none; }
+.chevron.open { transform: rotate(90deg); }
+.detail-actions { display: flex; gap: 8px; padding-top: 14px; border-top: 1px solid #E2DCD2; margin-top: 2px; }
+.detail-actions .btn-edit,
+.detail-actions .btn-del { flex: 1; padding: 10px; text-align: center; font-size: 13px; border-radius: 8px; }
+
 /* Table column widths responsiveness */
 @media (max-width: 639px) {
-  /* Hide Urutan column on mobile (4th column Tipe Lomba table, 5th column Nama Lomba table) */
-  .data-table th:nth-child(4),
-  .data-table td:nth-child(4) {
-    display: none;
+  /* ── Mobile card layout ── */
+  .data-table-wrap { border: none; background: transparent; overflow: visible; border-radius: 0; }
+  .data-table { display: block; }
+  .data-table thead { display: none; }
+  .data-table tbody { display: flex; flex-direction: column; gap: 8px; }
+
+  /* Tipe table card */
+  .tipe-table .data-row {
+    display: grid !important;
+    grid-template-columns: 1fr auto;
+    grid-template-areas: "tipe-nama tipe-warna" ". tipe-aksi";
+    column-gap: 10px; row-gap: 4px;
+    background: #fff; border: 1px solid #ECE7DE;
+    border-radius: 12px; padding: 10px; cursor: pointer;
   }
-  
-  /* Reduce width on mobile - Tipe Lomba table */
-  .data-table th[style*="width: 140px"] {
-    width: 70px !important;
+  .tipe-table .row-expanded { border-radius: 12px 12px 0 0 !important; border-bottom-color: transparent !important; }
+  .tipe-table .data-row td { padding: 0 !important; border: none !important; background: transparent !important; vertical-align: middle !important; }
+  .td-idx, .td-tipe-urutan { display: none !important; }
+  .td-tipe-nama  { grid-area: tipe-nama; align-self: center; }
+  .td-tipe-warna { grid-area: tipe-warna; align-self: center; display: flex; justify-content: flex-end; }
+  .td-tipe-aksi  { grid-area: tipe-aksi; align-self: center; display: flex; justify-content: flex-end; align-items: center; }
+
+  /* Kategori/Lomba table card */
+  .kat-table .data-row {
+    display: grid !important;
+    grid-template-columns: 1fr auto;
+    grid-template-areas: "kat-nama kat-tipe" "kat-jenis kat-aksi";
+    column-gap: 10px; row-gap: 4px;
+    background: #fff; border: 1px solid #ECE7DE;
+    border-radius: 12px; padding: 10px; cursor: pointer;
   }
-  
-  .data-table th[style*="width: 90px"] {
-    width: 70px !important;
+  .kat-table .row-expanded { border-radius: 12px 12px 0 0 !important; border-bottom-color: transparent !important; }
+  .kat-table .data-row td { padding: 0 !important; border: none !important; background: transparent !important; vertical-align: middle !important; }
+  .td-kat-urutan { display: none !important; }
+  .td-kat-nama  { grid-area: kat-nama; align-self: center; }
+  .td-kat-tipe  { grid-area: kat-tipe; align-self: center; display: flex; justify-content: flex-end; }
+  .td-kat-jenis { grid-area: kat-jenis; align-self: center; }
+  .td-kat-aksi  { grid-area: kat-aksi; align-self: center; display: flex; justify-content: flex-end; align-items: center; }
+
+  /* Detail rows */
+  .detail-row { display: block !important; }
+  .detail-row td { display: block !important; padding: 0 !important; border: none !important; }
+  .data-table tbody .detail-row {
+    border: 1px solid #ECE7DE !important; border-top: none !important;
+    border-radius: 0 0 12px 12px; background: #FAF8F3; margin-top: -8px;
   }
-  
-  /* Reduce width on mobile - Nama Lomba table */
-  .data-table th[style*="width: 160px"] {
-    width: 70px !important;
-  }
-  
-  .data-table th[style*="width: 120px"] {
-    width: 70px !important;
-  }
+
+  .empty { display: block !important; text-align: center !important; padding: 14px !important; font-size: 12px !important; }
 }
 
 @media (min-width: 640px) and (max-width: 1023px) {
@@ -537,7 +645,7 @@ onMounted(() => {
   .data-table th[style*="width: 160px"] {
     width: 120px !important;
   }
-  
+
   .data-table th[style*="width: 120px"] {
     width: 100px !important;
   }
@@ -608,7 +716,8 @@ onMounted(() => {
 .action-group {
   display: flex;
   gap: 4px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  align-items: center;
 }
 
 .btn-edit,

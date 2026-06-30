@@ -8,78 +8,89 @@
         </div>
         <div class="header-actions">
           <input v-model="search" type="text" class="tcr-input search-input" placeholder="Cari hasil..." />
-          <button class="btn-export" @click="doExport">Export Excel</button>
+          <button class="btn-export" @click="doExport"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>Export Excel</button>
           <button class="tcr-btn-red" style="background:#2E7D52;box-shadow:0 6px 16px rgba(46,125,82,.25);" @click="openForm()">+ Tambah Hasil</button>
         </div>
       </div>
 
-      <form v-if="showForm" @submit.prevent="submit" class="inline-form">
-        <!-- Cabang -->
-        <div style="grid-column:1/-1;">
-          <label class="form-label">Kategori Lomba <span class="req">*</span></label>
-          <select v-model="form.cabang" @change="onCabangChange" class="tcr-input">
-            <option value="">Pilih kategori...</option>
-            <option v-for="k in kategoriStore.list" :key="k.id" :value="k.nama">
-              {{ k.nama }}
-              <template v-if="k.jenis"> — {{ k.jenis }}</template>
-            </option>
-          </select>
+      <!-- Modal Form Hasil -->
+      <div v-if="showForm" class="modal-overlay" @click.self="resetForm">
+        <div class="modal-card">
+          <div class="modal-hd">
+            <h3 class="modal-ttl">Tambah Hasil Pertandingan</h3>
+            <button type="button" class="modal-x" @click="resetForm">✕</button>
+          </div>
+          <form @submit.prevent="submit" class="modal-bd">
+            <!-- Cabang -->
+            <div>
+              <label class="form-label">Kategori Lomba <span class="req">*</span></label>
+              <select v-model="form.cabang" @change="onCabangChange" class="tcr-input">
+                <option value="">Pilih kategori...</option>
+                <option v-for="k in kategoriStore.list" :key="k.id" :value="k.nama">
+                  {{ k.nama }}
+                  <template v-if="k.jenis"> — {{ k.jenis }}</template>
+                </option>
+              </select>
+            </div>
+
+            <!-- Jenis indicator -->
+            <div v-if="form.cabang">
+              <div class="jenis-indicator" :class="isPerorangan ? 'ind-perorangan' : 'ind-beregu'">
+                {{ isPerorangan ? '👤 Kompetisi Perorangan — isi juara 1, 2, 3' : '🤝 Kompetisi Beregu — isi Tim A vs Tim B' }}
+              </div>
+            </div>
+
+            <!-- Tanggal -->
+            <div>
+              <label class="form-label">Tanggal <span class="req">*</span></label>
+              <input v-model="form.tgl" type="date" class="tcr-input" />
+            </div>
+
+            <!-- ─── BEREGU fields ─── -->
+            <template v-if="!isPerorangan">
+              <div class="modal-form-grid">
+                <div>
+                  <label class="form-label">Tim A <span class="req">*</span></label>
+                  <input v-model="form.timA" type="text" class="tcr-input" placeholder="Blok A / nama regu" />
+                </div>
+                <div>
+                  <label class="form-label">Tim B <span class="req">*</span></label>
+                  <input v-model="form.timB" type="text" class="tcr-input" placeholder="Blok B / nama regu" />
+                </div>
+                <div>
+                  <label class="form-label">Skor <span class="req">*</span></label>
+                  <input v-model="form.skor" type="text" class="tcr-input" placeholder="2 — 1" />
+                </div>
+                <div>
+                  <label class="form-label">Juara <span class="req">*</span></label>
+                  <input v-model="form.juara" type="text" class="tcr-input" placeholder="Nama pemenang / blok" />
+                </div>
+              </div>
+            </template>
+
+            <!-- ─── PERORANGAN fields ─── -->
+            <template v-else>
+              <div>
+                <label class="form-label">🥇 Juara 1 <span class="req">*</span></label>
+                <input v-model="form.juara1" type="text" class="tcr-input" placeholder="Nama peserta / blok" />
+              </div>
+              <div>
+                <label class="form-label">🥈 Juara 2</label>
+                <input v-model="form.juara2" type="text" class="tcr-input" placeholder="Nama peserta / blok" />
+              </div>
+              <div>
+                <label class="form-label">🥉 Juara 3</label>
+                <input v-model="form.juara3" type="text" class="tcr-input" placeholder="Nama peserta / blok" />
+              </div>
+            </template>
+
+            <div style="display:flex;gap:12px;">
+              <button type="submit" class="btn-save">Simpan Hasil</button>
+              <button type="button" class="btn-cancel" @click="resetForm">Batal</button>
+            </div>
+          </form>
         </div>
-
-        <!-- Jenis indicator -->
-        <div v-if="form.cabang" style="grid-column:1/-1;">
-          <div class="jenis-indicator" :class="isPerorangan ? 'ind-perorangan' : 'ind-beregu'">
-            {{ isPerorangan ? '👤 Kompetisi Perorangan — isi juara 1, 2, 3' : '🤝 Kompetisi Beregu — isi Tim A vs Tim B' }}
-          </div>
-        </div>
-
-        <!-- Tanggal -->
-        <div>
-          <label class="form-label">Tanggal <span class="req">*</span></label>
-          <input v-model="form.tgl" type="date" class="tcr-input" />
-        </div>
-
-        <!-- ─── BEREGU fields ─── -->
-        <template v-if="!isPerorangan">
-          <div>
-            <label class="form-label">Tim A <span class="req">*</span></label>
-            <input v-model="form.timA" type="text" class="tcr-input" placeholder="Blok A / nama regu" />
-          </div>
-          <div>
-            <label class="form-label">Tim B <span class="req">*</span></label>
-            <input v-model="form.timB" type="text" class="tcr-input" placeholder="Blok B / nama regu" />
-          </div>
-          <div>
-            <label class="form-label">Skor <span class="req">*</span></label>
-            <input v-model="form.skor" type="text" class="tcr-input" placeholder="2 — 1" />
-          </div>
-          <div>
-            <label class="form-label">Juara <span class="req">*</span></label>
-            <input v-model="form.juara" type="text" class="tcr-input" placeholder="Nama pemenang / blok" />
-          </div>
-        </template>
-
-        <!-- ─── PERORANGAN fields ─── -->
-        <template v-else>
-          <div>
-            <label class="form-label">🥇 Juara 1 <span class="req">*</span></label>
-            <input v-model="form.juara1" type="text" class="tcr-input" placeholder="Nama peserta / blok" />
-          </div>
-          <div>
-            <label class="form-label">🥈 Juara 2</label>
-            <input v-model="form.juara2" type="text" class="tcr-input" placeholder="Nama peserta / blok" />
-          </div>
-          <div>
-            <label class="form-label">🥉 Juara 3</label>
-            <input v-model="form.juara3" type="text" class="tcr-input" placeholder="Nama peserta / blok" />
-          </div>
-        </template>
-
-        <div style="grid-column:1/-1;display:flex;gap:12px;">
-          <button type="submit" class="btn-save">Simpan Hasil</button>
-          <button type="button" class="btn-cancel" @click="resetForm">Batal</button>
-        </div>
-      </form>
+      </div>
 
       <div class="card-grid">
         <div v-for="h in paginated" :key="h.id" class="item-card">
@@ -249,6 +260,14 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:1000; display:flex; align-items:center; justify-content:center; padding:16px; }
+.modal-card    { background:#fff; border-radius:20px; width:100%; max-width:600px; max-height:90vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,.25); }
+.modal-hd      { display:flex; align-items:center; justify-content:space-between; padding:20px 24px 0; }
+.modal-ttl     { font:800 18px/1.2 Archivo; color:#1A1613; margin:0; }
+.modal-x       { width:32px; height:32px; border-radius:50%; border:none; background:#F0EBE2; color:#5A534B; font:700 16px/1 Archivo; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.modal-x:hover { background:#E2DCD2; }
+.modal-bd      { padding:20px 24px 24px; display:flex; flex-direction:column; gap:16px; }
+.modal-form-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; }
 .adm-main    { max-width:1180px; margin:0 auto; padding:34px 22px 70px; }
 .adm-section { background:#fff; border:1px solid #ECE7DE; border-radius:20px; padding:28px; }
 .section-header { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:24px; flex-wrap:wrap; }
@@ -297,11 +316,6 @@ onMounted(() => {
 .item-actions { display:flex; gap:8px; margin-top:auto; }
 .btn-del { padding:6px 14px; border:1px solid #FBEAEC; border-radius:8px; background:#FBEAEC; color:#CE1126; font:600 12px/1 'Plus Jakarta Sans'; cursor:pointer; }
 .empty   { text-align:center; padding:32px; color:#9A9389; font:500 14px/1 'Plus Jakarta Sans'; }
-.header-actions { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
-.search-input   { width:220px; }
-.btn-export     { padding:10px 18px; border:1.5px solid #2E7D52; border-radius:10px; background:#fff; color:#2E7D52; font:700 13px/1 'Plus Jakarta Sans'; cursor:pointer; white-space:nowrap; transition:background .15s; }
-.btn-export:hover { background:#E7F2EB; }
-
 @media (max-width: 767px) {
   .adm-main { padding: 16px 12px 50px; }
   .adm-section { padding: 14px; border-radius: 14px; }
@@ -313,9 +327,6 @@ onMounted(() => {
   .btn-save, .btn-cancel { padding: 9px 12px; font-size: 12px; border-radius: 8px; }
   .btn-del { padding: 5px 10px; font-size: 11px; border-radius: 6px; }
   .empty { padding: 18px 12px; font-size: 12px; }
-  .header-actions { gap: 8px; width: 100%; }
-  .search-input { width: 100%; min-width: 0; }
-  .btn-export { padding: 8px 12px; font-size: 12px; }
   .item-card { padding: 12px; }
   .item-nama { font-size: 13px; }
   .item-tgl { font-size: 11px; }

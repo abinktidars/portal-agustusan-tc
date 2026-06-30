@@ -8,111 +8,123 @@
         </div>
         <div class="header-actions">
           <input v-model="search" type="text" class="tcr-input search-input" placeholder="Cari jadwal..." />
-          <button class="btn-export" @click="doExport">Export Excel</button>
+          <button class="btn-export" @click="doExport"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>Export Excel</button>
           <button class="tcr-btn-red" @click="openForm()">+ Tambah Jadwal</button>
         </div>
       </div>
 
-      <form v-if="showForm" @submit.prevent="submit" class="inline-form">
-        <div style="grid-column:1/-1;">
-          <label class="form-label">Kategori Lomba <span class="req">*</span></label>
-          <select v-model="form.cabang" @change="onCabangChange" class="tcr-input">
-            <option value="">Pilih kategori lomba...</option>
-            <option v-for="k in kategoriStore.list" :key="k.id" :value="k.nama">{{ k.nama }} ({{ k.tipe || k.jenis }})</option>
-          </select>
-          <p v-if="!kategoriStore.list.length" class="hint">
-            Belum ada kategori. <RouterLink :to="{ name:'admin-lomba' }">Tambah di sini →</RouterLink>
-          </p>
-        </div>
-
-        <div>
-          <label class="form-label">Tanggal Mulai <span class="req">*</span></label>
-          <input v-model="form.tglMulai" type="date" class="tcr-input" />
-        </div>
-        <div>
-          <label class="form-label">Tanggal Selesai <span class="req">*</span></label>
-          <input v-model="form.tglSelesai" type="date" class="tcr-input" :min="form.tglMulai" />
-        </div>
-        <div>
-          <label class="form-label">Jam Mulai <span class="req">*</span></label>
-          <input v-model="form.jamMulai" type="time" class="tcr-input" />
-        </div>
-        <div>
-          <label class="form-label">Jam Selesai <span class="req">*</span></label>
-          <input v-model="form.jamSelesai" type="time" class="tcr-input" />
-        </div>
-        <div>
-          <label class="form-label">Babak</label>
-          <input v-model="form.babak" list="babak-opts" type="text" class="tcr-input"
-            placeholder="cth: Penyisihan, Semifinal, Final" />
-          <datalist id="babak-opts">
-            <option value="Penyisihan" />
-            <option value="Babak Grup" />
-            <option value="Perempat Final" />
-            <option value="Semifinal" />
-            <option value="Final" />
-            <option value="Grand Final" />
-            <option value="Puncak Acara" />
-          </datalist>
-        </div>
-
-        <!-- Peserta Picker (smart) -->
-        <div style="grid-column:1/-1;">
-          <label class="form-label">Peserta</label>
-
-          <!-- Beregu: Tim A vs Tim B -->
-          <template v-if="form.jenis === 'Beregu' && registrasiForCabang.length">
-            <div class="peserta-vs-row">
-              <select v-model="selectedTimA" class="tcr-input" @change="buildPeserta">
-                <option value="">Tim A — pilih dari pendaftar...</option>
-                <option v-for="r in registrasiForCabang" :key="r.id" :value="r.id">{{ r.label }}</option>
+      <!-- Modal Form Jadwal -->
+      <div v-if="showForm" class="form-modal-overlay" @click.self="resetForm">
+        <div class="form-modal-card">
+          <div class="modal-hd">
+            <h3 class="modal-ttl">{{ form.editId ? 'Edit' : 'Tambah' }} Jadwal</h3>
+            <button type="button" class="modal-x" @click="resetForm">✕</button>
+          </div>
+          <form @submit.prevent="submit" class="modal-bd">
+            <div>
+              <label class="form-label">Kategori Lomba <span class="req">*</span></label>
+              <select v-model="form.cabang" @change="onCabangChange" class="tcr-input">
+                <option value="">Pilih kategori lomba...</option>
+                <option v-for="k in kategoriStore.list" :key="k.id" :value="k.nama">{{ k.nama }} ({{ k.tipe || k.jenis }})</option>
               </select>
-              <span class="vs-sep">VS</span>
-              <select v-model="selectedTimB" class="tcr-input" @change="buildPeserta">
-                <option value="">Tim B — pilih dari pendaftar...</option>
-                <option v-for="r in registrasiForCabang" :key="r.id" :value="r.id">{{ r.label }}</option>
+              <p v-if="!kategoriStore.list.length" class="hint">
+                Belum ada kategori. <RouterLink :to="{ name:'admin-lomba' }">Tambah di sini →</RouterLink>
+              </p>
+            </div>
+
+            <div class="modal-form-grid">
+              <div>
+                <label class="form-label">Tanggal Mulai <span class="req">*</span></label>
+                <input v-model="form.tglMulai" type="date" class="tcr-input" />
+              </div>
+              <div>
+                <label class="form-label">Tanggal Selesai <span class="req">*</span></label>
+                <input v-model="form.tglSelesai" type="date" class="tcr-input" :min="form.tglMulai" />
+              </div>
+              <div>
+                <label class="form-label">Jam Mulai <span class="req">*</span></label>
+                <input v-model="form.jamMulai" type="time" class="tcr-input" />
+              </div>
+              <div>
+                <label class="form-label">Jam Selesai <span class="req">*</span></label>
+                <input v-model="form.jamSelesai" type="time" class="tcr-input" />
+              </div>
+            </div>
+
+            <div>
+              <label class="form-label">Babak</label>
+              <input v-model="form.babak" list="babak-opts" type="text" class="tcr-input"
+                placeholder="cth: Penyisihan, Semifinal, Final" />
+              <datalist id="babak-opts">
+                <option value="Penyisihan" />
+                <option value="Babak Grup" />
+                <option value="Perempat Final" />
+                <option value="Semifinal" />
+                <option value="Final" />
+                <option value="Grand Final" />
+                <option value="Puncak Acara" />
+              </datalist>
+            </div>
+
+            <!-- Peserta Picker (smart) -->
+            <div>
+              <label class="form-label">Peserta</label>
+
+              <!-- Beregu: Tim A vs Tim B -->
+              <template v-if="form.jenis === 'Beregu' && registrasiForCabang.length">
+                <div class="peserta-vs-row">
+                  <select v-model="selectedTimA" class="tcr-input" @change="buildPeserta">
+                    <option value="">Tim A — pilih dari pendaftar...</option>
+                    <option v-for="r in registrasiForCabang" :key="r.id" :value="r.id">{{ r.label }}</option>
+                  </select>
+                  <span class="vs-sep">VS</span>
+                  <select v-model="selectedTimB" class="tcr-input" @change="buildPeserta">
+                    <option value="">Tim B — pilih dari pendaftar...</option>
+                    <option v-for="r in registrasiForCabang" :key="r.id" :value="r.id">{{ r.label }}</option>
+                  </select>
+                </div>
+              </template>
+
+              <!-- Perorangan: toggle chips -->
+              <template v-else-if="form.jenis === 'Perorangan' && registrasiForCabang.length">
+                <div class="peserta-chip-wrap">
+                  <button v-for="r in registrasiForCabang" :key="r.id"
+                    type="button"
+                    class="peserta-chip" :class="{ active: selectedPesertaList.includes(r.id) }"
+                    @click="togglePeserta(r.id)">
+                    {{ r.label }}
+                  </button>
+                </div>
+              </template>
+
+              <!-- Manual text (always shown, auto-updated by pickers) -->
+              <input v-model="form.peserta" type="text" class="tcr-input"
+                :style="registrasiForCabang.length ? 'margin-top:10px' : ''"
+                :placeholder="form.jenis === 'Beregu' ? 'Tim A vs Tim B' : form.jenis === 'Perorangan' ? 'Nama peserta (dipisah koma)' : 'cth: Blok Anggrek vs Blok Dahlia'" />
+              <p v-if="registrasiForCabang.length" class="hint">Dipilih dari pendaftar atau isi teks manual di atas.</p>
+              <p v-else-if="form.cabang && !registrasiForCabang.length" class="hint">Belum ada pendaftar yang dikonfirmasi untuk {{ form.cabang }}. Isi manual.</p>
+            </div>
+
+            <div>
+              <label class="form-label">Lokasi</label>
+              <select v-model="form.lokasiId" class="tcr-input">
+                <option value="">Pilih lokasi...</option>
+                <option v-for="l in lokasiStore.list" :key="l.id" :value="l.id">{{ l.nama }}{{ l.alamat ? ' — ' + l.alamat : '' }}</option>
+                <option value="__manual__">Isi Manual...</option>
               </select>
+              <input v-if="form.lokasiId === '__manual__'" v-model="form.lokasiManual" type="text" class="tcr-input"
+                style="margin-top:8px;" placeholder="Nama lokasi manual" />
+              <p v-if="!lokasiStore.list.length" class="hint">
+                Belum ada lokasi. <RouterLink :to="{ name:'admin-lokasi' }">Tambah di sini →</RouterLink>
+              </p>
             </div>
-          </template>
-
-          <!-- Perorangan: toggle chips -->
-          <template v-else-if="form.jenis === 'Perorangan' && registrasiForCabang.length">
-            <div class="peserta-chip-wrap">
-              <button v-for="r in registrasiForCabang" :key="r.id"
-                type="button"
-                class="peserta-chip" :class="{ active: selectedPesertaList.includes(r.id) }"
-                @click="togglePeserta(r.id)">
-                {{ r.label }}
-              </button>
+            <div style="display:flex;gap:12px;">
+              <button type="submit" class="btn-save">{{ form.editId ? 'Update' : 'Simpan' }} Jadwal</button>
+              <button type="button" class="btn-cancel" @click="resetForm">Batal</button>
             </div>
-          </template>
-
-          <!-- Manual text (always shown, auto-updated by pickers) -->
-          <input v-model="form.peserta" type="text" class="tcr-input"
-            :style="registrasiForCabang.length ? 'margin-top:10px' : ''"
-            :placeholder="form.jenis === 'Beregu' ? 'Tim A vs Tim B' : form.jenis === 'Perorangan' ? 'Nama peserta (dipisah koma)' : 'cth: Blok Anggrek vs Blok Dahlia'" />
-          <p v-if="registrasiForCabang.length" class="hint">Dipilih dari pendaftar atau isi teks manual di atas.</p>
-          <p v-else-if="form.cabang && !registrasiForCabang.length" class="hint">Belum ada pendaftar yang dikonfirmasi untuk {{ form.cabang }}. Isi manual.</p>
+          </form>
         </div>
-
-        <div style="grid-column:1/-1;">
-          <label class="form-label">Lokasi</label>
-          <select v-model="form.lokasiId" class="tcr-input">
-            <option value="">Pilih lokasi...</option>
-            <option v-for="l in lokasiStore.list" :key="l.id" :value="l.id">{{ l.nama }}{{ l.alamat ? ' — ' + l.alamat : '' }}</option>
-            <option value="__manual__">Isi Manual...</option>
-          </select>
-          <input v-if="form.lokasiId === '__manual__'" v-model="form.lokasiManual" type="text" class="tcr-input"
-            style="margin-top:8px;" placeholder="Nama lokasi manual" />
-          <p v-if="!lokasiStore.list.length" class="hint">
-            Belum ada lokasi. <RouterLink :to="{ name:'admin-lokasi' }">Tambah di sini →</RouterLink>
-          </p>
-        </div>
-        <div style="grid-column:1/-1;display:flex;gap:12px;">
-          <button type="submit" class="btn-save">{{ form.editId ? 'Update' : 'Simpan' }} Jadwal</button>
-          <button type="button" class="btn-cancel" @click="resetForm">Batal</button>
-        </div>
-      </form>
+      </div>
 
       <!-- Filter -->
       <div class="filter-bar">
@@ -777,6 +789,14 @@ onMounted(() => { tipeStore.fetch(); kategoriStore.fetch(); jadwalStore.fetch();
 </script>
 
 <style scoped>
+.form-modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:1000; display:flex; align-items:center; justify-content:center; padding:16px; }
+.form-modal-card    { background:#fff; border-radius:20px; width:100%; max-width:680px; max-height:90vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,.25); }
+.modal-hd      { display:flex; align-items:center; justify-content:space-between; padding:20px 24px 0; }
+.modal-ttl     { font:800 18px/1.2 Archivo; color:#1A1613; margin:0; }
+.modal-x       { width:32px; height:32px; border-radius:50%; border:none; background:#F0EBE2; color:#5A534B; font:700 16px/1 Archivo; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.modal-x:hover { background:#E2DCD2; }
+.modal-bd      { padding:20px 24px 24px; display:flex; flex-direction:column; gap:16px; }
+.modal-form-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; }
 .adm-main    { max-width:1180px; margin:0 auto; padding:34px 22px 70px; }
 .adm-section { background:#fff; border:1px solid #ECE7DE; border-radius:20px; padding:28px; }
 .section-header { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:24px; flex-wrap:wrap; }
@@ -820,11 +840,6 @@ onMounted(() => { tipeStore.fetch(); kategoriStore.fetch(); jadwalStore.fetch();
 .btn-edit { padding:6px 14px; border:1px solid #E2DCD2; border-radius:8px; background:#fff; color:#1A1613; font:600 12px/1 'Plus Jakarta Sans'; cursor:pointer; }
 .btn-del  { padding:6px 14px; border:1px solid #FBEAEC; border-radius:8px; background:#FBEAEC; color:#CE1126; font:600 12px/1 'Plus Jakarta Sans'; cursor:pointer; }
 .empty    { text-align:center; padding:32px; color:#9A9389; font:500 14px/1 'Plus Jakarta Sans'; }
-.header-actions { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
-.search-input   { width:220px; }
-.btn-export     { padding:10px 18px; border:1.5px solid #2E7D52; border-radius:10px; background:#fff; color:#2E7D52; font:700 13px/1 'Plus Jakarta Sans'; cursor:pointer; white-space:nowrap; transition:background .15s; }
-.btn-export:hover { background:#E7F2EB; }
-
 .item-hasil { font:600 12px/1.4 'Plus Jakarta Sans'; color:#1E5C38; background:#DCF0E5; border-radius:8px; padding:7px 10px; margin-bottom:6px; }
 .item-set-detail { font:600 11px/1.35 'Plus Jakarta Sans'; color:#7A5C00; background:#FBF1DD; border-radius:8px; padding:6px 10px; margin-bottom:6px; }
 .btn-hasil-catat       { padding:6px 12px; border:1.5px solid #2E7D52; border-radius:8px; background:#E7F2EB; color:#2E7D52; font:700 12px/1 'Plus Jakarta Sans'; cursor:pointer; transition:background .15s; white-space:nowrap; }
@@ -875,9 +890,6 @@ onMounted(() => { tipeStore.fetch(); kategoriStore.fetch(); jadwalStore.fetch();
   .btn-save, .btn-cancel { padding: 9px 12px; font-size: 12px; border-radius: 8px; }
   .btn-edit, .btn-del { padding: 5px 10px; font-size: 11px; border-radius: 6px; }
   .empty { padding: 18px 12px; font-size: 12px; }
-  .header-actions { gap: 8px; width: 100%; }
-  .search-input { width: 100%; min-width: 0; }
-  .btn-export { padding: 8px 12px; font-size: 12px; }
   .filter-bar { gap: 8px; margin-bottom: 14px; }
   .filter-count { font-size: 12px; }
   .peserta-vs-row { flex-direction: column; gap: 6px; }

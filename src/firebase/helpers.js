@@ -1,7 +1,8 @@
-import { db } from './config'
+import { db, storage } from './config'
 import {
   collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, where, setDoc, orderBy
 } from 'firebase/firestore'
+import { ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage'
 
 const fmt = (d) => {
   if (!d) return null
@@ -107,20 +108,47 @@ export const addLokasi    = (data) => addDoc(collection(db, 'lokasi'), { ...data
 export const updateLokasi = (id, data) => updateDoc(doc(db, 'lokasi', id), data)
 export const deleteLokasi = (id) => deleteDoc(doc(db, 'lokasi', id))
 
+// ── GALERI ────────────────────────────────────────────
+export const getGaleri    = () => getDocs(query(collection(db, 'galeri'), orderBy('urutan'))).then(s => s.docs.map(d => ({ id: d.id, ...d.data() })))
+export const addGaleri    = (data) => addDoc(collection(db, 'galeri'), { ...data, createdAt: new Date() })
+export const updateGaleri = (id, data) => updateDoc(doc(db, 'galeri', id), data)
+export const deleteGaleri = (id) => deleteDoc(doc(db, 'galeri', id))
+
 // ── USERS ─────────────────────────────────────────────
 export const getUsers = () =>
   getDocs(collection(db, 'users')).then(s =>
-    s.docs.map(d => ({ id: d.id, email: d.data().email, nama: d.data().nama, role: d.data().role }))
+    s.docs.map(d => ({ id: d.id, email: d.data().email, nama: d.data().nama, role: d.data().role, fotoUrl: d.data().fotoUrl || null }))
   )
 
-export async function addUser({ email, password, role, nama }) {
-  const passwordHash = await sha256(password)
-  return addDoc(collection(db, 'users'), { email, passwordHash, role, nama, createdAt: new Date() })
+export async function uploadUserPhoto(userId, file) {
+  const ext = file.name.split('.').pop()
+  const path = storageRef(storage, `users/${userId}/foto.${ext}`)
+  await uploadBytes(path, file)
+  return getDownloadURL(path)
 }
 
-export async function updateUser(id, { email, password, role, nama }) {
+export async function deleteUserPhoto(userId) {
+  try {
+    for (const ext of ['jpg', 'jpeg', 'png', 'webp']) {
+      try { await deleteObject(storageRef(storage, `users/${userId}/foto.${ext}`)) } catch {}
+    }
+  } catch {}
+}
+
+export async function addUser({ email, password, role, nama, fotoFile }) {
+  const passwordHash = await sha256(password)
+  const docRef = await addDoc(collection(db, 'users'), { email, passwordHash, role, nama, createdAt: new Date() })
+  if (fotoFile) {
+    const fotoUrl = await uploadUserPhoto(docRef.id, fotoFile)
+    await updateDoc(docRef, { fotoUrl })
+  }
+  return docRef
+}
+
+export async function updateUser(id, { email, password, role, nama, fotoFile }) {
   const data = { email, role, nama }
   if (password) data.passwordHash = await sha256(password)
+  if (fotoFile) data.fotoUrl = await uploadUserPhoto(id, fotoFile)
   return updateDoc(doc(db, 'users', id), data)
 }
 
