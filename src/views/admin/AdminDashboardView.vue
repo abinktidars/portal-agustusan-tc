@@ -55,6 +55,22 @@
     <div class="row-2">
       <div class="adm-section">
         <div class="section-header">
+          <h2 class="section-title">Pendaftar Terbaru</h2>
+          <RouterLink :to="{ name: 'admin-registrasi' }" class="link-btn">Lihat semua →</RouterLink>
+        </div>
+        <div class="mini-list">
+          <div v-for="r in regStore.list.slice(0,5)" :key="r.id" class="mini-row">
+            <div class="avatar">{{ (r.nama || '?').charAt(0).toUpperCase() }}</div>
+            <div style="flex:1;">
+              <div class="mini-nama">{{ r.nama }}</div>
+              <div class="mini-sub">{{ r.cabang }} · {{ r.blok || r.blokRumah }}</div>
+            </div>
+          </div>
+          <div v-if="!regStore.list.length" class="empty">Belum ada pendaftar</div>
+        </div>
+      </div>
+      <div class="adm-section">
+        <div class="section-header">
           <h2 class="section-title">Jadwal Terdekat</h2>
           <RouterLink :to="{ name: 'admin-jadwal' }" class="link-btn">Kelola →</RouterLink>
         </div>
@@ -68,23 +84,6 @@
             <span class="status-badge" :class="statusCls(j.status)">{{ j.status }}</span>
           </div>
           <div v-if="!jadwalStore.upcoming.length" class="empty">Belum ada jadwal mendatang</div>
-        </div>
-      </div>
-
-      <div class="adm-section">
-        <div class="section-header">
-          <h2 class="section-title">Pendaftar Terbaru</h2>
-          <RouterLink :to="{ name: 'admin-registrasi' }" class="link-btn">Lihat semua →</RouterLink>
-        </div>
-        <div class="mini-list">
-          <div v-for="r in regStore.list.slice(0,5)" :key="r.id" class="mini-row">
-            <div class="avatar">{{ (r.nama || '?').charAt(0).toUpperCase() }}</div>
-            <div style="flex:1;">
-              <div class="mini-nama">{{ r.nama }}</div>
-              <div class="mini-sub">{{ r.cabang }} · {{ r.blok || r.blokRumah }}</div>
-            </div>
-          </div>
-          <div v-if="!regStore.list.length" class="empty">Belum ada pendaftar</div>
         </div>
       </div>
     </div>

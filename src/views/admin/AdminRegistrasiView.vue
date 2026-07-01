@@ -16,10 +16,13 @@
         </div>
         <div class="header-actions">
           <input v-model="search" type="text" class="tcr-input search-input" placeholder="Cari nama / blok / cabang..." />
-          <select v-model="filterTipe" class="tcr-input filter-select">
-            <option value="">Semua Tipe</option>
-            <option value="tim">Tim</option>
-            <option value="perorangan">Perorangan</option>
+          <select v-model="filterCabang" class="tcr-input filter-select">
+            <option value="">Semua Jenis Lomba</option>
+            <option v-for="k in kategoriStore.list" :key="k.id" :value="k.nama">{{ k.nama }}</option>
+          </select>
+          <select v-model="filterKoridor" class="tcr-input filter-select">
+            <option value="">Semua Koridor</option>
+            <option v-for="k in koridorStore.list" :key="k.id" :value="k.id">{{ k.nama }}</option>
           </select>
           <select v-model="filterStatus" class="tcr-input filter-select">
             <option value="">Semua Status</option>
@@ -233,7 +236,7 @@
 
             <tr v-if="!filtered.length">
               <td colspan="10" class="empty">
-                {{ search || filterTipe ? 'Tidak ada hasil pencarian' : 'Belum ada pendaftar.' }}
+                {{ search || filterCabang || filterKoridor || filterStatus ? 'Tidak ada hasil pencarian' : 'Belum ada pendaftar.' }}
               </td>
             </tr>
           </tbody>
@@ -259,7 +262,8 @@ const koridorStore  = useKoridorStore()
 const showForm     = ref(false)
 const expandedId   = ref(null)
 const search       = ref('')
-const filterTipe   = ref('')
+const filterCabang  = ref('')
+const filterKoridor = ref('')
 const filterStatus = ref('')
 const page         = ref(1)
 const PER_PAGE   = 10
@@ -323,13 +327,14 @@ const filtered = computed(() => {
       (r.namaKetua || r.nama || '').toLowerCase().includes(q) ||
       (r.blokRumah || '').toLowerCase().includes(q) ||
       (r.cabang || '').toLowerCase().includes(q)
-    const matchTipe   = !filterTipe.value   || (filterTipe.value === 'tim' ? isTimReg(r) : !isTimReg(r))
-    const matchStatus = !filterStatus.value || (r.status || 'new') === filterStatus.value
-    return matchQ && matchTipe && matchStatus
+    const matchCabang  = !filterCabang.value  || r.cabang === filterCabang.value
+    const matchKoridor = !filterKoridor.value || r.koridorId === filterKoridor.value
+    const matchStatus  = !filterStatus.value  || (r.status || 'new') === filterStatus.value
+    return matchQ && matchCabang && matchKoridor && matchStatus
   })
 })
 const paginated = computed(() => filtered.value.slice((page.value-1)*PER_PAGE, page.value*PER_PAGE))
-watch([search, filterTipe, filterStatus], () => { page.value = 1; selectedIds.value = [] })
+watch([search, filterCabang, filterKoridor, filterStatus], () => { page.value = 1; selectedIds.value = [] })
 
 const formatDate = (d) => {
   if (!d) return '-'
