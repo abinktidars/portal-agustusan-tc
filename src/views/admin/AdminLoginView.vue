@@ -36,7 +36,7 @@ function handleLogin() {
 </script>
 
 <style scoped>
-.login-wrapper { max-width: 1180px; margin: 0 auto; padding: 60px 22px; display: flex; align-items: center; justify-content: center; min-height: 60vh; }
+.login-wrapper { max-width: 1180px; margin: 0 auto; padding: 60px 22px; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
 .login-card    { background: #fff; border: 1px solid #ECE7DE; border-radius: 20px; padding: 40px; max-width: 380px; width: 100%; box-shadow: 0 8px 24px rgba(0,0,0,.08); }
 .login-eyebrow { font: 700 12px/1 'Plus Jakarta Sans'; letter-spacing: .12em; text-transform: uppercase; color: #CE1126; margin-bottom: 12px; }
 .login-title   { margin: 0 0 28px; font: 800 32px/1.2 Archivo; color: #1A1613; }

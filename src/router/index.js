@@ -42,10 +42,12 @@ const router = createRouter({
 })
 
 router.beforeEach((to) => {
-  if (!to.meta.requiresAuth) return
-
   const logged = localStorage.getItem('tcr_admin_logged')
   const role   = localStorage.getItem('tcr_admin_role')
+
+  if (to.name === 'admin-login' && logged) return { name: 'admin-dashboard' }
+
+  if (!to.meta.requiresAuth) return
 
   if (!logged) return { name: 'admin-login' }
 
