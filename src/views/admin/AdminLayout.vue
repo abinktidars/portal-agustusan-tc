@@ -213,13 +213,13 @@ const initials = computed(() => {
 
 const ALL_NAV = [
   { name: 'admin-dashboard',  icon: LayoutDashboard, label: 'Dashboard',  roles: ['admin', 'panitia'] },
+  { name: 'admin-registrasi', icon: ClipboardList,   label: 'Registrasi', roles: ['admin', 'panitia'] },
   { name: 'admin-lomba',      icon: Trophy,          label: 'Lomba',      roles: ['admin'] },
   { name: 'admin-jadwal',     icon: CalendarDays,    label: 'Jadwal',     roles: ['admin', 'panitia'] },
   { name: 'admin-hasil',      icon: Award,           label: 'Hasil',      roles: ['admin', 'panitia'] },
   { name: 'admin-klasemen',   icon: Medal,           label: 'Klasemen',   roles: ['admin', 'panitia'] },
-  { name: 'admin-registrasi', icon: ClipboardList,   label: 'Registrasi', roles: ['admin', 'panitia'] },
-  { name: 'admin-lokasi',     icon: MapPin,          label: 'Lokasi',     roles: ['admin'] },
   { name: 'admin-galeri',     icon: Images,          label: 'Galeri',     roles: ['admin'] },
+  { name: 'admin-lokasi',     icon: MapPin,          label: 'Lokasi',     roles: ['admin'] },
   { name: 'admin-users',      icon: Users,           label: 'Users',      roles: ['admin'] },
 ]
 
@@ -254,7 +254,7 @@ const isAllActive = computed(() =>
   backdrop-filter:blur(12px);
   border-bottom:1px solid #ECE7DE;
 }
-.flag-bar { height:4px; background:linear-gradient(90deg,#CE1126 50%,#fff 50%); }
+.flag-bar { height:4px;}
 
 .admin-topbar {
   max-width:1180px; margin:0 auto; padding:10px 16px;

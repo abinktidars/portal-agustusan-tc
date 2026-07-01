@@ -16,12 +16,12 @@
         </div>
         <div class="header-actions">
           <input v-model="search" type="text" class="tcr-input search-input" placeholder="Cari nama / blok / cabang..." />
-          <select v-model="filterTipe" class="tcr-input" style="width:140px">
+          <select v-model="filterTipe" class="tcr-input filter-select">
             <option value="">Semua Tipe</option>
             <option value="tim">Tim</option>
             <option value="perorangan">Perorangan</option>
           </select>
-          <select v-model="filterStatus" class="tcr-input" style="width:150px">
+          <select v-model="filterStatus" class="tcr-input filter-select">
             <option value="">Semua Status</option>
             <option value="new">Baru</option>
             <option value="confirm">Diterima</option>
@@ -163,9 +163,11 @@
                 <td class="td-wa"><a :href="`https://wa.me/${r.wa}`" target="_blank" class="wa-link" @click.stop>{{ r.wa }}</a></td>
                 <td class="td-tgl">{{ formatDate(r.tglDate || r.createdAt) }}</td>
                 <td class="td-aksi">
-                  <div class="action-group" @click.stop>
-                    <button @click="openForm(r)" class="btn-edit">Edit</button>
-                    <button @click="hapus(r)" class="btn-del">Hapus</button>
+                  <div class="action-group">
+                    <span class="action-buttons" @click.stop>
+                      <button @click="openForm(r)" class="btn-edit">Edit</button>
+                      <button @click="hapus(r)" class="btn-del">Hapus</button>
+                    </span>
                     <span class="chevron" :class="{ open: expandedId === r.id }">›</span>
                   </div>
                 </td>
@@ -219,6 +221,11 @@
                         </ol>
                       </div>
                     </template>
+
+                    <div class="detail-actions" @click.stop>
+                      <button @click="openForm(r)" class="btn-edit">Edit</button>
+                      <button @click="hapus(r)" class="btn-del">Hapus</button>
+                    </div>
                   </div>
                 </td>
               </tr>
@@ -448,6 +455,7 @@ onMounted(() => { regStore.fetch(); kategoriStore.fetch(); koridorStore.fetch() 
 .section-header  { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:24px; flex-wrap:wrap; }
 .section-eyebrow { font:700 13px/1 'Plus Jakarta Sans'; letter-spacing:.12em; text-transform:uppercase; color:#9A6B12; }
 .section-title   { font:800 28px/1.05 Archivo; color:#1A1613; margin:8px 0 0; }
+.filter-select   { min-width:140px; }
 /* modal */
 .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:1000; display:flex; align-items:center; justify-content:center; padding:16px; }
 .modal-card    { background:#fff; border-radius:20px; width:100%; max-width:640px; max-height:90vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,.25); }
@@ -502,7 +510,7 @@ onMounted(() => { regStore.fetch(); kategoriStore.fetch(); koridorStore.fetch() 
 .row-selected td { background:#FEF3F4 !important; }
 
 /* Table */
-.data-table-wrap { border:1px solid #ECE7DE; border-radius:14px; overflow:hidden; }
+.data-table-wrap { border:1px solid #ECE7DE; border-radius:14px; overflow-x:auto; }
 .data-table  { width:100%; border-collapse:collapse; font:500 13px/1.5 'Plus Jakarta Sans'; }
 .data-table thead tr { background:#FAF8F3; border-bottom:2px solid #ECE7DE; }
 .data-table th { padding:12px 16px; text-align:left; font:700 12px/1 'Plus Jakarta Sans'; color:#7A7368; letter-spacing:.06em; text-transform:uppercase; }
@@ -523,7 +531,8 @@ onMounted(() => { regStore.fetch(); kategoriStore.fetch(); koridorStore.fetch() 
 .chip-pers  { background:#FEF3C7; color:#92400E; }
 .td-cabang-mobile { display:none; }
 
-.action-group { display:flex; gap:6px; }
+.action-group { display:flex; align-items:center; gap:6px; }
+.action-buttons { display:flex; gap:6px; }
 .btn-edit { padding:6px 14px; border:1px solid #E2DCD2; border-radius:8px; background:#fff; color:#1A1613; font:600 12px/1 'Plus Jakarta Sans'; cursor:pointer; }
 .btn-del  { padding:6px 14px; border:1px solid #FBEAEC; border-radius:8px; background:#FBEAEC; color:#CE1126; font:600 12px/1 'Plus Jakarta Sans'; cursor:pointer; }
 
@@ -558,7 +567,7 @@ onMounted(() => { regStore.fetch(); kategoriStore.fetch(); koridorStore.fetch() 
 .toast-enter-from, .toast-leave-to { opacity:0; transform:translateY(12px); }
 .chevron { display:inline-block; font-size:18px; color:#C4BDB2; line-height:1; transition:transform .2s; user-select:none; }
 .chevron.open { transform:rotate(90deg); }
-.detail-actions { display:flex; gap:8px; padding-top:14px; border-top:1px solid #E2DCD2; margin-top:2px; }
+.detail-actions { display:none; gap:8px; padding-top:14px; border-top:1px solid #E2DCD2; margin-top:2px; }
 .detail-actions .btn-edit,
 .detail-actions .btn-del { flex:1; padding:10px; text-align:center; font-size:13px; border-radius:10px; }
 
@@ -593,30 +602,37 @@ onMounted(() => { regStore.fetch(); kategoriStore.fetch(); koridorStore.fetch() 
   .data-table tbody { display: flex; flex-direction: column; gap: 8px; }
   .data-row {
     display: grid !important;
-    grid-template-columns: auto 1fr auto;
+    grid-template-columns: auto minmax(0, 1fr) auto;
     grid-template-areas:
       "chk nama   status"
-      "chk badges aksi"
-      "chk info   info";
-    column-gap: 8px; row-gap: 4px;
+      "chk badges aksi";
+    column-gap: 8px; row-gap: 6px;
     background: #fff; border: 1px solid #ECE7DE;
-    border-radius: 14px; padding: 10px 12px;
+    border-radius: 14px; padding: 12px;
     cursor: pointer;
+    max-width: 100%;
   }
   .row-expanded { border-radius: 14px 14px 0 0 !important; border-bottom-color: transparent !important; }
   .row-selected { background: #FEF3F4 !important; }
-  .data-row td { padding: 0 !important; border: none !important; background: transparent !important; vertical-align: middle !important; }
+  .data-row td { padding: 0 !important; border: none !important; background: transparent !important; vertical-align: middle !important; min-width: 0; }
   .td-idx { display: none !important; }
   .td-check  { grid-area: chk; align-self: start; padding-top: 2px !important; }
-  .td-nama   { grid-area: nama; align-self: center; }
-  .td-status { grid-area: status; align-self: center; display: flex; justify-content: flex-end; }
-  .td-tipe   { grid-area: badges; align-self: center; display: flex; align-items: center; gap: 6px; }
+  .td-nama   { grid-area: nama; align-self: center; min-width: 0; }
+  .td-nama .td-bold, .td-nama .td-sub { overflow-wrap: anywhere; }
+  .td-status { grid-area: status; align-self: start; display: flex; justify-content: flex-end; flex-shrink: 0; }
+  .td-tipe   { grid-area: badges; align-self: center; display: flex; align-items: center; gap: 6px; min-width: 0; }
   .td-cabang { display: none !important; }
   .td-blok   { display: none !important; }
   .td-wa     { display: none !important; }
   .td-tgl    { display: none !important; }
-  .td-aksi   { grid-area: aksi; align-self: center; display: flex; justify-content: flex-end; }
-  .td-cabang-mobile { display: inline-flex !important; }
+  .td-aksi   { grid-area: aksi; align-self: center; display: flex; justify-content: flex-end; flex-shrink: 0; }
+  .td-aksi .action-buttons { display: none !important; }
+  .td-cabang-mobile {
+    display: inline-flex !important;
+    min-width: 0; flex-shrink: 1;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .tipe-chip { flex-shrink: 0; }
 
   .detail-row { display: block !important; }
   .detail-row td { display: block !important; padding: 0 !important; border: none !important; }
@@ -632,6 +648,9 @@ onMounted(() => { regStore.fetch(); kategoriStore.fetch(); koridorStore.fetch() 
   .detail-label { font-size: 10px; margin-bottom: 6px; }
   .detail-val { font-size: 12px; }
   .anggota-add { font-size: 12px; padding: 8px 12px; }
+  .detail-actions { display: flex; }
+  .detail-actions .btn-edit,
+  .detail-actions .btn-del { flex: 1; padding: 10px; text-align: center; font-size: 13px; border-radius: 10px; }
 }
 
 @media (min-width: 768px) {

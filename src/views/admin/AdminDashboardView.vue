@@ -62,7 +62,8 @@
           <div v-for="j in jadwalStore.upcoming" :key="j.id" class="mini-row">
             <div style="flex:1;">
               <div class="mini-nama">{{ j.cabang }}</div>
-              <div class="mini-sub">{{ j.tgl }} · {{ j.jam }} · {{ j.lokasi || j.venue || '-' }}</div>
+              <div v-if="j.peserta" class="mini-peserta">👥 {{ j.peserta }}</div>
+              <div class="mini-sub">{{ j.tgl }} · 🕐 {{ j.jamMulai || j.jam || '-' }}<template v-if="j.jamSelesai">–{{ j.jamSelesai }}</template><template v-if="lokasiNama(j)"> · 📍 {{ lokasiNama(j) }}</template></div>
             </div>
             <span class="status-badge" :class="statusCls(j.status)">{{ j.status }}</span>
           </div>
@@ -154,6 +155,7 @@ import { useJadwalStore }     from '@/stores/useJadwal'
 import { useHasilStore }      from '@/stores/useHasil'
 import { useRegistrasiStore } from '@/stores/useRegistrasi'
 import { useTipeStore }       from '@/stores/useTipe'
+import { useLokasiStore }     from '@/stores/useLokasi'
 import PaginationBar from '@/components/PaginationBar.vue'
 import HasilDetailModal from '@/components/HasilDetailModal.vue'
 import { exportToExcel } from '@/utils/exportExcel'
@@ -163,9 +165,14 @@ const jadwalStore   = useJadwalStore()
 const hasilStore    = useHasilStore()
 const regStore      = useRegistrasiStore()
 const tipeStore     = useTipeStore()
+const lokasiStore   = useLokasiStore()
 
 const statusCls = (s) => ({ 'Berlangsung':'status-berlangsung', 'Selesai':'status-selesai', 'Akan Datang':'status-akandatang' }[s] || 'status-akandatang')
 const tipeColor = (t) => tipeStore.warna(t)
+const lokasiNama = (j) => {
+  if (j.lokasiId) return lokasiStore.list.find(l => l.id === j.lokasiId)?.nama || j.lokasi || j.venue || ''
+  return j.lokasi || j.venue || ''
+}
 
 // --- hasil: gabungkan koleksi hasil + jadwal yang punya hasilPertandingan ---
 function mapJadwalToHasil(j) {
@@ -335,6 +342,7 @@ onMounted(() => {
   hasilStore.fetch()
   regStore.fetch()
   tipeStore.fetch()
+  lokasiStore.fetch()
 })
 </script>
 
@@ -394,8 +402,9 @@ onMounted(() => {
   border:1px solid #F0EBE2;
   border-radius:12px;
 }
-.mini-nama { font:700 13px/1.25 'Plus Jakarta Sans'; color:#1A1613; }
-.mini-sub  { font:500 12px/1.35 'Plus Jakarta Sans'; color:#7A7368; margin-top:4px; }
+.mini-nama    { font:700 13px/1.25 'Plus Jakarta Sans'; color:#1A1613; }
+.mini-peserta { font:600 12px/1.35 'Plus Jakarta Sans'; color:#2D5B8A; margin-top:3px; }
+.mini-sub     { font:500 12px/1.35 'Plus Jakarta Sans'; color:#7A7368; margin-top:4px; }
 .avatar    { width:32px; height:32px; border-radius:50%; background:#CE1126; color:#fff; display:flex; align-items:center; justify-content:center; font:700 14px/1 Archivo; flex-shrink:0; }
 
 .empty { text-align:center; padding:20px; color:#9A9389; font:500 13px/1 'Plus Jakarta Sans'; }
@@ -733,7 +742,7 @@ onMounted(() => {
   .section-title { font-size:18px; }
   .section-title-lg { font-size:28px; }
   .search-input { width:220px; }
-  .card-grid { grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:14px; }
+  .card-grid { grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:14px; }
   .item-card { padding:16px; }
   .item-nama { max-width:220px; font-size:15px; }
   .item-tgl { font-size:12px; }

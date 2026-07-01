@@ -16,99 +16,6 @@
       <div class="section-header">
         <div>
           <div class="section-eyebrow">Master Data</div>
-          <h2 class="section-title">Tipe Lomba</h2>
-        </div>
-        <button class="tcr-btn-red" @click="openTipeForm()">+ Tambah Tipe</button>
-      </div>
-
-      <!-- Modal Form Tipe -->
-      <div v-if="showTipeForm" class="modal-overlay" @click.self="resetTipeForm">
-        <div class="modal-card">
-          <div class="modal-hd">
-            <h3 class="modal-ttl">{{ tipeForm.editId ? 'Edit' : 'Tambah' }} Tipe</h3>
-            <button type="button" class="modal-x" @click="resetTipeForm">✕</button>
-          </div>
-          <form @submit.prevent="submitTipe" class="modal-bd">
-            <div>
-              <label class="form-label">Nama Tipe <span class="req">*</span></label>
-              <input v-model="tipeForm.nama" type="text" class="tcr-input" placeholder="cth: Olahraga" />
-            </div>
-            <div>
-              <label class="form-label">Warna <span class="req">*</span></label>
-              <div class="color-field">
-                <input v-model="tipeForm.warna" type="color" class="color-picker" />
-                <input v-model="tipeForm.warna" type="text" class="tcr-input" placeholder="#CE1126" />
-              </div>
-            </div>
-            <div>
-              <label class="form-label">Urutan</label>
-              <input v-model.number="tipeForm.urutan" type="number" min="1" class="tcr-input" />
-            </div>
-            <div class="form-actions">
-              <button type="submit" class="btn-save">{{ tipeForm.editId ? 'Update' : 'Simpan' }} Tipe</button>
-              <button type="button" class="btn-cancel" @click="resetTipeForm">Batal</button>
-            </div>
-          </form>
-        </div>
-      </div>
-
-      <div class="data-table-wrap">
-        <table class="data-table tipe-table">
-          <thead>
-            <tr>
-              <th style="width: 52px">#</th>
-              <th>Tipe</th>
-              <th style="width: 140px">Warna</th>
-              <th style="width: 90px; text-align: center">Urutan</th>
-              <th style="width: 140px">Aksi</th>
-            </tr>
-          </thead>
-          <tbody>
-            <template v-for="(t, i) in tipeStore.list" :key="t.id">
-              <tr class="data-row" :class="{ 'row-expanded': expandedTipeId === t.id }" @click="toggleTipeDetail(t.id)">
-                <td class="td-num td-idx">{{ i + 1 }}</td>
-                <td class="td-tipe-nama">
-                  <div class="tipe-cell">
-                    <span class="dot" :style="{ background: t.warna }"></span>
-                    <span class="td-bold">{{ t.nama }}</span>
-                  </div>
-                </td>
-                <td class="td-tipe-warna"><code class="color-code">{{ t.warna }}</code></td>
-                <td class="td-num td-tipe-urutan">{{ t.urutan || '-' }}</td>
-                <td class="td-tipe-aksi">
-                  <div class="action-group" @click.stop>
-                    <button class="btn-edit" @click="openTipeForm(t)">Edit</button>
-                    <button class="btn-del" @click="hapusTipe(t)">Hapus</button>
-                    <span class="chevron" :class="{ open: expandedTipeId === t.id }">›</span>
-                  </div>
-                </td>
-              </tr>
-              <tr v-if="expandedTipeId === t.id" class="detail-row">
-                <td colspan="5">
-                  <div class="detail-panel">
-                    <div class="detail-block">
-                      <div class="detail-label">Warna</div>
-                      <div style="display:flex;align-items:center;gap:8px;margin-top:6px;">
-                        <span class="dot" :style="{ background: t.warna }"></span>
-                        <code class="color-code">{{ t.warna }}</code>
-                      </div>
-                    </div>
-                  </div>
-                </td>
-              </tr>
-            </template>
-            <tr v-if="!tipeStore.list.length">
-              <td colspan="5" class="empty">Belum ada tipe lomba.</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-
-    <section class="adm-section">
-      <div class="section-header">
-        <div>
-          <div class="section-eyebrow">Master Data</div>
           <h2 class="section-title">Nama Lomba</h2>
         </div>
         <button class="tcr-btn-red" @click="openKategoriForm()">+ Tambah Lomba</button>
@@ -217,6 +124,100 @@
         </table>
       </div>
     </section>
+
+    <section class="adm-section">
+      <div class="section-header">
+        <div>
+          <div class="section-eyebrow">Master Data</div>
+          <h2 class="section-title">Tipe Lomba</h2>
+        </div>
+        <button class="tcr-btn-red" @click="openTipeForm()">+ Tambah Tipe</button>
+      </div>
+
+      <!-- Modal Form Tipe -->
+      <div v-if="showTipeForm" class="modal-overlay" @click.self="resetTipeForm">
+        <div class="modal-card">
+          <div class="modal-hd">
+            <h3 class="modal-ttl">{{ tipeForm.editId ? 'Edit' : 'Tambah' }} Tipe</h3>
+            <button type="button" class="modal-x" @click="resetTipeForm">✕</button>
+          </div>
+          <form @submit.prevent="submitTipe" class="modal-bd">
+            <div>
+              <label class="form-label">Nama Tipe <span class="req">*</span></label>
+              <input v-model="tipeForm.nama" type="text" class="tcr-input" placeholder="cth: Olahraga" />
+            </div>
+            <div>
+              <label class="form-label">Warna <span class="req">*</span></label>
+              <div class="color-field">
+                <input v-model="tipeForm.warna" type="color" class="color-picker" />
+                <input v-model="tipeForm.warna" type="text" class="tcr-input" placeholder="#CE1126" />
+              </div>
+            </div>
+            <div>
+              <label class="form-label">Urutan</label>
+              <input v-model.number="tipeForm.urutan" type="number" min="1" class="tcr-input" />
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn-save">{{ tipeForm.editId ? 'Update' : 'Simpan' }} Tipe</button>
+              <button type="button" class="btn-cancel" @click="resetTipeForm">Batal</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div class="data-table-wrap">
+        <table class="data-table tipe-table">
+          <thead>
+            <tr>
+              <th style="width: 52px">#</th>
+              <th>Tipe</th>
+              <th style="width: 140px">Warna</th>
+              <th style="width: 90px; text-align: center">Urutan</th>
+              <th style="width: 140px">Aksi</th>
+            </tr>
+          </thead>
+          <tbody>
+            <template v-for="(t, i) in tipeStore.list" :key="t.id">
+              <tr class="data-row" :class="{ 'row-expanded': expandedTipeId === t.id }" @click="toggleTipeDetail(t.id)">
+                <td class="td-num td-idx">{{ i + 1 }}</td>
+                <td class="td-tipe-nama">
+                  <div class="tipe-cell">
+                    <span class="dot" :style="{ background: t.warna }"></span>
+                    <span class="td-bold">{{ t.nama }}</span>
+                  </div>
+                </td>
+                <td class="td-tipe-warna"><code class="color-code">{{ t.warna }}</code></td>
+                <td class="td-num td-tipe-urutan">{{ t.urutan || '-' }}</td>
+                <td class="td-tipe-aksi">
+                  <div class="action-group" @click.stop>
+                    <button class="btn-edit" @click="openTipeForm(t)">Edit</button>
+                    <button class="btn-del" @click="hapusTipe(t)">Hapus</button>
+                    <span class="chevron" :class="{ open: expandedTipeId === t.id }">›</span>
+                  </div>
+                </td>
+              </tr>
+              <tr v-if="expandedTipeId === t.id" class="detail-row">
+                <td colspan="5">
+                  <div class="detail-panel">
+                    <div class="detail-block">
+                      <div class="detail-label">Warna</div>
+                      <div style="display:flex;align-items:center;gap:8px;margin-top:6px;">
+                        <span class="dot" :style="{ background: t.warna }"></span>
+                        <code class="color-code">{{ t.warna }}</code>
+                      </div>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            </template>
+            <tr v-if="!tipeStore.list.length">
+              <td colspan="5" class="empty">Belum ada tipe lomba.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
   </main>
 </template>
 

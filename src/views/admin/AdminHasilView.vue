@@ -288,7 +288,7 @@ onMounted(() => {
 .btn-save   { flex:1; padding:13px; border:none; border-radius:12px; background:#2E7D52; color:#fff; font:700 14px/1 'Plus Jakarta Sans'; cursor:pointer; }
 .btn-cancel { flex:1; padding:13px; border:1.5px solid #E2DCD2; border-radius:12px; background:transparent; color:#1A1613; font:700 14px/1 'Plus Jakarta Sans'; cursor:pointer; }
 
-.card-grid  { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:14px; }
+.card-grid  { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:14px; }
 .item-card  { background:#FAF8F3; border:1px solid #E2DCD2; border-radius:14px; padding:16px; display:flex; flex-direction:column; gap:10px; }
 .item-card-header { display:flex; align-items:flex-start; justify-content:space-between; gap:8px; }
 .item-nama  { font:800 15px/1.2 Archivo; color:#1A1613; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }

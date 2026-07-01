@@ -8,7 +8,6 @@
         </div>
         <div class="header-actions">
           <input v-model="search" type="text" class="tcr-input search-input" placeholder="Cari jadwal..." />
-          <button class="btn-export" @click="doExport"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>Export Excel</button>
           <button class="tcr-btn-red" @click="openForm()">+ Tambah Jadwal</button>
         </div>
       </div>
@@ -823,7 +822,7 @@ onMounted(() => { tipeStore.fetch(); kategoriStore.fetch(); jadwalStore.fetch();
 .filter-bar   { display:flex; align-items:center; gap:12px; margin-bottom:20px; flex-wrap:wrap; }
 .filter-count { font:600 13px/1 'Plus Jakarta Sans'; color:#7A7368; flex-shrink:0; }
 
-.card-grid  { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:14px; }
+.card-grid  { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:14px; }
 .item-card  { background:#FAF8F3; border:1px solid #E2DCD2; border-radius:14px; padding:16px; cursor:pointer; transition:border-color .15s, box-shadow .15s; }
 .item-card:hover { border-color:#CE1126; box-shadow:0 2px 12px rgba(206,17,38,.1); }
 .item-card-header { display:flex; align-items:flex-start; justify-content:space-between; gap:8px; margin-bottom:10px; }
