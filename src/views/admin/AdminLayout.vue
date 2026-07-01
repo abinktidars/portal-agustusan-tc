@@ -1,7 +1,7 @@
 <template>
   <div class="app-shell">
 
-    <header class="admin-header">
+    <header v-if="route.name !== 'admin-login'" class="admin-header">
       <div class="flag-bar"></div>
 
       <div class="admin-topbar">

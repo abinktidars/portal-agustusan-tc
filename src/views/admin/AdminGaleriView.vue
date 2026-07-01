@@ -40,11 +40,16 @@
             </div>
 
             <div class="form-row-full">
-              <label class="form-label">URL Foto</label>
-              <input v-model="form.url" type="url" class="tcr-input" placeholder="https://..." />
-              <div v-if="form.url" class="img-preview-wrap">
-                <img :src="form.url" alt="preview" class="img-preview" @error="form.url = ''" />
+              <label class="form-label">Foto</label>
+              <input ref="fileInputRef" type="file" accept="image/*" class="file-input-hidden" @change="handleFileChange" />
+              <div class="upload-box" :class="{ 'has-preview': form.fotoPreview }" @click="fileInputRef.click()">
+                <img v-if="form.fotoPreview" :src="form.fotoPreview" alt="preview" class="img-preview" />
+                <div v-else class="upload-placeholder">
+                  <span class="upload-icon">📷</span>
+                  <span>Klik untuk upload foto</span>
+                </div>
               </div>
+              <button v-if="form.fotoPreview" type="button" class="btn-change-photo" @click="fileInputRef.click()">Ganti Foto</button>
             </div>
 
             <div class="form-row-2">
@@ -60,8 +65,8 @@
             </div>
 
             <div class="form-row-full form-actions">
-              <button type="submit" class="btn-save">{{ form.editId ? 'Update Foto' : 'Simpan Foto' }}</button>
-              <button type="button" class="btn-cancel" @click="resetForm">Batal</button>
+              <button type="submit" class="btn-save" :disabled="saving">{{ saving ? 'Menyimpan...' : (form.editId ? 'Update Foto' : 'Simpan Foto') }}</button>
+              <button type="button" class="btn-cancel" @click="resetForm" :disabled="saving">Batal</button>
             </div>
           </form>
         </div>
@@ -173,8 +178,10 @@ const filtered  = computed(() => {
 const paginated = computed(() => filtered.value.slice((page.value - 1) * PER_PAGE, page.value * PER_PAGE))
 watch(search, () => { page.value = 1 })
 
-const form  = reactive({ judul: '', url: '', kategori: '', keterangan: '', urutan: 1, editId: null })
+const form  = reactive({ judul: '', kategori: '', keterangan: '', urutan: 1, editId: null, fotoFile: null, fotoPreview: '' })
 const toast = reactive({ show: false, msg: '', type: 'success' })
+const fileInputRef = ref(null)
+const saving = ref(false)
 let toastTimer = null
 
 function showToast(msg, type = 'success') {
@@ -189,9 +196,9 @@ function toggleDetail(id) {
 
 function openForm(g = null) {
   if (g) {
-    Object.assign(form, { judul: g.judul, url: g.url || '', kategori: g.kategori || '', keterangan: g.keterangan || '', urutan: g.urutan ?? 1, editId: g.id })
+    Object.assign(form, { judul: g.judul, kategori: g.kategori || '', keterangan: g.keterangan || '', urutan: g.urutan ?? 1, editId: g.id, fotoFile: null, fotoPreview: g.url || '' })
   } else {
-    Object.assign(form, { judul: '', url: '', kategori: '', keterangan: '', urutan: store.list.length + 1, editId: null })
+    Object.assign(form, { judul: '', kategori: '', keterangan: '', urutan: store.list.length + 1, editId: null, fotoFile: null, fotoPreview: '' })
   }
   showForm.value = true
   expandedId.value = null
@@ -199,7 +206,18 @@ function openForm(g = null) {
 
 function resetForm() {
   showForm.value = false
-  Object.assign(form, { judul: '', url: '', kategori: '', keterangan: '', urutan: 1, editId: null })
+  if (form.fotoPreview?.startsWith('blob:')) URL.revokeObjectURL(form.fotoPreview)
+  Object.assign(form, { judul: '', kategori: '', keterangan: '', urutan: 1, editId: null, fotoFile: null, fotoPreview: '' })
+}
+
+function handleFileChange(e) {
+  const file = e.target.files[0]
+  if (!file) return
+  if (file.size > 2 * 1024 * 1024) { showToast('Ukuran foto maks 2 MB.', 'error'); e.target.value = ''; return }
+  if (form.fotoPreview?.startsWith('blob:')) URL.revokeObjectURL(form.fotoPreview)
+  form.fotoFile = file
+  form.fotoPreview = URL.createObjectURL(file)
+  e.target.value = ''
 }
 
 async function submit() {
@@ -207,17 +225,19 @@ async function submit() {
   const isEdit = !!form.editId
   const p = {
     judul:      form.judul.trim(),
-    url:        form.url.trim(),
     kategori:   form.kategori.trim(),
     keterangan: form.keterangan.trim(),
     urutan:     form.urutan || 1,
   }
+  saving.value = true
   try {
-    isEdit ? await store.update(form.editId, p) : await store.add(p)
+    isEdit ? await store.update(form.editId, p, form.fotoFile) : await store.add(p, form.fotoFile)
     showToast(isEdit ? `Foto "${p.judul}" berhasil diperbarui.` : `Foto "${p.judul}" berhasil ditambahkan.`)
     resetForm()
   } catch {
     showToast('Gagal menyimpan. Coba lagi.', 'error')
+  } finally {
+    saving.value = false
   }
 }
 
@@ -274,11 +294,27 @@ onMounted(() => store.fetch())
 .req          { color:#CE1126; }
 .tcr-textarea { resize:vertical; min-height:80px; line-height:1.6; font-family:'Plus Jakarta Sans',sans-serif; font-size:13px; }
 .btn-save     { flex:1; padding:13px; border:none; border-radius:12px; background:#CE1126; color:#fff; font:700 14px/1 'Plus Jakarta Sans'; cursor:pointer; }
+.btn-save:disabled, .btn-cancel:disabled { opacity:.6; cursor:default; }
 .btn-cancel   { flex:1; padding:13px; border:1.5px solid #E2DCD2; border-radius:12px; background:transparent; color:#1A1613; font:700 14px/1 'Plus Jakarta Sans'; cursor:pointer; }
 
-/* img preview */
-.img-preview-wrap { margin-top:10px; }
-.img-preview { max-width:100%; max-height:180px; border-radius:10px; border:1px solid #E2DCD2; object-fit:cover; }
+/* upload foto */
+.file-input-hidden { display:none; }
+.upload-box {
+  display:flex; align-items:center; justify-content:center;
+  min-height:140px; border:1.5px dashed #E2DCD2; border-radius:12px;
+  background:#FAF8F3; cursor:pointer; overflow:hidden; margin-top:6px;
+}
+.upload-box:hover { border-color:#CE1126; }
+.upload-box.has-preview { border-style:solid; padding:0; }
+.upload-placeholder { display:flex; flex-direction:column; align-items:center; gap:6px; color:#9A9389; font:600 13px/1 'Plus Jakarta Sans'; padding:24px; }
+.upload-icon { font-size:28px; line-height:1; }
+.img-preview { max-width:100%; max-height:180px; border-radius:10px; object-fit:cover; }
+.btn-change-photo {
+  margin-top:8px; align-self:flex-start;
+  padding:7px 14px; border:1.5px solid #E2DCD2; border-radius:8px;
+  background:transparent; color:#1A1613; font:600 12px/1 'Plus Jakarta Sans'; cursor:pointer;
+}
+.btn-change-photo:hover { background:#F0EBE2; }
 
 /* table */
 .data-table-wrap { border:1px solid #ECE7DE; border-radius:14px; overflow:hidden; }

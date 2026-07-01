@@ -12,14 +12,14 @@ export const useGaleriStore = defineStore('galeri', () => {
     finally { loading.value = false }
   }
 
-  async function add(data) {
-    const ref_ = await addGaleri(data)
+  async function add(data, fotoFile) {
+    const ref_ = await addGaleri(data, fotoFile)
     await fetch()
     return ref_
   }
 
-  async function update(id, data) {
-    await updateGaleri(id, data)
+  async function update(id, data, fotoFile) {
+    await updateGaleri(id, data, fotoFile)
     await fetch()
   }
 
