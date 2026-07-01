@@ -109,10 +109,39 @@ export const updateLokasi = (id, data) => updateDoc(doc(db, 'lokasi', id), data)
 export const deleteLokasi = (id) => deleteDoc(doc(db, 'lokasi', id))
 
 // ── GALERI ────────────────────────────────────────────
-export const getGaleri    = () => getDocs(query(collection(db, 'galeri'), orderBy('urutan'))).then(s => s.docs.map(d => ({ id: d.id, ...d.data() })))
-export const addGaleri    = (data) => addDoc(collection(db, 'galeri'), { ...data, createdAt: new Date() })
-export const updateGaleri = (id, data) => updateDoc(doc(db, 'galeri', id), data)
-export const deleteGaleri = (id) => deleteDoc(doc(db, 'galeri', id))
+export const getGaleri = () => getDocs(query(collection(db, 'galeri'), orderBy('urutan'))).then(s => s.docs.map(d => ({ id: d.id, ...d.data() })))
+
+export async function uploadGaleriFoto(id, file) {
+  const ext = file.name.split('.').pop()
+  const path = storageRef(storage, `galeri/${id}/foto.${ext}`)
+  await uploadBytes(path, file)
+  return getDownloadURL(path)
+}
+
+export async function deleteGaleriFoto(id) {
+  for (const ext of ['jpg', 'jpeg', 'png', 'webp']) {
+    try { await deleteObject(storageRef(storage, `galeri/${id}/foto.${ext}`)) } catch {}
+  }
+}
+
+export async function addGaleri(data, fotoFile) {
+  const docRef = await addDoc(collection(db, 'galeri'), { ...data, url: '', createdAt: new Date() })
+  if (fotoFile) {
+    const url = await uploadGaleriFoto(docRef.id, fotoFile)
+    await updateDoc(docRef, { url })
+  }
+  return docRef
+}
+
+export async function updateGaleri(id, data, fotoFile) {
+  if (fotoFile) data.url = await uploadGaleriFoto(id, fotoFile)
+  return updateDoc(doc(db, 'galeri', id), data)
+}
+
+export async function deleteGaleri(id) {
+  await deleteGaleriFoto(id)
+  return deleteDoc(doc(db, 'galeri', id))
+}
 
 // ── USERS ─────────────────────────────────────────────
 export const getUsers = () =>
