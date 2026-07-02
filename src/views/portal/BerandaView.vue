@@ -4,15 +4,11 @@
     <section class="hero-grid">
       <!-- Hero card -->
       <div class="hero-card">
-        <div class="hero-bg-circle"></div>
-        <div class="hero-bg-stripe"></div>
-        <div style="position:relative;">
-          <div class="hero-badge">11 Juli – 31 Agustus 2026</div>
-          <h1 class="hero-title">Semarak Agustusan <span style="color:#F4C36B;">ke-81</span></h1>
-          <p class="hero-desc">Portal bersama warga Teras Country Residence. Yuk Cek jadwal &amp; hasil pertandingan, klasemen, dan daftar lomba semua di satu tempat.</p>
-          <div class="hero-actions">
-            <button class="btn-white" @click="$router.push({ name: 'registrasi' })">Daftar Lomba Sekarang</button>
-          </div>
+        <div class="hero-badge">11 Juli – 31 Agustus 2026</div>
+        <h1 class="hero-title">Semarak Agustusan <span class="hero-title-accent">ke-81</span></h1>
+        <p class="hero-desc">Portal bersama warga Teras Country Residence. Yuk Cek jadwal &amp; hasil pertandingan, klasemen, dan daftar lomba semua di satu tempat.</p>
+        <div class="hero-actions">
+          <button class="btn-primary" @click="$router.push({ name: 'registrasi' })">Daftar Lomba Sekarang</button>
         </div>
       </div>
 
@@ -349,27 +345,19 @@ onUnmounted(() => clearInterval(timer))
 /* ── Hero ───────────────────────────────── */
 .hero-grid { display:grid; grid-template-columns:1.15fr .85fr; gap:16px; align-items:stretch; }
 .hero-card {
-  background:#CE1126; border-radius:10px; padding:24px;
-  display:flex; flex-direction:column; justify-content:center;
-  position:relative; overflow:hidden;
-}
-.hero-bg-circle {
-  position:absolute; top:-50px; right:-50px; width:220px; height:220px;
-  border-radius:50%; background:repeating-linear-gradient(45deg,rgba(255,255,255,.16) 0 14px,transparent 14px 28px);
-}
-.hero-bg-stripe {
-  position:absolute; bottom:0; left:0; right:0; height:5px;
-  background:repeating-linear-gradient(90deg,#fff 0 15px,transparent 15px 30px); opacity:.5;
+  display:flex; 
+  flex-direction:column; 
+  justify-content:center;
 }
 .hero-badge {
-  display:inline-flex; align-items:center; gap:8px; padding:7px 14px;
-  border-radius:999px; background:rgba(255,255,255,.18); color:#fff;
-  font:700 12px/1 'Plus Jakarta Sans'; letter-spacing:.04em;
+  display:inline-flex; align-items:center; gap:8px;
+  color:#CE1126; font:700 13px/1 'Plus Jakarta Sans'; letter-spacing:.1em; text-transform:uppercase;
 }
-.hero-title   { margin:18px 0 0; font:900 42px/.98 Archivo; letter-spacing:-.02em; color:#fff; }
-.hero-desc    { margin:18px 0 0; font:500 17px/1.6 'Plus Jakarta Sans'; color:rgba(255,255,255,.9); max-width:46ch; }
+.hero-title   { margin:16px 0 0; font:900 42px/1.05 Archivo; letter-spacing:-.02em; color:#1A1613; }
+.hero-title-accent { color:#CE1126; }
+.hero-desc    { margin:16px 0 0; font:500 17px/1.6 'Plus Jakarta Sans'; color:#5A534B; max-width:46ch; }
 .hero-actions { display:flex; gap:12px; margin-top:26px; flex-wrap:wrap; }
-.btn-white    { padding:14px 24px; border:none; border-radius:8px; background:#fff; color:#CE1126; font:800 15px/1 'Plus Jakarta Sans'; cursor:pointer; box-shadow:0 8px 20px rgba(0,0,0,.18); }
+.btn-primary  { padding:14px 26px; border:none; border-radius:8px; background:#CE1126; color:#fff; font:800 15px/1 'Plus Jakarta Sans'; cursor:pointer; box-shadow:0 8px 20px rgba(206,17,38,.22); }
 
 /* ── Countdown ──────────────────────────── */
 .countdown-card { background:#1A1613; border-radius:10px; padding:32px; color:#fff; display:flex; flex-direction:column; }
@@ -501,7 +489,6 @@ onUnmounted(() => clearInterval(timer))
   .hero-grid { gap:16px; }
   .hero-title { font-size:34px !important; }
   .hero-desc { font-size:15px; }
-  .hero-card { padding:20px; }
   .countdown-card { padding:20px; }
   .cd-grid { grid-template-columns:repeat(2,1fr); }
   .section-title { font-size:24px; }
@@ -509,6 +496,9 @@ onUnmounted(() => clearInterval(timer))
   .quick-grid { margin-top:12px; gap:10px; }
   .quick-card { padding:16px; }
   .hasil-grid { grid-template-columns:1fr; }
+  .hero-card {
+    padding: 8px 0 16px;
+  }
 
   .momen-scroll {
     display:flex; grid-template-columns:none; overflow-x:auto; gap:12px;
