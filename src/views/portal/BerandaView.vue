@@ -8,8 +8,8 @@
         <div class="hero-bg-stripe"></div>
         <div style="position:relative;">
           <div class="hero-badge">11 Juli – 31 Agustus 2026</div>
-          <h1 class="hero-title">Semarak<br>Kemerdekaan <span style="color:#F4C36B;">ke-81</span></h1>
-          <p class="hero-desc">Portal bersama warga Teras Country Residence. Cek jadwal &amp; hasil pertandingan, klasemen, dan daftar lomba — semua di satu tempat.</p>
+          <h1 class="hero-title">Semarak<br>Agustusan <span style="color:#F4C36B;">ke-81</span></h1>
+          <p class="hero-desc">Portal bersama warga Teras Country Residence. Yuk Cek jadwal &amp; hasil pertandingan, klasemen, dan daftar lomba semua di satu tempat.</p>
           <div class="hero-actions">
             <button class="btn-white" @click="$router.push({ name: 'registrasi' })">Daftar Lomba Sekarang</button>
           </div>

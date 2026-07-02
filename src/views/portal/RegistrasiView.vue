@@ -434,5 +434,9 @@ onMounted(async () => {
   .sidebar-card { padding: 18px; }
   .pd-grid { grid-template-columns: 1fr 1fr; }
   .p-koridor { display: none; }
+
+  .pagination { flex-wrap: wrap; gap: 10px; }
+  .page-info { order: -1; width: 100%; text-align: center; }
+  .page-btn { flex: 1 1 0; max-width: 160px; padding: 10px 12px; font-size: 12px; }
 }
 </style>

@@ -2,7 +2,7 @@
   <div>
     <div class="eyebrow">Galeri Foto</div>
     <h2 class="page-title">Momen Kemerdekaan</h2>
-    <p class="desc">Dokumentasi kegiatan Semarak Merdeka 81 dari panitia dan warga.</p>
+    <p class="desc">Dokumentasi kegiatan Semarak Agustusan HUT RI ke 80 dari warga Teras Country Residence.</p>
 
     <!-- Filter kategori -->
     <div v-if="kategoris.length" class="filter-bar">
