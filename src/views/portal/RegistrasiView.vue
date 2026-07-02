@@ -112,8 +112,9 @@
         </div>
         <div class="sidebar-divider"></div>
         <div class="sidebar-info">
+          Pendaftaran akan ditutup Tanggal 8 Juli 2026.<br> <br>
           Pertanyaan lebih lanjut, hubungi: <br>
-          Andi (Ketua Panitia)
+          Andie Hans (Ketua Panitia)
           <a
             href="https://wa.me/6281574109182?text=Halo%20Andi%2C%20saya%20ingin%20bertanya%20soal%20registrasi%20lomba"
             target="_blank"
@@ -134,12 +135,12 @@
       </div>
 
       <div class="peserta-list">
-        <div v-for="(r, i) in regStore.list" :key="r.id || i"
+        <div v-for="(r, i) in pagedPeserta" :key="r.id || i"
           class="peserta-item" :class="{ 'peserta-open': expandedPeserta === (r.id || i) }"
           @click="togglePeserta(r.id || i)">
 
           <div class="peserta-main">
-            <span class="p-num">{{ i + 1 }}</span>
+            <span class="p-num">{{ (pesertaPage - 1) * PESERTA_PER_PAGE + i + 1 }}</span>
             <div class="p-info">
               <div class="p-nama">{{ r.namaRegu || r.namaKetua || r.nama || '—' }}</div>
               <div class="p-sub">{{ r.cabang }}{{ r.namaRegu && r.namaKetua ? ' · ' + r.namaKetua : '' }}</div>
@@ -186,6 +187,12 @@
         <div v-if="!regStore.list.length && !regStore.loading" class="peserta-empty">
           Belum ada peserta terdaftar.
         </div>
+      </div>
+
+      <div v-if="pesertaTotalPages > 1" class="pagination">
+        <button type="button" class="page-btn" :disabled="pesertaPage === 1" @click="pesertaPage--">‹ Sebelumnya</button>
+        <span class="page-info">Halaman {{ pesertaPage }} / {{ pesertaTotalPages }}</span>
+        <button type="button" class="page-btn" :disabled="pesertaPage === pesertaTotalPages" @click="pesertaPage++">Selanjutnya ›</button>
       </div>
     </div>
   </div>
@@ -278,6 +285,17 @@ const expandedPeserta = ref(null)
 function togglePeserta(key) {
   expandedPeserta.value = expandedPeserta.value === key ? null : key
 }
+
+const PESERTA_PER_PAGE = 30
+const pesertaPage = ref(1)
+const pesertaTotalPages = computed(() => Math.max(1, Math.ceil(regStore.list.length / PESERTA_PER_PAGE)))
+const pagedPeserta = computed(() => {
+  const start = (pesertaPage.value - 1) * PESERTA_PER_PAGE
+  return regStore.list.slice(start, start + PESERTA_PER_PAGE)
+})
+watch(() => regStore.list.length, () => {
+  if (pesertaPage.value > pesertaTotalPages.value) pesertaPage.value = pesertaTotalPages.value
+})
 const formatDate = (d) => {
   if (!d) return '—'
   const dt = d?.seconds ? new Date(d.seconds * 1000) : new Date(d)
@@ -399,6 +417,13 @@ onMounted(async () => {
 .pd-anggota-ol li { font: 500 13px/1.5 'Plus Jakarta Sans'; color: #1A1613; }
 
 .peserta-empty { padding: 32px; text-align: center; color: #9A9389; font: 500 14px/1 'Plus Jakarta Sans'; }
+
+.pagination { display: flex; align-items: center; justify-content: center; gap: 16px; margin-top: 18px; }
+.page-btn { padding: 9px 18px; border: 1.5px solid #F0D3D7; border-radius: 8px; background: #fff;
+  color: #CE1126; font: 700 13px/1 'Plus Jakarta Sans'; cursor: pointer; }
+.page-btn:disabled { opacity: .4; cursor: not-allowed; }
+.page-btn:not(:disabled):hover { background: #FCE7EA; }
+.page-info { font: 600 13px/1 'Plus Jakarta Sans'; color: #5A534B; }
 
 @media(max-width:767px) {
   .reg-grid, .form-grid { grid-template-columns: 1fr !important; }

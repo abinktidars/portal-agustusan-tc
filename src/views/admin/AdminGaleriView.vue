@@ -42,14 +42,17 @@
             <div class="form-row-full">
               <label class="form-label">Foto</label>
               <input ref="fileInputRef" type="file" accept="image/*" class="file-input-hidden" @change="handleFileChange" />
-              <div class="upload-box" :class="{ 'has-preview': form.fotoPreview }" @click="fileInputRef.click()">
+              <div class="upload-box" :class="{ 'has-preview': form.fotoPreview }" @click="!compressing && fileInputRef.click()">
                 <img v-if="form.fotoPreview" :src="form.fotoPreview" alt="preview" class="img-preview" />
                 <div v-else class="upload-placeholder">
                   <span class="upload-icon">📷</span>
-                  <span>Klik untuk upload foto</span>
+                  <span>{{ compressing ? 'Memproses foto...' : 'Klik untuk upload foto' }}</span>
                 </div>
               </div>
-              <button v-if="form.fotoPreview" type="button" class="btn-change-photo" @click="fileInputRef.click()">Ganti Foto</button>
+              <button v-if="form.fotoPreview" type="button" class="btn-change-photo" :disabled="compressing" @click="fileInputRef.click()">Ganti Foto</button>
+              <div v-if="saving && form.fotoFile" class="upload-progress">
+                <div class="upload-progress-bar" :style="{ width: uploadProgress + '%' }"></div>
+              </div>
             </div>
 
             <div class="form-row-2">
@@ -65,7 +68,9 @@
             </div>
 
             <div class="form-row-full form-actions">
-              <button type="submit" class="btn-save" :disabled="saving">{{ saving ? 'Menyimpan...' : (form.editId ? 'Update Foto' : 'Simpan Foto') }}</button>
+              <button type="submit" class="btn-save" :disabled="saving || compressing">
+                {{ saving ? (form.fotoFile ? `Mengupload... ${uploadProgress}%` : 'Menyimpan...') : (form.editId ? 'Update Foto' : 'Simpan Foto') }}
+              </button>
               <button type="button" class="btn-cancel" @click="resetForm" :disabled="saving">Batal</button>
             </div>
           </form>
@@ -155,9 +160,10 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch, onMounted } from 'vue'
+import { ref, reactive, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useGaleriStore } from '@/stores/useGaleri'
 import { seedGaleri } from '@/firebase/seedGaleri'
+import { compressImage } from '@/utils/compressImage'
 import PaginationBar from '@/components/PaginationBar.vue'
 
 const store      = useGaleriStore()
@@ -182,7 +188,26 @@ const form  = reactive({ judul: '', kategori: '', keterangan: '', urutan: 1, edi
 const toast = reactive({ show: false, msg: '', type: 'success' })
 const fileInputRef = ref(null)
 const saving = ref(false)
+const compressing = ref(false)
+const uploadProgress = ref(0)
 let toastTimer = null
+let progressTimer = null
+
+// Firebase Storage only reports progress per finished chunk (min 256 KB), so a
+// compressed photo often uploads as a single chunk with no in-between values.
+// Simulate a smooth climb to 90% so the bar doesn't look stuck, then let the
+// real/final progress (or the try block) push it to 100%.
+function startFakeProgress() {
+  clearInterval(progressTimer)
+  progressTimer = setInterval(() => {
+    if (uploadProgress.value < 90) uploadProgress.value += Math.max(1, Math.round((90 - uploadProgress.value) * 0.15))
+  }, 150)
+}
+function stopFakeProgress() {
+  clearInterval(progressTimer)
+  progressTimer = null
+}
+onUnmounted(stopFakeProgress)
 
 function showToast(msg, type = 'success') {
   clearTimeout(toastTimer)
@@ -206,18 +231,29 @@ function openForm(g = null) {
 
 function resetForm() {
   showForm.value = false
+  stopFakeProgress()
+  uploadProgress.value = 0
   if (form.fotoPreview?.startsWith('blob:')) URL.revokeObjectURL(form.fotoPreview)
   Object.assign(form, { judul: '', kategori: '', keterangan: '', urutan: 1, editId: null, fotoFile: null, fotoPreview: '' })
 }
 
-function handleFileChange(e) {
+async function handleFileChange(e) {
   const file = e.target.files[0]
-  if (!file) return
-  if (file.size > 2 * 1024 * 1024) { showToast('Ukuran foto maks 2 MB.', 'error'); e.target.value = ''; return }
-  if (form.fotoPreview?.startsWith('blob:')) URL.revokeObjectURL(form.fotoPreview)
-  form.fotoFile = file
-  form.fotoPreview = URL.createObjectURL(file)
   e.target.value = ''
+  if (!file) return
+  if (file.size > 8 * 1024 * 1024) { showToast('Ukuran foto maks 8 MB.', 'error'); return }
+
+  compressing.value = true
+  try {
+    const compressed = await compressImage(file)
+    if (form.fotoPreview?.startsWith('blob:')) URL.revokeObjectURL(form.fotoPreview)
+    form.fotoFile = compressed
+    form.fotoPreview = URL.createObjectURL(compressed)
+  } catch {
+    showToast('Gagal memproses foto. Coba foto lain.', 'error')
+  } finally {
+    compressing.value = false
+  }
 }
 
 async function submit() {
@@ -230,14 +266,20 @@ async function submit() {
     urutan:     form.urutan || 1,
   }
   saving.value = true
+  uploadProgress.value = 0
+  if (form.fotoFile) startFakeProgress()
+  const onProgress = (pct) => { uploadProgress.value = Math.max(uploadProgress.value, pct) }
   try {
-    isEdit ? await store.update(form.editId, p, form.fotoFile) : await store.add(p, form.fotoFile)
+    isEdit ? await store.update(form.editId, p, form.fotoFile, onProgress) : await store.add(p, form.fotoFile, onProgress)
+    uploadProgress.value = 100
     showToast(isEdit ? `Foto "${p.judul}" berhasil diperbarui.` : `Foto "${p.judul}" berhasil ditambahkan.`)
     resetForm()
   } catch {
     showToast('Gagal menyimpan. Coba lagi.', 'error')
   } finally {
+    stopFakeProgress()
     saving.value = false
+    uploadProgress.value = 0
   }
 }
 
@@ -315,6 +357,9 @@ onMounted(() => store.fetch())
   background:transparent; color:#1A1613; font:600 12px/1 'Plus Jakarta Sans'; cursor:pointer;
 }
 .btn-change-photo:hover { background:#F0EBE2; }
+.btn-change-photo:disabled { opacity:.6; cursor:default; }
+.upload-progress { margin-top:10px; height:6px; border-radius:999px; background:#F0EBE2; overflow:hidden; }
+.upload-progress-bar { height:100%; background:#CE1126; transition:width .2s ease; }
 
 /* table */
 .data-table-wrap { border:1px solid #ECE7DE; border-radius:14px; overflow:hidden; }

@@ -2,7 +2,7 @@ import { db, storage } from './config'
 import {
   collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, where, setDoc, orderBy
 } from 'firebase/firestore'
-import { ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage'
+import { ref as storageRef, uploadBytes, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage'
 
 const fmt = (d) => {
   if (!d) return null
@@ -111,11 +111,17 @@ export const deleteLokasi = (id) => deleteDoc(doc(db, 'lokasi', id))
 // ── GALERI ────────────────────────────────────────────
 export const getGaleri = () => getDocs(query(collection(db, 'galeri'), orderBy('urutan'))).then(s => s.docs.map(d => ({ id: d.id, ...d.data() })))
 
-export async function uploadGaleriFoto(id, file) {
+export function uploadGaleriFoto(id, file, onProgress) {
   const ext = file.name.split('.').pop()
   const path = storageRef(storage, `galeri/${id}/foto.${ext}`)
-  await uploadBytes(path, file)
-  return getDownloadURL(path)
+  const task = uploadBytesResumable(path, file)
+  return new Promise((resolve, reject) => {
+    task.on('state_changed',
+      snap => onProgress?.(Math.round((snap.bytesTransferred / snap.totalBytes) * 100)),
+      reject,
+      () => getDownloadURL(task.snapshot.ref).then(resolve, reject)
+    )
+  })
 }
 
 export async function deleteGaleriFoto(id) {
@@ -124,18 +130,27 @@ export async function deleteGaleriFoto(id) {
   }
 }
 
-export async function addGaleri(data, fotoFile) {
-  const docRef = await addDoc(collection(db, 'galeri'), { ...data, url: '', createdAt: new Date() })
+export async function addGaleri(data, fotoFile, onProgress) {
+  const docRef = doc(collection(db, 'galeri'))
+  const payload = { ...data, url: '', createdAt: new Date() }
   if (fotoFile) {
-    const url = await uploadGaleriFoto(docRef.id, fotoFile)
+    // Upload runs alongside the Firestore write instead of waiting for it first.
+    const [url] = await Promise.all([
+      uploadGaleriFoto(docRef.id, fotoFile, onProgress),
+      setDoc(docRef, payload),
+    ])
     await updateDoc(docRef, { url })
+    payload.url = url
+  } else {
+    await setDoc(docRef, payload)
   }
-  return docRef
+  return { id: docRef.id, ...payload }
 }
 
-export async function updateGaleri(id, data, fotoFile) {
-  if (fotoFile) data.url = await uploadGaleriFoto(id, fotoFile)
-  return updateDoc(doc(db, 'galeri', id), data)
+export async function updateGaleri(id, data, fotoFile, onProgress) {
+  if (fotoFile) data.url = await uploadGaleriFoto(id, fotoFile, onProgress)
+  await updateDoc(doc(db, 'galeri', id), data)
+  return { id, ...data }
 }
 
 export async function deleteGaleri(id) {

@@ -47,7 +47,21 @@ export const useJadwalStore = defineStore('jadwal', () => {
   const cabangOptions = computed(() => ['Semua', ...new Set(list.value.map(j => j.cabang))])
   const statusOptions  = ['Semua', 'Berlangsung', 'Akan Datang', 'Selesai']
 
-  const listWithStatus = computed(() => list.value.map(j => ({ ...j, status: computeStatus(j) })))
+  function startTimestamp(j) {
+    const tglDate = j.tglDate instanceof Date ? j.tglDate : (j.tglDate ? new Date(j.tglDate) : null)
+    if (!tglDate || Number.isNaN(tglDate.getTime())) return Infinity
+    const jam = j.jamMulai || j.jam || '00:00'
+    const [h, m] = jam.split(':').map(Number)
+    const start = new Date(tglDate)
+    start.setHours(h || 0, m || 0, 0, 0)
+    return start.getTime()
+  }
+
+  const listWithStatus = computed(() =>
+    list.value
+      .map(j => ({ ...j, status: computeStatus(j) }))
+      .sort((a, b) => startTimestamp(a) - startTimestamp(b))
+  )
 
   const filtered = computed(() => listWithStatus.value.filter(j =>
     (filterCabang.value === 'Semua' || j.cabang === filterCabang.value) &&
