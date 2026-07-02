@@ -26,20 +26,21 @@
             <div class="foto-field">
               <label class="form-label">Foto Profil</label>
               <div class="foto-picker">
-                <div class="foto-preview" @click="$refs.fotoInput.click()">
+                <div class="foto-preview" @click="!compressingFoto && $refs.fotoInput.click()">
                   <img v-if="fotoPreview" :src="fotoPreview" class="foto-img" alt="preview" />
                   <div v-else class="foto-placeholder">
                     <span class="foto-icon">📷</span>
-                    <span class="foto-hint">Klik untuk pilih foto</span>
+                    <span class="foto-hint">{{ compressingFoto ? 'Memproses...' : 'Klik untuk pilih foto' }}</span>
                   </div>
                   <div class="foto-overlay">Ganti Foto</div>
                 </div>
                 <div class="foto-info">
-                  <p class="foto-desc">JPG, PNG, atau WEBP. Maks 2 MB.</p>
-                  <button v-if="fotoPreview" type="button" class="btn-hapus-foto" @click="hapusFoto">Hapus foto</button>
+                  <p class="foto-desc">JPG, PNG, atau WEBP.</p>
+                  <button v-if="fotoPreview" type="button" class="btn-hapus-foto" :disabled="compressingFoto" @click="hapusFoto">Hapus foto</button>
                 </div>
               </div>
               <input ref="fotoInput" type="file" accept="image/jpeg,image/png,image/webp" style="display:none" @change="onFotoChange" />
+              <p v-if="fotoError" class="foto-error">⚠ {{ fotoError }}</p>
             </div>
 
             <div>
@@ -69,7 +70,7 @@
               <div class="error-box">{{ formError }}</div>
             </div>
             <div style="display:flex;gap:12px;">
-              <button type="submit" :disabled="saving" class="btn-save">
+              <button type="submit" :disabled="saving || compressingFoto" class="btn-save">
                 {{ saving ? 'Menyimpan...' : (form.editId ? 'Update' : 'Simpan') }}
               </button>
               <button type="button" class="btn-cancel" @click="resetForm">Batal</button>
@@ -156,6 +157,7 @@ import { ref, reactive, computed, watch, onMounted } from 'vue'
 import * as fb from '@/firebase/helpers'
 import PaginationBar from '@/components/PaginationBar.vue'
 import { exportToExcel } from '@/utils/exportExcel'
+import { compressImageToDataUrl } from '@/utils/compressImage'
 
 const ROLE_LABEL = { admin:'Admin', panitia:'Panitia', warga:'Warga' }
 
@@ -181,8 +183,10 @@ const page       = ref(1)
 const PER_PAGE   = 10
 const expandedId = ref(null)
 const fotoInput  = ref(null)
-const fotoFile   = ref(null)
+const fotoDataUrl = ref(null)
 const fotoPreview = ref(null)
+const compressingFoto = ref(false)
+const fotoError  = ref('')
 
 function toggleExpand(id) {
   expandedId.value = expandedId.value === id ? null : id
@@ -193,19 +197,32 @@ function initials(u) {
   return name.slice(0, 2).toUpperCase()
 }
 
-function onFotoChange(e) {
+async function onFotoChange(e) {
   const file = e.target.files[0]
-  if (!file) return
-  if (file.size > 2 * 1024 * 1024) { formError.value = 'Ukuran foto maks 2 MB.'; return }
-  fotoFile.value = file
-  fotoPreview.value = URL.createObjectURL(file)
-  formError.value = ''
   e.target.value = ''
+  if (!file) return
+  fotoError.value = ''
+  // Photos are compressed to a base64 data URL client-side regardless of the
+  // original file size, so this is just a sanity cap to avoid the browser
+  // hanging while decoding an absurdly large source image.
+  if (file.size > 30 * 1024 * 1024) { fotoError.value = 'Ukuran foto maks 30 MB.'; return }
+
+  compressingFoto.value = true
+  try {
+    const dataUrl = await compressImageToDataUrl(file, { maxWidth: 500, maxHeight: 500, quality: 0.75, maxBytes: 300 * 1024 })
+    fotoDataUrl.value = dataUrl
+    fotoPreview.value = dataUrl
+  } catch (err) {
+    fotoError.value = err.message || 'Gagal memproses foto. Coba foto lain.'
+  } finally {
+    compressingFoto.value = false
+  }
 }
 
 function hapusFoto() {
-  fotoFile.value = null
+  fotoDataUrl.value = null
   fotoPreview.value = null
+  fotoError.value = ''
 }
 
 const filtered  = computed(() => {
@@ -237,7 +254,8 @@ async function fetchUsers() {
 
 function openForm(u = null) {
   formError.value = ''
-  fotoFile.value = null
+  fotoError.value = ''
+  fotoDataUrl.value = null
   if (u) {
     Object.assign(form, { nama:u.nama, email:u.email, role:u.role, password:'', editId:u.id })
     fotoPreview.value = u.fotoUrl || null
@@ -251,23 +269,26 @@ function openForm(u = null) {
 function resetForm() {
   showForm.value = false
   formError.value = ''
-  fotoFile.value = null
+  fotoError.value = ''
+  fotoDataUrl.value = null
   fotoPreview.value = null
   Object.assign(form, { nama:'', email:'', role:'panitia', password:'', editId:null })
 }
 
 async function submit() {
   formError.value = ''
+  if (fotoError.value) { formError.value = 'Perbaiki dulu masalah foto sebelum menyimpan.'; return }
   if (!form.nama.trim() || !form.email.trim()) { formError.value = 'Nama dan email wajib diisi.'; return }
   if (!form.editId && !form.password) { formError.value = 'Password wajib diisi untuk user baru.'; return }
   saving.value = true
   try {
     form.editId
-      ? await fb.updateUser(form.editId, { email:form.email, password:form.password, role:form.role, nama:form.nama, fotoFile:fotoFile.value })
-      : await fb.addUser({ email:form.email, password:form.password, role:form.role, nama:form.nama, fotoFile:fotoFile.value })
+      ? await fb.updateUser(form.editId, { email:form.email, password:form.password, role:form.role, nama:form.nama, fotoDataUrl:fotoDataUrl.value })
+      : await fb.addUser({ email:form.email, password:form.password, role:form.role, nama:form.nama, fotoDataUrl:fotoDataUrl.value })
     await fetchUsers()
     resetForm()
   } catch (e) {
+    console.error(e)
     formError.value = 'Gagal menyimpan: ' + e.message
   } finally {
     saving.value = false
@@ -276,8 +297,12 @@ async function submit() {
 
 async function hapus(u) {
   if (!confirm(`Hapus user "${u.nama || u.email}"?`)) return
-  await fb.deleteUser(u.id)
-  await fetchUsers()
+  try {
+    await fb.deleteUser(u.id)
+    await fetchUsers()
+  } catch (e) {
+    console.error(e)
+  }
 }
 
 onMounted(fetchUsers)
@@ -331,6 +356,7 @@ onMounted(fetchUsers)
 }
 .foto-info    { display:flex; flex-direction:column; gap:8px; }
 .foto-desc    { font:500 12px/1.4 'Plus Jakarta Sans'; color:#9A9389; margin:0; }
+.foto-error   { margin:8px 0 0; font:600 12px/1.4 'Plus Jakarta Sans'; color:#CE1126; }
 .btn-hapus-foto { padding:5px 12px; border:1px solid #FBEAEC; border-radius:8px; background:#FBEAEC; color:#CE1126; font:600 11px/1 'Plus Jakarta Sans'; cursor:pointer; width:fit-content; }
 
 .table-wrap  { border:1px solid #ECE7DE; border-radius:14px; overflow:hidden; overflow-x:auto; }

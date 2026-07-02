@@ -12,15 +12,22 @@ export const useGaleriStore = defineStore('galeri', () => {
     finally { loading.value = false }
   }
 
-  async function add(data, fotoFile) {
-    const ref_ = await addGaleri(data, fotoFile)
-    await fetch()
-    return ref_
+  function sortByUrutan() {
+    list.value.sort((a, b) => (a.urutan ?? 0) - (b.urutan ?? 0))
   }
 
-  async function update(id, data, fotoFile) {
-    await updateGaleri(id, data, fotoFile)
-    await fetch()
+  async function add(data, fotoDataUrl) {
+    const newItem = await addGaleri(data, fotoDataUrl)
+    list.value.push(newItem)
+    sortByUrutan()
+    return newItem
+  }
+
+  async function update(id, data, fotoDataUrl) {
+    const updated = await updateGaleri(id, data, fotoDataUrl)
+    const idx = list.value.findIndex(g => g.id === id)
+    if (idx !== -1) list.value[idx] = { ...list.value[idx], ...updated }
+    sortByUrutan()
   }
 
   async function remove(id) {

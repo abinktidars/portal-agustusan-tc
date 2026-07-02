@@ -42,14 +42,15 @@
             <div class="form-row-full">
               <label class="form-label">Foto</label>
               <input ref="fileInputRef" type="file" accept="image/*" class="file-input-hidden" @change="handleFileChange" />
-              <div class="upload-box" :class="{ 'has-preview': form.fotoPreview }" @click="fileInputRef.click()">
+              <div class="upload-box" :class="{ 'has-preview': form.fotoPreview }" @click="!compressing && fileInputRef.click()">
                 <img v-if="form.fotoPreview" :src="form.fotoPreview" alt="preview" class="img-preview" />
                 <div v-else class="upload-placeholder">
                   <span class="upload-icon">📷</span>
-                  <span>Klik untuk upload foto</span>
+                  <span>{{ compressing ? 'Memproses foto...' : 'Klik untuk upload foto' }}</span>
                 </div>
               </div>
-              <button v-if="form.fotoPreview" type="button" class="btn-change-photo" @click="fileInputRef.click()">Ganti Foto</button>
+              <button v-if="form.fotoPreview" type="button" class="btn-change-photo" :disabled="compressing" @click="fileInputRef.click()">Ganti Foto</button>
+              <div v-if="fotoError" class="foto-error">⚠ {{ fotoError }}</div>
             </div>
 
             <div class="form-row-2">
@@ -65,7 +66,9 @@
             </div>
 
             <div class="form-row-full form-actions">
-              <button type="submit" class="btn-save" :disabled="saving">{{ saving ? 'Menyimpan...' : (form.editId ? 'Update Foto' : 'Simpan Foto') }}</button>
+              <button type="submit" class="btn-save" :disabled="saving || compressing">
+                {{ saving ? 'Menyimpan...' : (form.editId ? 'Update Foto' : 'Simpan Foto') }}
+              </button>
               <button type="button" class="btn-cancel" @click="resetForm" :disabled="saving">Batal</button>
             </div>
           </form>
@@ -120,8 +123,9 @@
                   <td colspan="6">
                     <div class="detail-panel">
                       <div v-if="g.url" class="detail-block">
-                        <div class="detail-label">URL Foto</div>
-                        <a :href="g.url" target="_blank" rel="noopener" class="detail-link">{{ g.url }}</a>
+                        <div class="detail-label">Foto</div>
+                        <img :src="g.url" :alt="g.judul" class="detail-photo" />
+                        <a v-if="!g.url.startsWith('data:')" :href="g.url" target="_blank" rel="noopener" class="detail-link">{{ g.url }}</a>
                       </div>
                       <div v-if="g.keterangan" class="detail-block">
                         <div class="detail-label">Keterangan</div>
@@ -158,6 +162,7 @@
 import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { useGaleriStore } from '@/stores/useGaleri'
 import { seedGaleri } from '@/firebase/seedGaleri'
+import { compressImageToDataUrl } from '@/utils/compressImage'
 import PaginationBar from '@/components/PaginationBar.vue'
 
 const store      = useGaleriStore()
@@ -170,7 +175,7 @@ const PER_PAGE   = 10
 const filtered  = computed(() => {
   const q = search.value.toLowerCase()
   return store.list.filter(g => !q ||
-    g.judul.toLowerCase().includes(q) ||
+    (g.judul || '').toLowerCase().includes(q) ||
     (g.kategori || '').toLowerCase().includes(q) ||
     (g.keterangan || '').toLowerCase().includes(q)
   )
@@ -178,10 +183,12 @@ const filtered  = computed(() => {
 const paginated = computed(() => filtered.value.slice((page.value - 1) * PER_PAGE, page.value * PER_PAGE))
 watch(search, () => { page.value = 1 })
 
-const form  = reactive({ judul: '', kategori: '', keterangan: '', urutan: 1, editId: null, fotoFile: null, fotoPreview: '' })
+const form  = reactive({ judul: '', kategori: '', keterangan: '', urutan: 1, editId: null, fotoDataUrl: null, fotoPreview: '' })
 const toast = reactive({ show: false, msg: '', type: 'success' })
 const fileInputRef = ref(null)
 const saving = ref(false)
+const compressing = ref(false)
+const fotoError = ref('')
 let toastTimer = null
 
 function showToast(msg, type = 'success') {
@@ -195,10 +202,11 @@ function toggleDetail(id) {
 }
 
 function openForm(g = null) {
+  fotoError.value = ''
   if (g) {
-    Object.assign(form, { judul: g.judul, kategori: g.kategori || '', keterangan: g.keterangan || '', urutan: g.urutan ?? 1, editId: g.id, fotoFile: null, fotoPreview: g.url || '' })
+    Object.assign(form, { judul: g.judul, kategori: g.kategori || '', keterangan: g.keterangan || '', urutan: g.urutan ?? 1, editId: g.id, fotoDataUrl: null, fotoPreview: g.url || '' })
   } else {
-    Object.assign(form, { judul: '', kategori: '', keterangan: '', urutan: store.list.length + 1, editId: null, fotoFile: null, fotoPreview: '' })
+    Object.assign(form, { judul: '', kategori: '', keterangan: '', urutan: store.list.length + 1, editId: null, fotoDataUrl: null, fotoPreview: '' })
   }
   showForm.value = true
   expandedId.value = null
@@ -206,22 +214,36 @@ function openForm(g = null) {
 
 function resetForm() {
   showForm.value = false
-  if (form.fotoPreview?.startsWith('blob:')) URL.revokeObjectURL(form.fotoPreview)
-  Object.assign(form, { judul: '', kategori: '', keterangan: '', urutan: 1, editId: null, fotoFile: null, fotoPreview: '' })
+  fotoError.value = ''
+  Object.assign(form, { judul: '', kategori: '', keterangan: '', urutan: 1, editId: null, fotoDataUrl: null, fotoPreview: '' })
 }
 
-function handleFileChange(e) {
+async function handleFileChange(e) {
   const file = e.target.files[0]
-  if (!file) return
-  if (file.size > 2 * 1024 * 1024) { showToast('Ukuran foto maks 2 MB.', 'error'); e.target.value = ''; return }
-  if (form.fotoPreview?.startsWith('blob:')) URL.revokeObjectURL(form.fotoPreview)
-  form.fotoFile = file
-  form.fotoPreview = URL.createObjectURL(file)
   e.target.value = ''
+  if (!file) return
+  fotoError.value = ''
+  // Photos are compressed to a base64 data URL client-side regardless of the
+  // original file size, so this is just a sanity cap to avoid the browser
+  // hanging while decoding an absurdly large source image.
+  if (file.size > 30 * 1024 * 1024) { fotoError.value = 'Ukuran foto maks 30 MB.'; return }
+
+  compressing.value = true
+  try {
+    const dataUrl = await compressImageToDataUrl(file, { maxWidth: 1000, maxHeight: 1000, quality: 0.7, maxBytes: 700 * 1024 })
+    form.fotoDataUrl = dataUrl
+    form.fotoPreview = dataUrl
+  } catch (err) {
+    console.error(err)
+    fotoError.value = err.message || 'Gagal memproses foto. Coba foto lain.'
+  } finally {
+    compressing.value = false
+  }
 }
 
 async function submit() {
   if (!form.judul.trim()) { showToast('Judul foto wajib diisi.', 'error'); return }
+  if (fotoError.value) { showToast('Perbaiki dulu masalah foto sebelum menyimpan.', 'error'); return }
   const isEdit = !!form.editId
   const p = {
     judul:      form.judul.trim(),
@@ -231,10 +253,11 @@ async function submit() {
   }
   saving.value = true
   try {
-    isEdit ? await store.update(form.editId, p, form.fotoFile) : await store.add(p, form.fotoFile)
+    isEdit ? await store.update(form.editId, p, form.fotoDataUrl) : await store.add(p, form.fotoDataUrl)
     showToast(isEdit ? `Foto "${p.judul}" berhasil diperbarui.` : `Foto "${p.judul}" berhasil ditambahkan.`)
     resetForm()
-  } catch {
+  } catch (err) {
+    console.error(err)
     showToast('Gagal menyimpan. Coba lagi.', 'error')
   } finally {
     saving.value = false
@@ -246,7 +269,8 @@ async function hapus(g) {
   try {
     await store.remove(g.id)
     showToast(`Foto "${g.judul}" berhasil dihapus.`)
-  } catch {
+  } catch (err) {
+    console.error(err)
     showToast('Gagal menghapus. Coba lagi.', 'error')
   }
 }
@@ -259,7 +283,8 @@ async function doSeed() {
     await seedGaleri()
     await store.fetch()
     showToast('8 foto sample berhasil ditambahkan.')
-  } catch {
+  } catch (err) {
+    console.error(err)
     showToast('Gagal menambahkan sample data.', 'error')
   } finally {
     seeding.value = false
@@ -315,6 +340,8 @@ onMounted(() => store.fetch())
   background:transparent; color:#1A1613; font:600 12px/1 'Plus Jakarta Sans'; cursor:pointer;
 }
 .btn-change-photo:hover { background:#F0EBE2; }
+.btn-change-photo:disabled { opacity:.6; cursor:default; }
+.foto-error { margin-top:8px; font:600 12px/1.4 'Plus Jakarta Sans'; color:#CE1126; }
 
 /* table */
 .data-table-wrap { border:1px solid #ECE7DE; border-radius:14px; overflow:hidden; }
@@ -348,6 +375,7 @@ onMounted(() => store.fetch())
 .detail-label  { font:700 11px/1 'Plus Jakarta Sans'; letter-spacing:.1em; text-transform:uppercase; color:#9A9389; margin-bottom:6px; }
 .detail-text   { font:500 14px/1.7 'Plus Jakarta Sans'; color:#1A1613; margin:0; }
 .detail-link   { font:500 13px/1.5 'Plus Jakarta Sans'; color:#2D5B8A; word-break:break-all; }
+.detail-photo  { max-width:220px; max-height:220px; border-radius:10px; object-fit:cover; display:block; margin-bottom:8px; }
 .detail-empty  { font:500 13px/1 'Plus Jakarta Sans'; color:#9A9389; font-style:italic; }
 
 .empty { text-align:center; padding:32px; color:#9A9389; font:500 14px/1 'Plus Jakarta Sans'; }
