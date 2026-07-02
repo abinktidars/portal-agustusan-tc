@@ -130,7 +130,7 @@
       <div class="peserta-sec-header">
         <div>
           <div class="eyebrow">Peserta Terdaftar</div>
-          <p class="peserta-sec-sub">{{ regStore.list.length }} peserta telah mendaftar</p>
+          <p class="peserta-sec-sub">{{ visiblePeserta.length }} peserta telah mendaftar</p>
         </div>
       </div>
 
@@ -184,7 +184,7 @@
           </div>
         </div>
 
-        <div v-if="!regStore.list.length && !regStore.loading" class="peserta-empty">
+        <div v-if="!visiblePeserta.length && !regStore.loading" class="peserta-empty">
           Belum ada peserta terdaftar.
         </div>
       </div>
@@ -286,14 +286,16 @@ function togglePeserta(key) {
   expandedPeserta.value = expandedPeserta.value === key ? null : key
 }
 
+const visiblePeserta = computed(() => regStore.list.filter(r => r.status !== 'cancel'))
+
 const PESERTA_PER_PAGE = 30
 const pesertaPage = ref(1)
-const pesertaTotalPages = computed(() => Math.max(1, Math.ceil(regStore.list.length / PESERTA_PER_PAGE)))
+const pesertaTotalPages = computed(() => Math.max(1, Math.ceil(visiblePeserta.value.length / PESERTA_PER_PAGE)))
 const pagedPeserta = computed(() => {
   const start = (pesertaPage.value - 1) * PESERTA_PER_PAGE
-  return regStore.list.slice(start, start + PESERTA_PER_PAGE)
+  return visiblePeserta.value.slice(start, start + PESERTA_PER_PAGE)
 })
-watch(() => regStore.list.length, () => {
+watch(() => visiblePeserta.value.length, () => {
   if (pesertaPage.value > pesertaTotalPages.value) pesertaPage.value = pesertaTotalPages.value
 })
 const formatDate = (d) => {

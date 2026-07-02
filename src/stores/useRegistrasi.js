@@ -15,7 +15,7 @@ export const useRegistrasiStore = defineStore('registrasi', () => {
   const submitted = ref(false)
   const error     = ref('')
 
-  const recent = () => list.value.slice(0, 5).map(r => ({
+  const recent = () => list.value.filter(r => r.status !== 'cancel').slice(0, 5).map(r => ({
     initial: ((r.namaRegu || r.namaKetua || r.nama) || '?').charAt(0).toUpperCase(),
     nama:    r.namaRegu || r.namaKetua || r.nama || '—',
     line:    `${r.cabang} · ${r.koridorNama || (r.koridor ? `Koridor ${r.koridor}` : '—')}`,
