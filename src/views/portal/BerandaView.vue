@@ -44,7 +44,7 @@
     </section>
 
     <!-- Quick links -->
-    <section class="quick-grid">
+    <!-- <section class="quick-grid">
       <button class="quick-card" @click="$router.push({ name: 'jadwal' })">
         <div class="quick-icon" style="background:#FBEAEC;color:#CE1126;">📅</div>
         <div class="quick-title">Jadwal Pertandingan</div>
@@ -60,7 +60,7 @@
         <div class="quick-title">Klasemen</div>
         <div class="quick-desc">Perolehan juara per kategori lomba.</div>
       </button>
-    </section>
+    </section> -->
 
     <!-- Jadwal terdekat -->
     <section style="margin-top:44px;">
@@ -101,8 +101,48 @@
       </div>
     </section>
 
-    <!-- Hasil terbaru -->
+    <!-- Daftar Lomba -->
     <section style="margin-top:44px;">
+      <div class="section-eyebrow" style="color:#2D5B8A;">Cabang Lomba</div>
+      <div class="section-header-row">
+        <h2 class="section-title">Daftar Lomba</h2>
+        <button class="link-btn" @click="$router.push({ name: 'lomba' })">Lihat semua →</button>
+      </div>
+
+      <div v-if="kategoriStore.loading" class="lomba-preview-grid">
+        <div v-for="n in 6" :key="n" class="skeleton-card"></div>
+      </div>
+
+      <div v-else-if="lombaPreview.length" class="lomba-preview-grid">
+        <div v-for="kat in lombaPreview" :key="kat.id" class="lomba-preview-card"
+          @click="$router.push({ name: 'lomba' })" role="button" tabindex="0">
+          <div class="lomba-preview-icon" :style="{ background: kat._color.bg, color: kat._color.color }">
+            <svg v-if="kat._icon.type === 'badminton-racket'" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <ellipse cx="12.8" cy="7.6" rx="4.4" ry="5.4" transform="rotate(-20 12.8 7.6)" />
+              <path d="M12.8 2.6v10M8.3 7.6h9" transform="rotate(-20 12.8 7.6)" />
+              <path d="M10.2 12.6L7.5 19.5" />
+            </svg>
+            <component v-else :is="kat._icon.icon" :size="22" :stroke-width="1.8" />
+          </div>
+          <div class="lomba-preview-top">
+            <span class="lomba-preview-badge" :style="{ background: tipeStore.bgById(kat.tipeId), color: tipeStore.warnaById(kat.tipeId) }">
+              {{ tipeStore.namaById(kat.tipeId) || kat.tipe || '' }}
+            </span>
+            <span class="lomba-preview-jenis" :class="kat.jenis === 'Perorangan' ? 'jenis-p' : 'jenis-b'">
+              {{ kat.jenis || 'Beregu' }}
+            </span>
+          </div>
+          <div class="lomba-preview-nama">{{ kat.nama }}</div>
+        </div>
+      </div>
+
+      <div v-else class="empty-section">
+        Belum ada daftar lomba yang tersedia.
+      </div>
+    </section>
+
+    <!-- Hasil terbaru -->
+    <!-- <section style="margin-top:44px;">
       <div class="section-eyebrow" style="color:#2E7D52;">Hasil Pertandingan</div>
       <div class="section-header-row">
         <h2 class="section-title">Terbaru</h2>
@@ -121,7 +161,6 @@
             <span class="hasil-tgl">{{ h.tgl }}</span>
           </div>
 
-          <!-- Beregu -->
           <template v-if="!isPerorangan(h)">
             <div class="skor-row">
               <div class="tim">{{ h.timA }}</div>
@@ -131,7 +170,6 @@
             <div v-if="h.juara" class="juara-chip">🏆 {{ h.juara }}</div>
           </template>
 
-          <!-- Perorangan -->
           <template v-else>
             <div class="podium-mini">
               <div v-if="h.juara1" class="podium-item">🥇 <span>{{ h.juara1 }}</span></div>
@@ -145,6 +183,36 @@
       <div v-else class="empty-section">
         Hasil pertandingan belum tersedia.
       </div>
+    </section> -->
+
+    <!-- Momen Agustusan tahun lalu -->
+    <section style="margin-top:44px;">
+      <div class="section-eyebrow" style="color:#C0871C;">Kilas Balik</div>
+      <div class="section-header-row">
+        <h2 class="section-title">Momen Agustusan Tahun Lalu</h2>
+        <button class="link-btn" @click="$router.push({ name: 'galeri' })">Lihat galeri →</button>
+      </div>
+
+      <div v-if="galeriStore.loading" class="momen-scroll">
+        <div v-for="n in 4" :key="n" class="skeleton-card momen-card"></div>
+      </div>
+
+      <div v-else-if="momenFoto.length" class="momen-scroll">
+        <div v-for="g in momenFoto" :key="g.id" class="momen-card" @click="$router.push({ name: 'galeri' })" role="button" tabindex="0">
+          <div class="momen-img-wrap">
+            <img v-if="g.url" :src="g.url" :alt="g.judul" class="momen-img" loading="lazy" @error="e => e.target.style.display='none'" />
+            <div v-else class="momen-img-placeholder">🖼️</div>
+          </div>
+          <div class="momen-body">
+            <div class="momen-title">{{ g.judul }}</div>
+            <div v-if="g.kategori" class="momen-kat">{{ g.kategori }}</div>
+          </div>
+        </div>
+      </div>
+
+      <div v-else class="empty-section">
+        Belum ada foto momen Agustusan tahun lalu.
+      </div>
     </section>
   </div>
 </template>
@@ -155,16 +223,75 @@ import { useJadwalStore }    from '@/stores/useJadwal'
 import { useHasilStore }     from '@/stores/useHasil'
 import { useRegistrasiStore } from '@/stores/useRegistrasi'
 import { useKategoriStore }  from '@/stores/useKategori'
+import { useTipeStore }      from '@/stores/useTipe'
 import { useKoridorStore }   from '@/stores/useKoridor'
 import { useLokasiStore }    from '@/stores/useLokasi'
+import { useGaleriStore }    from '@/stores/useGaleri'
 import StatusBadge from '@/components/StatusBadge.vue'
+import {
+  Volleyball, Gamepad2, Footprints, HandFist, Utensils,
+  CircleDot, TreePalm, Dumbbell, PartyPopper, CalendarDays, Trophy,
+} from '@lucide/vue'
 
 const jadwalStore   = useJadwalStore()
 const hasilStore    = useHasilStore()
 const regStore      = useRegistrasiStore()
 const kategoriStore = useKategoriStore()
+const tipeStore     = useTipeStore()
 const koridorStore  = useKoridorStore()
 const lokasiStore   = useLokasiStore()
+const galeriStore   = useGaleriStore()
+
+const momenFoto = computed(() => galeriStore.list.slice(0, 8))
+
+const lombaPreview = computed(() =>
+  [...kategoriStore.list]
+    .sort((a, b) => (a.urutan || 999) - (b.urutan || 999))
+    .slice(0, 6)
+    .map(kat => ({ ...kat, _icon: resolveIcon(kat), _color: resolveColor(kat) }))
+)
+
+// Ikon representatif per lomba berdasarkan kata kunci nama.
+// 'badminton-racket' dirender sebagai SVG custom (lihat template), sisanya pakai @lucide/vue.
+const LOMBA_ICON_KEYWORDS = [
+  { test: /voli|volley/i,                icon: Volleyball },
+  { test: /mobile legends|e-?sport|valorant|free ?fire/i, icon: Gamepad2 },
+  { test: /karung/i,                     icon: Footprints },
+  { test: /tarik ?tambang/i,             icon: HandFist },
+  { test: /kerupuk/i,                    icon: Utensils },
+  { test: /kelereng/i,                   icon: CircleDot },
+  { test: /pinang/i,                     icon: TreePalm },
+]
+
+const TIPE_ICON_FALLBACK = {
+  Olahraga:    Dumbbell,
+  Tradisional: PartyPopper,
+  'E-Sport':   Gamepad2,
+  Acara:       CalendarDays,
+}
+
+function resolveIcon(kat) {
+  const nama = kat.nama || ''
+  if (/futsal|sepak ?bola/i.test(nama))      return { type: 'lucide', icon: Trophy }
+  if (/badminton|bulu ?tangkis/i.test(nama)) return { type: 'badminton-racket' }
+
+  const found = LOMBA_ICON_KEYWORDS.find(k => k.test.test(nama))
+  if (found) return { type: 'lucide', icon: found.icon }
+
+  const tipeNama = tipeStore.namaById(kat.tipeId) || kat.tipe
+  return { type: 'lucide', icon: TIPE_ICON_FALLBACK[tipeNama] || Trophy }
+}
+
+// Override warna khusus per lomba (di luar warna default tipe)
+const LOMBA_COLOR_OVERRIDE = [
+  { test: /voli putra/i, bg: '#E5EDF7', color: '#2D5B8A' },
+]
+
+function resolveColor(kat) {
+  const found = LOMBA_COLOR_OVERRIDE.find(o => o.test.test(kat.nama || ''))
+  if (found) return { bg: found.bg, color: found.color }
+  return { bg: tipeStore.bgById(kat.tipeId), color: tipeStore.warnaById(kat.tipeId) }
+}
 
 // Countdown ke opening
 const TARGET = new Date('2026-07-11T08:00:00+07:00').getTime()
@@ -194,6 +321,12 @@ const lokasiNama = (j) => {
   return j.lokasi || j.venue || ''
 }
 
+function truncateWords(text, maxWords) {
+  const words = text.trim().split(/\s+/)
+  if (words.length <= maxWords) return text
+  return words.slice(0, maxWords).join(' ') + '…'
+}
+
 function isPerorangan(h) {
   return !!(h.juara1 || h.juara2 || h.juara3) || h.jenis === 'Perorangan'
 }
@@ -203,8 +336,10 @@ onMounted(() => {
   hasilStore.fetch()
   regStore.fetch()
   kategoriStore.fetch()
+  tipeStore.fetch()
   koridorStore.fetch()
   lokasiStore.fetch()
+  galeriStore.fetch()
   timer = setInterval(() => { now.value = Date.now() }, 1000)
 })
 onUnmounted(() => clearInterval(timer))
@@ -297,6 +432,26 @@ onUnmounted(() => clearInterval(timer))
 .jadwal-babak { font:700 10px/1 'Plus Jakarta Sans'; letter-spacing:.05em; text-transform:uppercase; color:#2D5B8A; background:#E7EEF6; border-radius:4px; padding:2px 7px; }
 .dot          { width:9px; height:9px; border-radius:50%; display:inline-block; flex-shrink:0; }
 
+/* ── Daftar Lomba ───────────────────────── */
+.lomba-preview-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
+.lomba-preview-card {
+  background:#fff; border:1.5px solid #F0D3D7; border-radius:8px; padding:20px;
+  cursor:pointer; transition:border-color .15s, transform .15s;
+  display:flex; flex-direction:column;
+}
+.lomba-preview-card:hover { border-color:#CE1126; transform:translateY(-2px); }
+.lomba-preview-icon {
+  width:44px; height:44px; border-radius:12px; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center; margin-bottom:14px;
+}
+.lomba-preview-top   { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
+.lomba-preview-badge { padding:5px 11px; border-radius:999px; font:700 11px/1 'Plus Jakarta Sans'; letter-spacing:.04em; text-transform:uppercase; }
+.lomba-preview-jenis { font:700 10px/1 'Plus Jakarta Sans'; letter-spacing:.06em; text-transform:uppercase; padding:4px 9px; border-radius:6px; }
+.jenis-b { background:#E5EDF7; color:#2D5B8A; }
+.jenis-p { background:#FBF1DD; color:#C0871C; }
+.lomba-preview-nama { font:800 17px/1.2 Archivo; color:#1A1613; }
+.lomba-preview-desc { font:500 13px/1.5 'Plus Jakarta Sans'; color:#7A7368; margin-top:8px; flex:1; }
+
 /* ── Hasil terbaru ──────────────────────── */
 .hasil-grid  { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
 .hasil-card  { background:#fff; border:1.5px solid #F0D3D7; border-radius:8px; padding:18px; display:flex; flex-direction:column; gap:12px; }
@@ -314,6 +469,21 @@ onUnmounted(() => clearInterval(timer))
 .podium-item { display:flex; align-items:center; gap:8px; font:600 13px/1.3 'Plus Jakarta Sans'; color:#1A1613; }
 .podium-item span { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 
+/* ── Momen Agustusan tahun lalu ─────────── */
+.momen-scroll { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; }
+.momen-card {
+  background:#fff; border:1.5px solid #F0D3D7; border-radius:10px; overflow:hidden;
+  cursor:pointer; transition:transform .18s, box-shadow .18s;
+}
+.momen-card:hover { transform:translateY(-3px); box-shadow:0 8px 24px rgba(0,0,0,.10); }
+.momen-img-wrap { aspect-ratio:4/3; overflow:hidden; background:#FAF8F3; }
+.momen-img { width:100%; height:100%; object-fit:cover; display:block; transition:transform .3s; }
+.momen-card:hover .momen-img { transform:scale(1.04); }
+.momen-img-placeholder { width:100%; height:100%; display:flex; align-items:center; justify-content:center; font-size:32px; }
+.momen-body  { padding:10px 12px 12px; }
+.momen-title { font:700 13px/1.3 'Plus Jakarta Sans'; color:#1A1613; }
+.momen-kat   { margin-top:6px; display:inline-block; padding:3px 9px; border-radius:999px; background:#FFF3CD; color:#856404; font:600 11px/1 'Plus Jakarta Sans'; }
+
 /* ── Empty ──────────────────────────────── */
 .empty-section {
   padding:32px; border:1.5px dashed #E0D8CE; border-radius:10px;
@@ -323,6 +493,8 @@ onUnmounted(() => clearInterval(timer))
 /* ── Responsive ─────────────────────────── */
 @media(max-width:1023px) {
   .hasil-grid { grid-template-columns:repeat(2,1fr); }
+  .momen-scroll { grid-template-columns:repeat(3,1fr); }
+  .lomba-preview-grid { grid-template-columns:repeat(2,1fr); }
 }
 @media(max-width:767px) {
   .hero-grid, .quick-grid { grid-template-columns:1fr !important; }
@@ -337,5 +509,21 @@ onUnmounted(() => clearInterval(timer))
   .quick-grid { margin-top:12px; gap:10px; }
   .quick-card { padding:16px; }
   .hasil-grid { grid-template-columns:1fr; }
+
+  .momen-scroll {
+    display:flex; grid-template-columns:none; overflow-x:auto; gap:12px;
+    padding-bottom:6px; scroll-snap-type:x proximity;
+    -webkit-overflow-scrolling:touch; scrollbar-width:none;
+  }
+  .momen-scroll::-webkit-scrollbar { display:none; }
+  .momen-card { flex:0 0 62%; scroll-snap-align:start; }
+
+  .lomba-preview-grid {
+    display:flex; grid-template-columns:none; overflow-x:auto; gap:12px;
+    padding-bottom:6px; scroll-snap-type:x proximity;
+    -webkit-overflow-scrolling:touch; scrollbar-width:none;
+  }
+  .lomba-preview-grid::-webkit-scrollbar { display:none; }
+  .lomba-preview-card { flex:0 0 78%; scroll-snap-align:start; }
 }
 </style>
