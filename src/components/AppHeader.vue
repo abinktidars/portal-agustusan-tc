@@ -3,10 +3,15 @@
     <div class="flag-bar"></div>
     <div class="header-inner">
       <div class="brand" @click="$router.push({ name: 'beranda' })">
-        <img src="/assets/logo.png" alt="TCR" class="brand-logo" />
-        <div>
+        <div class="brand-logo">
+          <img src="/assets/logo.png" alt="TCR" class="brand-logo" />
+        </div>
+        <div class="brand-center">
           <div class="brand-sub">Teras Country Residence</div>
-          <div class="brand-title">Semarak Merdeka 81</div>
+          <div class="brand-title">Semarak Agustusan TC</div>
+        </div>
+        <div class="brand-logo">
+          <img src="/assets/logo-81.png" alt="TCR" class="hut81" />
         </div>
       </div>
       <button class="tcr-btn-red hide-mobile" @click="$router.push({ name: 'registrasi' })">Daftar Lomba</button>
@@ -77,8 +82,14 @@ watch(() => route.name, async () => {
   display: flex; align-items: center; gap: 12px; cursor: pointer;
 }
 .brand-logo {
-  width: 46px; height: 46px; border-radius: 50%;
-  box-shadow: 0 2px 8px rgba(0,0,0,.12); flex: 0 0 auto;
+  display: flex;
+  gap: 2px;
+}
+.brand-logo img {
+  width: 50px;
+}
+.brand-center {
+  text-align: center;
 }
 .brand-sub   { font: 700 11px/1 'Plus Jakarta Sans'; letter-spacing: .14em; text-transform: uppercase; color: #CE1126; }
 .brand-title { font: 800 17px/1.1 Archivo; color: #1A1613; margin-top: 3px; white-space: nowrap; }
@@ -97,8 +108,11 @@ watch(() => route.name, async () => {
 }
 @media(max-width:767px) {
   .hide-mobile { display: none; }
-  .header-inner { padding: 10px 16px; }
-  .header-nav { padding: 0 16px 10px; }
+  .header-inner { 
+    padding: 10px 16px; 
+    justify-content: center;
+  }
+  .header-nav { padding: 0 16px 4px; }
   .brand-title { font-size: 15px; }
 }
 </style>
