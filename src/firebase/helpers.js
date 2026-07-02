@@ -1,8 +1,7 @@
-import { db, storage } from './config'
+import { db } from './config'
 import {
   collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, where, setDoc, orderBy
 } from 'firebase/firestore'
-import { ref as storageRef, uploadBytes, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage'
 
 const fmt = (d) => {
   if (!d) return null
@@ -109,54 +108,25 @@ export const updateLokasi = (id, data) => updateDoc(doc(db, 'lokasi', id), data)
 export const deleteLokasi = (id) => deleteDoc(doc(db, 'lokasi', id))
 
 // ── GALERI ────────────────────────────────────────────
+// Photos are stored as base64 data URLs directly in the `url` field (no
+// Firebase Storage, which now requires a paid Blaze plan even for
+// free-tier usage) — compressImageToDataUrl keeps each one well under
+// Firestore's 1 MiB per-document limit.
 export const getGaleri = () => getDocs(query(collection(db, 'galeri'), orderBy('urutan'))).then(s => s.docs.map(d => ({ id: d.id, ...d.data() })))
 
-export function uploadGaleriFoto(id, file, onProgress) {
-  const ext = file.name.split('.').pop()
-  const path = storageRef(storage, `galeri/${id}/foto.${ext}`)
-  const task = uploadBytesResumable(path, file)
-  return new Promise((resolve, reject) => {
-    task.on('state_changed',
-      snap => onProgress?.(Math.round((snap.bytesTransferred / snap.totalBytes) * 100)),
-      reject,
-      () => getDownloadURL(task.snapshot.ref).then(resolve, reject)
-    )
-  })
-}
-
-export async function deleteGaleriFoto(id) {
-  for (const ext of ['jpg', 'jpeg', 'png', 'webp']) {
-    try { await deleteObject(storageRef(storage, `galeri/${id}/foto.${ext}`)) } catch {}
-  }
-}
-
-export async function addGaleri(data, fotoFile, onProgress) {
-  const docRef = doc(collection(db, 'galeri'))
-  const payload = { ...data, url: '', createdAt: new Date() }
-  if (fotoFile) {
-    // Upload runs alongside the Firestore write instead of waiting for it first.
-    const [url] = await Promise.all([
-      uploadGaleriFoto(docRef.id, fotoFile, onProgress),
-      setDoc(docRef, payload),
-    ])
-    await updateDoc(docRef, { url })
-    payload.url = url
-  } else {
-    await setDoc(docRef, payload)
-  }
+export async function addGaleri(data, fotoDataUrl) {
+  const payload = { ...data, url: fotoDataUrl || '', createdAt: new Date() }
+  const docRef = await addDoc(collection(db, 'galeri'), payload)
   return { id: docRef.id, ...payload }
 }
 
-export async function updateGaleri(id, data, fotoFile, onProgress) {
-  if (fotoFile) data.url = await uploadGaleriFoto(id, fotoFile, onProgress)
+export async function updateGaleri(id, data, fotoDataUrl) {
+  if (fotoDataUrl) data.url = fotoDataUrl
   await updateDoc(doc(db, 'galeri', id), data)
   return { id, ...data }
 }
 
-export async function deleteGaleri(id) {
-  await deleteGaleriFoto(id)
-  return deleteDoc(doc(db, 'galeri', id))
-}
+export const deleteGaleri = (id) => deleteDoc(doc(db, 'galeri', id))
 
 // ── USERS ─────────────────────────────────────────────
 export const getUsers = () =>
@@ -164,35 +134,15 @@ export const getUsers = () =>
     s.docs.map(d => ({ id: d.id, email: d.data().email, nama: d.data().nama, role: d.data().role, fotoUrl: d.data().fotoUrl || null }))
   )
 
-export async function uploadUserPhoto(userId, file) {
-  const ext = file.name.split('.').pop()
-  const path = storageRef(storage, `users/${userId}/foto.${ext}`)
-  await uploadBytes(path, file)
-  return getDownloadURL(path)
-}
-
-export async function deleteUserPhoto(userId) {
-  try {
-    for (const ext of ['jpg', 'jpeg', 'png', 'webp']) {
-      try { await deleteObject(storageRef(storage, `users/${userId}/foto.${ext}`)) } catch {}
-    }
-  } catch {}
-}
-
-export async function addUser({ email, password, role, nama, fotoFile }) {
+export async function addUser({ email, password, role, nama, fotoDataUrl }) {
   const passwordHash = await sha256(password)
-  const docRef = await addDoc(collection(db, 'users'), { email, passwordHash, role, nama, createdAt: new Date() })
-  if (fotoFile) {
-    const fotoUrl = await uploadUserPhoto(docRef.id, fotoFile)
-    await updateDoc(docRef, { fotoUrl })
-  }
-  return docRef
+  return addDoc(collection(db, 'users'), { email, passwordHash, role, nama, fotoUrl: fotoDataUrl || null, createdAt: new Date() })
 }
 
-export async function updateUser(id, { email, password, role, nama, fotoFile }) {
+export async function updateUser(id, { email, password, role, nama, fotoDataUrl }) {
   const data = { email, role, nama }
   if (password) data.passwordHash = await sha256(password)
-  if (fotoFile) data.fotoUrl = await uploadUserPhoto(id, fotoFile)
+  if (fotoDataUrl) data.fotoUrl = fotoDataUrl
   return updateDoc(doc(db, 'users', id), data)
 }
 
