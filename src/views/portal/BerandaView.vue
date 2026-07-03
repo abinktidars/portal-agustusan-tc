@@ -182,14 +182,14 @@
     </section> -->
 
     <!-- Momen Agustusan tahun lalu -->
-    <section style="margin-top:44px;">
+    <section ref="momenSectionRef" style="margin-top:44px;">
       <div class="section-eyebrow" style="color:#C0871C;">Kilas Balik</div>
       <div class="section-header-row">
         <h2 class="section-title">Momen Agustusan Tahun Lalu</h2>
         <button class="link-btn" @click="$router.push({ name: 'galeri' })">Lihat galeri →</button>
       </div>
 
-      <div v-if="galeriStore.loading" class="momen-scroll">
+      <div v-if="galeriStore.loading || !momenVisible" class="momen-scroll">
         <div v-for="n in 4" :key="n" class="skeleton-card momen-card"></div>
       </div>
 
@@ -327,6 +327,10 @@ function isPerorangan(h) {
   return !!(h.juara1 || h.juara2 || h.juara3) || h.jenis === 'Perorangan'
 }
 
+const momenSectionRef = ref(null)
+const momenVisible    = ref(false)
+let momenObserver
+
 onMounted(() => {
   jadwalStore.fetch()
   hasilStore.fetch()
@@ -335,10 +339,23 @@ onMounted(() => {
   tipeStore.fetch()
   koridorStore.fetch()
   lokasiStore.fetch()
-  galeriStore.fetch()
   timer = setInterval(() => { now.value = Date.now() }, 1000)
+
+  // Galeri berisi foto base64 berukuran besar, jadi baru di-fetch saat
+  // section-nya mendekati viewport agar tidak memperlambat render awal.
+  momenObserver = new IntersectionObserver((entries) => {
+    if (entries[0].isIntersecting) {
+      momenVisible.value = true
+      galeriStore.fetch()
+      momenObserver.disconnect()
+    }
+  }, { rootMargin: '400px' })
+  if (momenSectionRef.value) momenObserver.observe(momenSectionRef.value)
 })
-onUnmounted(() => clearInterval(timer))
+onUnmounted(() => {
+  clearInterval(timer)
+  momenObserver?.disconnect()
+})
 </script>
 
 <style scoped>

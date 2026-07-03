@@ -1,7 +1,7 @@
 import { db } from './config'
 import {
   collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, where, setDoc, orderBy
-} from 'firebase/firestore'
+} from 'firebase/firestore/lite'
 
 const fmt = (d) => {
   if (!d) return null
