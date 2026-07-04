@@ -4,14 +4,14 @@
     <div class="header-inner">
       <div class="brand" @click="$router.push({ name: 'beranda' })">
         <div class="brand-logo">
-          <img src="/assets/logo.png" alt="TCR" class="brand-logo" />
+          <img src="/static/logo.png" alt="TCR" class="brand-logo" />
         </div>
         <div class="brand-center">
           <div class="brand-sub">Teras Country Residence</div>
           <div class="brand-title">Semarak Agustusan TC</div>
         </div>
         <div class="brand-logo">
-          <img src="/assets/logo-81.png" alt="TCR" class="hut81" />
+          <img src="/static/logo-81.png" alt="TCR" class="hut81" />
         </div>
       </div>
       <button class="tcr-btn-red hide-mobile" @click="$router.push({ name: 'registrasi' })">Daftar Lomba</button>

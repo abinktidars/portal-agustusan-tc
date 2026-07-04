@@ -6,7 +6,7 @@
 
       <div class="splash-content">
         <div class="splash-icon-wrap">
-          <img src="/assets/logo.png" alt="Logo" class="splash-logo" />
+          <img src="/static/logo.png" alt="Logo" class="splash-logo" />
         </div>
         <div class="splash-badge">Admin Panel</div>
         <div class="splash-title">Semarak Merdeka 81</div>

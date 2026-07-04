@@ -8,7 +8,7 @@ export default defineConfig({
     vue(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['assets/logo.png'],
+      includeAssets: ['static/logo.png'],
       manifest: {
         name: 'Admin Panel — Semarak Merdeka 81',
         short_name: 'Admin SM81',
@@ -22,19 +22,19 @@ export default defineConfig({
         categories: ['productivity', 'utilities'],
         icons: [
           {
-            src: '/assets/logo.png',
+            src: '/static/logo.png',
             sizes: '192x192',
             type: 'image/png',
             purpose: 'any'
           },
           {
-            src: '/assets/logo.png',
+            src: '/static/logo.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any'
           },
           {
-            src: '/assets/logo.png',
+            src: '/static/logo.png',
             sizes: '835x835',
             type: 'image/png',
             purpose: 'maskable'

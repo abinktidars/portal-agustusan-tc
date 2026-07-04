@@ -4,7 +4,7 @@
     <div class="footer-inner">
       <div>
         <div class="footer-brand">
-          <img src="/assets/logo.png" alt="" class="footer-logo" />
+          <img src="/static/logo.png" alt="" class="footer-logo" />
           <div>
             <div class="footer-name">Teras Country Residence</div>
             <div class="footer-sub">Panitia HUT RI ke-81</div>
