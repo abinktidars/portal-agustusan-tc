@@ -67,13 +67,14 @@
       </div>
 
       <div v-if="jadwalStore.loading" class="jadwal-list">
-        <div v-for="n in 3" :key="n" class="skeleton-row"></div>
+        <div v-for="n in 5" :key="n" class="skeleton-row"></div>
       </div>
 
-      <div v-else-if="jadwalStore.upcoming.length" class="jadwal-list">
-        <div v-for="j in jadwalStore.upcoming" :key="j.id" class="jadwal-row"
+      <div v-else-if="upcomingJadwal.length" class="jadwal-list">
+        <div v-for="j in upcomingJadwal" :key="j.id" class="jadwal-row"
           @click="$router.push({ name: 'jadwal' })" role="button" tabindex="0">
           <div class="jadwal-date">
+            <div class="jadwal-hari">{{ hariDariTgl(j) }}</div>
             <div class="jadwal-tgl">{{ j.tglMulai || j.tgl }}</div>
             <div class="jadwal-jam">{{ j.jamMulai || j.jam }}</div>
           </div>
@@ -83,6 +84,7 @@
               <span class="dot" :style="{ background: katColor(j.kat) }"></span>
               <span class="jadwal-cabang">{{ j.cabang }}</span>
             </div>
+            <div v-if="j.peserta" class="jadwal-peserta">{{ j.peserta }}</div>
             <div class="jadwal-sub">
               <span v-if="j.babak" class="jadwal-babak">{{ j.babak }}</span>
               {{ lokasiNama(j) }}
@@ -97,6 +99,59 @@
       </div>
     </section>
 
+    <!-- Hasil terbaru -->
+    <section style="margin-top:44px;">
+      <div class="section-eyebrow" style="color:#2E7D52;">Hasil Pertandingan</div>
+      <div class="section-header-row">
+        <h2 class="section-title">Terbaru</h2>
+        <button class="link-btn" @click="$router.push({ name: 'hasil' })">Lihat semua →</button>
+      </div>
+
+      <div v-if="hasilStore.loading" class="hasil-grid">
+        <div v-for="n in 3" :key="n" class="skeleton-card"></div>
+      </div>
+
+      <div v-else-if="hasilStore.list.length" class="hasil-grid">
+        <div
+          v-for="h in hasilStore.list.slice(0, 3)"
+          :key="h.id"
+          class="hasil-card"
+          role="button"
+          tabindex="0"
+          @click="$router.push({ name: 'hasil' })"
+          @keydown.enter.prevent="$router.push({ name: 'hasil' })"
+          @keydown.space.prevent="$router.push({ name: 'hasil' })"
+        >
+          <div class="hasil-head">
+            <span class="dot" :style="{ background: katColor(h.kat) }"></span>
+            <span class="hasil-cabang">{{ h.cabang }}</span>
+            <span class="hasil-tgl">{{ h.tgl }}</span>
+          </div>
+
+          <template v-if="!isPerorangan(h)">
+            <div class="skor-row">
+              <div class="tim">{{ h.timA }}</div>
+              <div class="skor">{{ h.skor }}</div>
+              <div class="tim tim-r">{{ h.timB }}</div>
+            </div>
+            <div v-if="h.juara" class="juara-chip">🏆 {{ h.juara }}</div>
+          </template>
+
+          <template v-else>
+            <div class="podium-mini">
+              <div v-if="h.juara1" class="podium-item">🥇 <span>{{ h.juara1 }}</span></div>
+              <div v-if="h.juara2" class="podium-item">🥈 <span>{{ h.juara2 }}</span></div>
+              <div v-if="h.juara3" class="podium-item">🥉 <span>{{ h.juara3 }}</span></div>
+            </div>
+          </template>
+        </div>
+      </div>
+
+      <div v-else class="empty-section">
+        Hasil pertandingan belum tersedia.
+      </div>
+    </section>
+    
     <!-- Daftar Lomba -->
     <section style="margin-top:44px;">
       <div class="section-eyebrow" style="color:#2D5B8A;">Cabang Lomba</div>
@@ -137,49 +192,6 @@
       </div>
     </section>
 
-    <!-- Hasil terbaru -->
-    <!-- <section style="margin-top:44px;">
-      <div class="section-eyebrow" style="color:#2E7D52;">Hasil Pertandingan</div>
-      <div class="section-header-row">
-        <h2 class="section-title">Terbaru</h2>
-        <button class="link-btn" @click="$router.push({ name: 'hasil' })">Lihat semua →</button>
-      </div>
-
-      <div v-if="hasilStore.loading" class="hasil-grid">
-        <div v-for="n in 3" :key="n" class="skeleton-card"></div>
-      </div>
-
-      <div v-else-if="hasilStore.list.length" class="hasil-grid">
-        <div v-for="h in hasilStore.list.slice(0, 3)" :key="h.id" class="hasil-card">
-          <div class="hasil-head">
-            <span class="dot" :style="{ background: katColor(h.kat) }"></span>
-            <span class="hasil-cabang">{{ h.cabang }}</span>
-            <span class="hasil-tgl">{{ h.tgl }}</span>
-          </div>
-
-          <template v-if="!isPerorangan(h)">
-            <div class="skor-row">
-              <div class="tim">{{ h.timA }}</div>
-              <div class="skor">{{ h.skor }}</div>
-              <div class="tim tim-r">{{ h.timB }}</div>
-            </div>
-            <div v-if="h.juara" class="juara-chip">🏆 {{ h.juara }}</div>
-          </template>
-
-          <template v-else>
-            <div class="podium-mini">
-              <div v-if="h.juara1" class="podium-item">🥇 <span>{{ h.juara1 }}</span></div>
-              <div v-if="h.juara2" class="podium-item">🥈 <span>{{ h.juara2 }}</span></div>
-              <div v-if="h.juara3" class="podium-item">🥉 <span>{{ h.juara3 }}</span></div>
-            </div>
-          </template>
-        </div>
-      </div>
-
-      <div v-else class="empty-section">
-        Hasil pertandingan belum tersedia.
-      </div>
-    </section> -->
 
     <!-- Momen Agustusan tahun lalu -->
     <section style="margin-top:44px;">
@@ -239,6 +251,10 @@ const lokasiStore   = useLokasiStore()
 const galeriStore   = useGaleriStore()
 
 const momenFoto = computed(() => galeriStore.list.slice(0, 8))
+
+const upcomingJadwal = computed(() =>
+  jadwalStore.listWithStatus.filter(j => j.status !== 'Selesai').slice(0, 3)
+)
 
 const lombaPreview = computed(() =>
   [...kategoriStore.list]
@@ -315,6 +331,30 @@ const katColor = (k) => ({
 const lokasiNama = (j) => {
   if (j.lokasiId) return lokasiStore.list.find(l => l.id === j.lokasiId)?.nama || j.lokasi || j.venue || ''
   return j.lokasi || j.venue || ''
+}
+
+const monthMap = {
+  Jan: 0, Feb: 1, Mar: 2, Apr: 3, Mei: 4, Jun: 5,
+  Jul: 6, Agu: 7, Sep: 8, Okt: 9, Nov: 10, Des: 11,
+}
+
+function hariDariTgl(jadwal) {
+  if (jadwal?.hari) return jadwal.hari
+  if (jadwal?.tglDate instanceof Date && !Number.isNaN(jadwal.tglDate.getTime())) {
+    return jadwal.tglDate.toLocaleDateString('id-ID', { weekday: 'long' })
+  }
+
+  const parts = String(jadwal?.tgl || '').trim().split(/\s+/)
+  if (parts.length < 2) return '-'
+
+  const tanggal = Number(parts[0])
+  const bulan = monthMap[parts[1]]
+  if (!tanggal || bulan === undefined) return '-'
+
+  const date = new Date(2026, bulan, tanggal)
+  if (Number.isNaN(date.getTime())) return '-'
+
+  return date.toLocaleDateString('id-ID', { weekday: 'long' })
 }
 
 function truncateWords(text, maxWords) {
@@ -411,11 +451,13 @@ onUnmounted(() => clearInterval(timer))
 }
 .jadwal-row:hover { border-color:#CE1126; }
 .jadwal-date  { flex:0 0 auto; text-align:center; min-width:64px; }
+.jadwal-hari  { font:700 10px/1 'Plus Jakarta Sans'; letter-spacing:.08em; text-transform:uppercase; color:#9A6B12; margin-bottom:3px; }
 .jadwal-tgl   { font:800 15px/1 Archivo; color:#CE1126; }
 .jadwal-jam   { font:600 13px/1 'Plus Jakarta Sans'; color:#7A7368; margin-top:5px; }
 .divider-v    { width:1px; align-self:stretch; background:#ECE7DE; }
 .jadwal-info  { flex:1; min-width:160px; }
 .jadwal-cabang{ font:700 15px/1.2 'Plus Jakarta Sans'; color:#1A1613; }
+.jadwal-peserta{ font:500 13px/1.4 'Plus Jakarta Sans'; color:#5A534B; margin-top:5px; }
 .jadwal-sub   { font:500 12px/1.4 'Plus Jakarta Sans'; color:#7A7368; margin-top:4px; display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
 .jadwal-babak { font:700 10px/1 'Plus Jakarta Sans'; letter-spacing:.05em; text-transform:uppercase; color:#2D5B8A; background:#E7EEF6; border-radius:4px; padding:2px 7px; }
 .dot          { width:9px; height:9px; border-radius:50%; display:inline-block; flex-shrink:0; }
@@ -442,7 +484,9 @@ onUnmounted(() => clearInterval(timer))
 
 /* ── Hasil terbaru ──────────────────────── */
 .hasil-grid  { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
-.hasil-card  { background:#fff; border:1.5px solid #F0D3D7; border-radius:8px; padding:18px; display:flex; flex-direction:column; gap:12px; }
+.hasil-card  { background:#fff; border:1.5px solid #F0D3D7; border-radius:8px; padding:18px; display:flex; flex-direction:column; gap:12px; cursor:pointer; transition:box-shadow .15s ease, border-color .15s ease; }
+.hasil-card:hover { border-color:#CE1126; box-shadow:0 8px 24px rgba(206,17,38,.12); }
+.hasil-card:focus-visible { outline:3px solid rgba(206,17,38,.25); outline-offset:2px; }
 .hasil-head  { display:flex; align-items:center; gap:8px; }
 .hasil-cabang{ font:700 14px/1.2 'Plus Jakarta Sans'; color:#1A1613; flex:1; min-width:0; }
 .hasil-tgl   { font:500 11px/1 'Plus Jakarta Sans'; color:#9A9389; white-space:nowrap; }
