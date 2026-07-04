@@ -159,7 +159,7 @@ export async function loginAdmin(email, password) {
   const q    = query(collection(db, 'users'), where('email', '==', email), where('passwordHash', '==', hash))
   const snap = await getDocs(q)
   if (snap.empty) throw new Error('INVALID_CREDENTIALS')
-  return snap.docs[0].data()
+  return { id: snap.docs[0].id, ...snap.docs[0].data() }
 }
 
 export function logoutAdmin() {

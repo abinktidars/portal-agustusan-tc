@@ -151,6 +151,7 @@
                   <div class="td-bold">{{ r.namaRegu || r.namaKetua || r.nama || '—' }}</div>
                   <div v-if="isTimReg(r) && r.namaRegu && r.namaKetua" class="td-sub">Ketua: {{ r.namaKetua }}</div>
                   <div v-if="isTimReg(r) && r.anggota?.length" class="td-sub">{{ r.anggota.length }} anggota</div>
+                  <div class="td-sub">Diinput: {{ creatorLabel(r) }}</div>
                 </td>
                 <td class="td-status">
                   <span class="status-chip" :class="statusCls(r.status)">{{ statusLabel(r.status) }}</span>
@@ -198,6 +199,14 @@
                       <div class="detail-block">
                         <div class="detail-label">Tgl Daftar</div>
                         <div class="detail-val">{{ formatDate(r.tglDate || r.createdAt) }}</div>
+                      </div>
+                      <div class="detail-block">
+                        <div class="detail-label">Diinput Oleh</div>
+                        <div class="detail-val">{{ creatorLabel(r) }}</div>
+                      </div>
+                      <div v-if="updaterLabel(r)" class="detail-block">
+                        <div class="detail-label">Terakhir Diubah Oleh</div>
+                        <div class="detail-val">{{ updaterLabel(r) }}</div>
                       </div>
                     </div>
 
@@ -252,12 +261,14 @@ import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { useRegistrasiStore } from '@/stores/useRegistrasi'
 import { useKategoriStore }   from '@/stores/useKategori'
 import { useKoridorStore }    from '@/stores/useKoridor'
+import { useAuthStore }       from '@/stores/useAuth'
 import PaginationBar from '@/components/PaginationBar.vue'
 import { exportToExcel } from '@/utils/exportExcel'
 
 const regStore      = useRegistrasiStore()
 const kategoriStore = useKategoriStore()
 const koridorStore  = useKoridorStore()
+const authStore     = useAuthStore()
 
 const showForm     = ref(false)
 const expandedId   = ref(null)
@@ -292,6 +303,14 @@ const someSelected = computed(() => selectedIds.value.length > 0 && !allSelected
 const STATUS_MAP = { new: 'Baru', confirm: 'Diterima', cancel: 'Ditolak' }
 const statusLabel = (s) => STATUS_MAP[s] || 'Baru'
 const statusCls   = (s) => ({ new:'s-new', confirm:'s-confirm', cancel:'s-cancel' }[s] || 's-new')
+
+function whoLabel(who) {
+  if (!who) return null
+  if (who.type === 'self') return 'Pendaftaran mandiri (via website)'
+  return who.nama || who.email || 'Admin'
+}
+const creatorLabel = (r) => whoLabel(r.inputBy) || 'Tidak diketahui'
+const updaterLabel = (r) => whoLabel(r.updatedBy)
 
 function toggleAll() {
   if (allSelected.value) {
@@ -394,6 +413,7 @@ async function submit() {
 
   const isEdit = !!form.editId
   const koridorNama = koridorStore.list.find(k => k.id === form.koridorId)?.nama || ''
+  const adminInfo = { type: 'admin', uid: authStore.userId || null, nama: authStore.userName || '', email: authStore.userEmail || '' }
   const payload = {
     cabang:      form.cabang,
     koridorId:   form.koridorId,
@@ -404,6 +424,7 @@ async function submit() {
     ...(tipe === 'tim'
       ? { namaRegu: form.namaRegu.trim(), namaKetua: form.namaKetua.trim(), anggota: form.anggota.filter(a => a.trim()) }
       : { nama: form.nama.trim() }),
+    ...(isEdit ? { updatedBy: adminInfo } : { inputBy: adminInfo }),
   }
 
   saving.value = true
@@ -448,6 +469,8 @@ function doExport() {
     { label: 'No. WA',      field: 'wa' },
     { label: 'Anggota',     field: r => r.anggota?.join(', ') || '' },
     { label: 'Tgl Daftar',  field: r => formatDate(r.tglDate || r.createdAt) },
+    { label: 'Diinput Oleh', field: r => creatorLabel(r) },
+    { label: 'Terakhir Diubah Oleh', field: r => updaterLabel(r) || '' },
   ], 'registrasi-peserta')
 }
 

@@ -63,7 +63,7 @@ export const useRegistrasiStore = defineStore('registrasi', () => {
 
     try {
       loading.value = true
-      await fb.addRegistrasi({ ...form, ts: Date.now() })
+      await fb.addRegistrasi({ ...form, ts: Date.now(), inputBy: { type: 'self' } })
       submitted.value = true
       await fetch()
       return true

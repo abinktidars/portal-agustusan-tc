@@ -10,6 +10,7 @@ export const useAuthStore = defineStore('auth', () => {
   const userEmail  = ref(localStorage.getItem('tcr_admin_email') || '')
   const userRole   = ref(localStorage.getItem('tcr_admin_role')  || '')
   const userName   = ref(localStorage.getItem('tcr_admin_nama')  || '')
+  const userId     = ref(localStorage.getItem('tcr_admin_uid')   || '')
   const loginError = ref('')
   const loading    = ref(false)
 
@@ -39,10 +40,12 @@ export const useAuthStore = defineStore('auth', () => {
       localStorage.setItem('tcr_admin_email', email)
       localStorage.setItem('tcr_admin_role',  user.role)
       localStorage.setItem('tcr_admin_nama',  user.nama || '')
+      localStorage.setItem('tcr_admin_uid',   user.id || '')
       isLoggedIn.value = true
       userEmail.value  = email
       userRole.value   = user.role
       userName.value   = user.nama || ''
+      userId.value     = user.id || ''
       router.push({ name: 'admin-dashboard' })
     } catch {
       loginError.value = 'Email atau password salah.'
@@ -57,12 +60,14 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.removeItem('tcr_admin_email')
     localStorage.removeItem('tcr_admin_role')
     localStorage.removeItem('tcr_admin_nama')
+    localStorage.removeItem('tcr_admin_uid')
     isLoggedIn.value = false
     userEmail.value  = ''
     userRole.value   = ''
     userName.value   = ''
+    userId.value     = ''
     router.push({ name: 'admin-login' })
   }
 
-  return { isLoggedIn, userEmail, userRole, userName, roleLabel, canAccessDashboard, loginError, loading, login, logout }
+  return { isLoggedIn, userEmail, userRole, userName, userId, roleLabel, canAccessDashboard, loginError, loading, login, logout }
 })
