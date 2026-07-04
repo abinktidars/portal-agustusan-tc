@@ -468,8 +468,8 @@ const registrasiForCabang = computed(() => {
     .map(r => ({
       id: r.id || String(Math.random()),
       label: r.tipe === 'tim'
-        ? `${r.namaRegu || r.namaKetua || '—'}${r.blokRumah ? ' (' + r.blokRumah + ')' : ''}`
-        : `${r.nama || r.namaKetua || '—'}${r.blokRumah ? ' (' + r.blokRumah + ')' : ''}`
+        ? (r.namaRegu || r.namaKetua || '—')
+        : (r.nama || r.namaKetua || '—')
     }))
 })
 
