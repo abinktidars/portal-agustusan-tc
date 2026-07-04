@@ -92,6 +92,10 @@
                   class="daftar-btn" @click="$emit('daftar')">
                   Daftar Sekarang →
                 </button>
+                <button v-if="jadwal.hasilPertandingan"
+                  type="button" class="lihat-hasil-btn" @click="goHasil">
+                  Lihat Detail Hasil →
+                </button>
               </div>
 
               <!-- PERSYARATAN -->
@@ -163,6 +167,15 @@
                       <div class="hasil-label">🏆 Skor / Hasil</div>
                       <div class="hasil-skor">{{ jadwal.hasilPertandingan }}</div>
                     </div>
+                    <div v-if="setDetailList.length" class="set-detail-card">
+                      <div class="hasil-label">📊 Detail Set</div>
+                      <div class="set-detail-list">
+                        <div v-for="(s, i) in setDetailList" :key="i" class="set-detail-row">
+                          <span class="set-detail-num">Set {{ i + 1 }}</span>
+                          <span class="set-detail-score">{{ s }}</span>
+                        </div>
+                      </div>
+                    </div>
                     <div v-if="jadwal.pemenang" class="pemenang-card">
                       <div class="pemenang-crown">🥇</div>
                       <div class="pemenang-info">
@@ -176,6 +189,10 @@
                     <div class="info-label">📝 Catatan</div>
                     <div class="info-val">{{ jadwal.catatanHasil }}</div>
                   </div>
+
+                  <button type="button" class="lihat-hasil-btn" @click="goHasil">
+                    Lihat Detail Hasil →
+                  </button>
                 </div>
                 <div v-else class="empty-tab">
                   <div class="empty-icon">{{ jadwal.status === 'Selesai' ? '📊' : '⏳' }}</div>
@@ -198,6 +215,7 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import StatusBadge from '@/components/StatusBadge.vue'
 import { useRegistrasiStore } from '@/stores/useRegistrasi'
 import { useLokasiStore }     from '@/stores/useLokasi'
@@ -206,9 +224,17 @@ import { useKategoriStore }   from '@/stores/useKategori'
 const props = defineProps({ jadwal: { type: Object, default: null } })
 const emit = defineEmits(['close', 'daftar'])
 
+const route  = useRoute()
+const router = useRouter()
 const registrasiStore = useRegistrasiStore()
 const lokasiStore     = useLokasiStore()
 const kategoriStore   = useKategoriStore()
+
+function goHasil() {
+  const isAdmin = route.path.startsWith('/admin')
+  emit('close')
+  router.push({ name: isAdmin ? 'admin-hasil' : 'hasil' })
+}
 
 function isTimPeserta(p) {
   const kat = kategoriStore.list.find(k => k.nama === p.cabang)
@@ -269,6 +295,13 @@ const katBg = (k) => ({ Olahraga: '#FBEAEC', Tradisional: '#FBF1DD', 'E-Sport': 
 const initial = (p) => (namaPeserta(p)).charAt(0).toUpperCase()
 
 watch(() => props.jadwal, () => { activeTab.value = 'detail' })
+
+const setDetailList = computed(() => {
+  const sd = props.jadwal?.setDetails
+  if (!sd) return []
+  const arr = Array.isArray(sd) ? sd : String(sd).split(',')
+  return arr.map(s => String(s).trim()).filter(Boolean)
+})
 
 const juaraPodium = computed(() => {
   if (!props.jadwal) return []
@@ -437,6 +470,19 @@ const juaraPodium = computed(() => {
 .pemenang-label { font: 700 11px/1 'Plus Jakarta Sans'; letter-spacing: .08em; text-transform: uppercase; color: #C0871C; margin-bottom: 4px; }
 .pemenang-nama { font: 800 16px/1.2 Archivo; color: #1A1613; }
 .catatan-card { background: #FAF8F3; border-radius: 10px; padding: 14px 16px; }
+.lihat-hasil-btn {
+  align-self: flex-start; margin-top: 2px;
+  padding: 10px 20px; border: 1.5px solid #CE1126; border-radius: 8px;
+  background: transparent; color: #CE1126;
+  font: 700 13px/1 'Plus Jakarta Sans'; cursor: pointer; transition: all .15s;
+}
+.lihat-hasil-btn:hover { background: #FBEAEC; }
+.set-detail-card { background: #FBF1DD; border: 1.5px solid #EBD79A; border-radius: 12px; padding: 14px 18px; }
+.set-detail-card .hasil-label { color: #7A5C00; }
+.set-detail-list { display: flex; flex-direction: column; gap: 6px; }
+.set-detail-row { display: flex; align-items: center; justify-content: space-between; }
+.set-detail-num { font: 700 12px/1 'Plus Jakarta Sans'; color: #7A5C00; }
+.set-detail-score { font: 800 14px/1 Archivo; color: #1A1613; }
 
 /* Empty */
 .empty-tab { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 40px 20px; text-align: center; }
