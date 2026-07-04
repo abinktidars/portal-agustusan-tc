@@ -247,15 +247,25 @@ const lokasiNama = computed(() => {
   return j.lokasi || j.venue || ''
 })
 
+const namaPeserta = (p) => p.namaRegu || p.namaKetua || p.nama || '—'
+
+const pesertaNamesInJadwal = computed(() => {
+  const raw = props.jadwal?.peserta || ''
+  if (!raw) return []
+  const parts = raw.includes(' vs ') ? raw.split(' vs ') : raw.split(',')
+  return parts.map(s => s.trim().toLowerCase()).filter(Boolean)
+})
+
 const pesertaList = computed(() => {
   if (!props.jadwal) return []
-  return registrasiStore.list.filter(r => r.cabang === props.jadwal.cabang)
+  const pool = registrasiStore.list.filter(r => r.cabang === props.jadwal.cabang)
+  const names = pesertaNamesInJadwal.value
+  if (!names.length) return []
+  return pool.filter(r => names.includes(namaPeserta(r).trim().toLowerCase()))
 })
 
 const katColor = (k) => ({ Olahraga: '#CE1126', Tradisional: '#C0871C', 'E-Sport': '#2D5B8A', Acara: '#2E7D52' })[k] || '#CE1126'
 const katBg = (k) => ({ Olahraga: '#FBEAEC', Tradisional: '#FBF1DD', 'E-Sport': '#E7EEF6', Acara: '#E7F2EB' })[k] || '#FBEAEC'
-
-const namaPeserta = (p) => p.namaRegu || p.namaKetua || p.nama || '—'
 const initial = (p) => (namaPeserta(p)).charAt(0).toUpperCase()
 
 watch(() => props.jadwal, () => { activeTab.value = 'detail' })
