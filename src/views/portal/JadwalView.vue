@@ -3,21 +3,28 @@
     <div class="eyebrow">Jadwal Pertandingan</div>
     <h2 class="page-title">Kapan &amp; Di Mana</h2>
 
-    <div ref="cabangRowRef" class="tcr-scroll chip-row">
-      <button v-for="(c, i) in jadwalStore.cabangOptions" :key="c"
-        :ref="el => { if(el) cabangBtnRefs[i] = el }"
-        class="chip" :class="{ active: jadwalStore.filterCabang === c }"
-        @click="selectCabang(c, i)">{{ c }}</button>
+    <div class="filter-wrap">
+      <div class="filter-icon">
+        <button class="filter-btn" @click="filterModalOpen = true">
+          <ListFilter :size="15" :stroke-width="2" />
+          <span>Filter</span>
+          <span v-if="activeFilterCount" class="filter-badge">{{ activeFilterCount }}</span>
+        </button>
+      </div>
+      <div class="filter-row tcr-scroll">
+        <button class="chip" :class="{ active: filterMingguIni }"
+          @click="filterMingguIni = !filterMingguIni">Minggu Ini</button>
+        <button v-for="c in jadwalStore.cabangOptions.filter(c => c !== 'Semua')" :key="c"
+          class="chip" :class="{ active: jadwalStore.filterCabang === c }"
+          @click="jadwalStore.filterCabang = jadwalStore.filterCabang === c ? 'Semua' : c">{{ c }}</button>
+        <button v-for="k in koridorStore.list" :key="k.id"
+          class="chip" :class="{ active: filterKoridorId === k.id }"
+          @click="filterKoridorId = filterKoridorId === k.id ? '' : k.id">{{ k.nama }}</button>
+      </div>
     </div>
-    <!-- <div ref="statusRowRef" class="tcr-scroll chip-row" style="padding:10px 0 6px;">
-      <button v-for="(s, i) in jadwalStore.statusOptions" :key="s"
-        :ref="el => { if(el) statusBtnRefs[i] = el }"
-        class="chip" :class="{ active: jadwalStore.filterStatus === s }"
-        @click="selectStatus(s, i)">{{ s }}</button>
-    </div> -->
 
     <div class="jadwal-list">
-      <div v-for="j in jadwalStore.filtered" :key="j.id"
+      <div v-for="j in filteredJadwal" :key="j.id"
         class="jadwal-item" @click="openDetail(j)" role="button" tabindex="0"
         @keydown.enter="openDetail(j)" @keydown.space.prevent="openDetail(j)">
         <div class="jadwal-row">
@@ -50,7 +57,7 @@
           <span class="row-arrow">›</span>
         </div>
       </div>
-      <div v-if="!jadwalStore.filtered.length" class="empty-state">Tidak ada jadwal untuk filter ini.</div>
+      <div v-if="!filteredJadwal.length" class="empty-state">Tidak ada jadwal untuk filter ini.</div>
     </div>
 
     <JadwalDetailModal
@@ -58,22 +65,36 @@
       @close="selectedJadwal = null"
       @daftar="goRegistrasi"
     />
+
+    <JadwalFilterModal
+      v-model:visible="filterModalOpen"
+      v-model:cabang="jadwalStore.filterCabang"
+      v-model:status="jadwalStore.filterStatus"
+      v-model:mingguIni="filterMingguIni"
+      v-model:koridorId="filterKoridorId"
+      :cabang-options="jadwalStore.cabangOptions"
+      :koridor-options="koridorStore.list"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useJadwalStore } from '@/stores/useJadwal'
 import { useLokasiStore } from '@/stores/useLokasi'
 import { useRegistrasiStore } from '@/stores/useRegistrasi'
+import { useKoridorStore } from '@/stores/useKoridor'
+import { ListFilter } from '@lucide/vue'
 import StatusBadge from '@/components/StatusBadge.vue'
 import JadwalDetailModal from '@/components/JadwalDetailModal.vue'
+import JadwalFilterModal from '@/components/JadwalFilterModal.vue'
 
 const router = useRouter()
 const jadwalStore = useJadwalStore()
 const lokasiStore = useLokasiStore()
 const registrasiStore = useRegistrasiStore()
+const koridorStore = useKoridorStore()
 
 const lokasiNama = (j) => {
   if (j.lokasiId) return lokasiStore.list.find(l => l.id === j.lokasiId)?.nama || j.lokasi || j.venue || ''
@@ -108,16 +129,6 @@ function goRegistrasi() {
   router.push({ name: 'registrasi', query: cabang ? { cabang } : {} })
 }
 
-const cabangRowRef  = ref(null)
-const statusRowRef  = ref(null)
-const cabangBtnRefs = []
-const statusBtnRefs = []
-
-function scrollToCenter(row, btn) {
-  if (!row || !btn) return
-  row.scrollTo({ left: btn.offsetLeft - row.clientWidth / 2 + btn.offsetWidth / 2, behavior: 'smooth' })
-}
-
 function hariDariTgl(jadwal) {
   if (jadwal?.hari) return jadwal.hari
   if (jadwal?.tglDate instanceof Date && !Number.isNaN(jadwal.tglDate.getTime())) {
@@ -137,28 +148,113 @@ function hariDariTgl(jadwal) {
   return date.toLocaleDateString('id-ID', { weekday: 'long' })
 }
 
-function selectCabang(c, i) {
-  jadwalStore.filterCabang = c
-  scrollToCenter(cabangRowRef.value, cabangBtnRefs[i])
+function startOfWeek(date) {
+  const d = new Date(date)
+  const day = d.getDay()
+  const diff = day === 0 ? -6 : 1 - day // geser ke Senin
+  d.setDate(d.getDate() + diff)
+  d.setHours(0, 0, 0, 0)
+  return d
 }
 
-function selectStatus(s, i) {
-  jadwalStore.filterStatus = s
-  scrollToCenter(statusRowRef.value, statusBtnRefs[i])
+function endOfWeek(date) {
+  const start = startOfWeek(date)
+  const end = new Date(start)
+  end.setDate(end.getDate() + 6)
+  end.setHours(23, 59, 59, 999)
+  return end
 }
+
+function isMingguIni(jadwal) {
+  const mulai = jadwal.tglDate instanceof Date ? jadwal.tglDate : (jadwal.tglDate ? new Date(jadwal.tglDate) : null)
+  if (!mulai || Number.isNaN(mulai.getTime())) return false
+
+  const selesai = jadwal.tglSelesaiDate
+    ? (jadwal.tglSelesaiDate instanceof Date ? jadwal.tglSelesaiDate : new Date(jadwal.tglSelesaiDate))
+    : mulai
+
+  const now = new Date()
+  return mulai <= endOfWeek(now) && selesai >= startOfWeek(now)
+}
+
+const namaPeserta = (r) => r.namaRegu || r.namaKetua || r.nama || ''
+
+function pesertaNamesInJadwal(jadwal) {
+  const raw = jadwal?.peserta || ''
+  if (!raw) return []
+  const parts = raw.includes(' vs ') ? raw.split(' vs ') : raw.split(',')
+  return parts.map(s => s.trim().toLowerCase()).filter(Boolean)
+}
+
+function isDalamKoridor(jadwal, koridorId) {
+  if (!koridorId) return true
+  const names = pesertaNamesInJadwal(jadwal)
+  if (!names.length) return false
+  return registrasiStore.list.some(r =>
+    r.cabang === jadwal.cabang &&
+    r.koridorId === koridorId &&
+    names.includes(namaPeserta(r).trim().toLowerCase())
+  )
+}
+
+const filterModalOpen = ref(false)
+const filterMingguIni = ref(false)
+const filterKoridorId = ref('')
+
+const filteredJadwal = computed(() =>
+  jadwalStore.filtered.filter(j =>
+    (!filterMingguIni.value || isMingguIni(j)) &&
+    isDalamKoridor(j, filterKoridorId.value)
+  )
+)
+
+const activeFilterCount = computed(() => [
+  jadwalStore.filterCabang !== 'Semua',
+  jadwalStore.filterStatus !== 'Semua',
+  filterMingguIni.value,
+  !!filterKoridorId.value,
+].filter(Boolean).length)
 
 onMounted(() => {
   jadwalStore.fetch()
   lokasiStore.fetch()
   registrasiStore.fetch()
+  koridorStore.fetch()
 })
 </script>
 
 <style scoped>
 .eyebrow   { font: 700 13px/1 'Plus Jakarta Sans'; letter-spacing: .12em; text-transform: uppercase; color: #CE1126; }
 .page-title{ margin: 9px 0 22px; font: 800 32px/1.05 Archivo; color: #1A1613; text-transform: uppercase; }
-.chip-row  { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; }
-.jadwal-list { display: flex; flex-direction: column; gap: 12px; margin-top: 18px; }
+.tcr-scroll::-webkit-scrollbar {
+  height: 0;
+}
+.filter-wrap {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.filter-row {
+  display: flex;
+  align-items: center; 
+  gap: 4px;
+  overflow-x: auto;
+}
+.filter-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  flex: 0 0 auto;
+  padding: 6px 14px; border-radius: 999px;
+  border: 1.5px solid #E2DCD2; background: #fff; color: #1A1613;
+  font: 700 13px/1 'Plus Jakarta Sans'; cursor: pointer; transition: border-color .15s;
+}
+.filter-btn:hover { border-color: #CE1126; }
+.filter-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 20px; height: 20px; padding: 0 5px; border-radius: 999px;
+  background: #CE1126; color: #fff; font: 700 11px/1 'Plus Jakarta Sans';
+}
+.jadwal-list { display: flex; flex-direction: column; gap: 12px; }
 .jadwal-item {
   border: 1.5px solid #F0D3D7; border-radius: 8px; overflow: hidden; background: #fff;
   cursor: pointer; transition: border-color .15s, box-shadow .15s;
