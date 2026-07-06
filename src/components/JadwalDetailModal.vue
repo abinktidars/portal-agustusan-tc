@@ -88,10 +88,10 @@
                   </div>
                 </div>
 
-                <button v-if="jadwal.status === 'Akan Datang'"
+                <!-- <button v-if="jadwal.status === 'Akan Datang'"
                   class="daftar-btn" @click="$emit('daftar')">
                   Daftar Sekarang →
-                </button>
+                </button> -->
                 <button v-if="jadwal.hasilPertandingan"
                   type="button" class="lihat-hasil-btn" @click="goHasil">
                   Lihat Detail Hasil →
@@ -99,7 +99,7 @@
               </div>
 
               <!-- PERSYARATAN -->
-              <div v-if="activeTab === 'syarat'" class="tab-content">
+              <!-- <div v-if="activeTab === 'syarat'" class="tab-content">
                 <div v-if="jadwal.persyaratan && jadwal.persyaratan.length" class="syarat-list">
                   <div v-for="(s, i) in jadwal.persyaratan" :key="i" class="syarat-item">
                     <span class="syarat-num">{{ i + 1 }}</span>
@@ -112,7 +112,7 @@
                   <div class="empty-msg">Persyaratan belum tersedia.</div>
                   <div class="empty-sub">Hubungi panitia untuk informasi lebih lanjut.</div>
                 </div>
-              </div>
+              </div> -->
 
               <!-- PESERTA -->
               <div v-if="activeTab === 'peserta'" class="tab-content">
@@ -246,7 +246,6 @@ const activeTab = ref('detail')
 
 const tabs = [
   { key: 'detail',  label: 'Detail' },
-  { key: 'syarat',  label: 'Persyaratan' },
   { key: 'peserta', label: 'Peserta' },
   { key: 'hasil',   label: 'Hasil' },
 ]
