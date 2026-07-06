@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import * as fb from '@/firebase/helpers'
 
 export const TIPE_OPTIONS = ['Olahraga', 'Tradisional', 'E-Sport', 'Acara']
@@ -7,6 +7,8 @@ export const TIPE_OPTIONS = ['Olahraga', 'Tradisional', 'E-Sport', 'Acara']
 export const useKategoriStore = defineStore('kategori', () => {
   const list    = ref([])
   const loading = ref(false)
+
+  const visibleList = computed(() => list.value.filter((k) => !k.hidden))
 
   async function fetch() {
     loading.value = true
@@ -34,5 +36,5 @@ export const useKategoriStore = defineStore('kategori', () => {
     await fetch()
   }
 
-  return { list, loading, fetch, add, update, remove }
+  return { list, visibleList, loading, fetch, add, update, remove }
 })

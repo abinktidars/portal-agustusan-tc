@@ -28,6 +28,14 @@
             <h3 class="modal-ttl">{{ kategoriForm.editId ? 'Edit' : 'Tambah' }} Lomba</h3>
             <button type="button" class="modal-x" @click="resetKategoriForm">✕</button>
           </div>
+          <div v-if="kategoriForm.editId" class="modal-hide-bar">
+            <span class="modal-hide-info">
+              {{ kategoriForm.hidden ? 'Lomba ini ditutup, tidak muncul di pilihan pendaftaran.' : 'Lomba ini masih bisa dipilih di form pendaftaran.' }}
+            </span>
+            <button type="button" class="btn-hide" :class="{ 'btn-hide-active': kategoriForm.hidden }" @click="toggleHiddenKategori">
+              {{ kategoriForm.hidden ? 'Buka Pendaftaran' : 'Tutup Pendaftaran' }}
+            </button>
+          </div>
           <form @submit.prevent="submitKategori" class="modal-bd">
             <div class="modal-form-grid">
               <div>
@@ -83,9 +91,12 @@
           </thead>
           <tbody>
             <template v-for="(k, i) in kategoriStore.list" :key="k.id">
-              <tr class="data-row" :class="{ 'row-expanded': expandedKatId === k.id }" @click="toggleKatDetail(k.id)">
+              <tr class="data-row" :class="{ 'row-expanded': expandedKatId === k.id, 'row-hidden': k.hidden }" @click="toggleKatDetail(k.id)">
                 <td class="td-num td-idx">{{ i + 1 }}</td>
-                <td class="td-bold td-kat-nama">{{ k.nama }}</td>
+                <td class="td-bold td-kat-nama">
+                  {{ k.nama }}
+                  <span v-if="k.hidden" class="hidden-badge">Pendaftaran Ditutup</span>
+                </td>
                 <td class="td-kat-tipe">
                   <span class="tipe-badge" :style="{ background: tipeStore.bgById(k.tipeId) || '#F0EBE2', color: tipeStore.warnaById(k.tipeId) || '#5A534B' }">
                     {{ tipeStore.namaById(k.tipeId) || k.tipe || '-' }}
@@ -316,6 +327,7 @@ const kategoriForm = reactive({
   urutan: 1,
   deskripsi: '',
   peraturan: '',
+  hidden: false,
   editId: null,
 })
 
@@ -329,6 +341,7 @@ function openKategoriForm(k = null) {
       urutan: k.urutan || 1,
       deskripsi: k.deskripsi || '',
       peraturan: k.peraturan || '',
+      hidden: !!k.hidden,
       editId: k.id,
     })
   } else {
@@ -339,6 +352,7 @@ function openKategoriForm(k = null) {
       urutan: kategoriStore.list.length + 1,
       deskripsi: '',
       peraturan: '',
+      hidden: false,
       editId: null,
     })
   }
@@ -354,8 +368,21 @@ function resetKategoriForm() {
     urutan: 1,
     deskripsi: '',
     peraturan: '',
+    hidden: false,
     editId: null,
   })
+}
+
+async function toggleHiddenKategori() {
+  if (!kategoriForm.editId) return
+  const nextHidden = !kategoriForm.hidden
+  try {
+    await kategoriStore.update(kategoriForm.editId, { hidden: nextHidden })
+    kategoriForm.hidden = nextHidden
+    showToast(nextHidden ? 'Pendaftaran lomba ini ditutup.' : 'Pendaftaran lomba ini dibuka kembali.')
+  } catch {
+    showToast('Gagal mengubah status lomba.', 'error')
+  }
 }
 
 async function submitKategori() {
@@ -375,6 +402,7 @@ async function submitKategori() {
     urutan: kategoriForm.urutan || 1,
     deskripsi: kategoriForm.deskripsi.trim(),
     peraturan: kategoriForm.peraturan.trim(),
+    hidden: kategoriForm.hidden,
   }
 
   try {
@@ -412,6 +440,58 @@ onMounted(() => {
 .modal-x:hover { background:#E2DCD2; }
 .modal-bd      { padding:20px 24px 24px; display:flex; flex-direction:column; gap:16px; }
 .modal-form-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; }
+
+.modal-hide-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 14px 24px 0;
+  padding: 10px 12px;
+  background: #FAF8F3;
+  border: 1px solid #E2DCD2;
+  border-radius: 10px;
+}
+
+.modal-hide-info {
+  font: 500 12px/1.4 'Plus Jakarta Sans';
+  color: #5A534B;
+}
+
+.btn-hide {
+  flex-shrink: 0;
+  padding: 7px 12px;
+  border-radius: 8px;
+  border: 1.5px solid #E2DCD2;
+  background: #fff;
+  color: #1A1613;
+  font: 700 12px/1 'Plus Jakarta Sans';
+  cursor: pointer;
+}
+
+.btn-hide:hover { background: #F0EBE2; }
+
+.btn-hide-active {
+  border-color: #CE1126;
+  background: #FBEAEC;
+  color: #CE1126;
+}
+
+.row-hidden td { opacity: .55; }
+
+.hidden-badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: #F0EBE2;
+  color: #7A7368;
+  font: 700 9px/1 'Plus Jakarta Sans';
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  vertical-align: middle;
+}
 .adm-main {
   max-width: 1180px;
   margin: 0 auto;

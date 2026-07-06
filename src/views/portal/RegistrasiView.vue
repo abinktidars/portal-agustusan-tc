@@ -24,7 +24,7 @@
               <label class="form-label">Cabang Lomba <span class="req">*</span></label>
               <select v-model="form.cabang" class="tcr-input" :disabled="kategoriStore.loading">
                 <option value="">{{ kategoriStore.loading ? 'Memuat daftar lomba…' : 'Pilih cabang lomba…' }}</option>
-                <option v-for="k in kategoriStore.list" :key="k.id" :value="k.nama">{{ k.nama }}</option>
+                <option v-for="k in kategoriStore.visibleList" :key="k.id" :value="k.nama">{{ k.nama }}</option>
               </select>
             </div>
 
