@@ -3,6 +3,16 @@
     <div class="eyebrow">Registrasi Lomba</div>
     <h2 class="page-title">Daftarkan Peserta</h2>
 
+    <div class="info-banner">
+      <span class="info-banner-icon">ℹ️</span>
+      <div>
+        <div class="info-banner-title">Pendaftaran Lomba Mewarnai (2-6 Tahun) Sudah Ditutup</div>
+        <div class="info-banner-desc">
+          Kuota sudah mencapai 50 peserta. Panitia akan menseleksi peserta yang sudah mendaftar berdasarkan urutan waktu mendaftar.
+        </div>
+      </div>
+    </div>
+
     <div class="reg-grid">
       <!-- Form -->
       <div class="form-card">
@@ -327,6 +337,12 @@ onMounted(async () => {
 .eyebrow   { font: 700 13px/1 'Plus Jakarta Sans'; letter-spacing: .12em; text-transform: uppercase; color: #CE1126; }
 .page-title{ margin: 9px 0 22px; font: 800 32px/1.05 Archivo; color: #1A1613; text-transform: uppercase; }
 .reg-grid  { display: grid; grid-template-columns: 1.3fr .7fr; gap: 20px; align-items: start; }
+
+.info-banner { display: flex; gap: 12px; align-items: flex-start; background: #FEF3C7; border: 1.5px solid #F5D68A;
+  border-radius: 12px; padding: 16px 18px; margin-bottom: 20px; }
+.info-banner-icon { font-size: 20px; line-height: 1.3; flex-shrink: 0; }
+.info-banner-title{ font: 800 14px/1.3 Archivo; color: #92400E; }
+.info-banner-desc { font: 500 13px/1.5 'Plus Jakarta Sans'; color: #7A5A15; margin-top: 4px; }
 
 .form-card { background: #fff; border: 1.5px solid #F0D3D7; border-radius: 10px; padding: 28px; }
 .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
