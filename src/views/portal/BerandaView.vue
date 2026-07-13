@@ -12,30 +12,37 @@
         </div>
       </div>
 
-      <!-- Countdown card -->
-      <div class="countdown-card">
-        <div class="cd-label">Menuju Opening</div>
-        <div class="cd-title">Opening Acara<br><span style="color:#F4C36B;">Sabtu, 11 Juli 2026</span></div>
-        <div class="cd-grid">
-          <div class="cd-box" v-for="(val, lbl) in countdown" :key="lbl">
-            <div class="cd-num" :style="lbl === 'Detik' ? 'color:#F4C36B' : ''">{{ val }}</div>
-            <div class="cd-unit">{{ lbl }}</div>
-          </div>
+      <!-- Foto terbaru -->
+      <div v-if="carouselFotos.length" class="hero-carousel">
+        <transition name="fade" mode="out-in">
+          <img
+            :key="currentFoto.id"
+            :src="currentFoto.url"
+            :alt="currentFoto.judul || 'Foto kegiatan'"
+            class="carousel-img"
+          />
+        </transition>
+        <div class="carousel-overlay"></div>
+        <div class="carousel-tag">Foto Terbaru</div>
+        <div v-if="currentFoto.judul" class="carousel-caption">{{ currentFoto.judul }}</div>
+
+        <button v-if="carouselFotos.length > 1" class="carousel-nav carousel-prev" @click="prevSlide" aria-label="Foto sebelumnya">
+          <ChevronLeft :size="18" :stroke-width="2.4" />
+        </button>
+        <button v-if="carouselFotos.length > 1" class="carousel-nav carousel-next" @click="nextSlide" aria-label="Foto berikutnya">
+          <ChevronRight :size="18" :stroke-width="2.4" />
+        </button>
+
+        <div v-if="carouselFotos.length > 1" class="carousel-dots">
+          <button
+            v-for="(f, i) in carouselFotos" :key="f.id"
+            class="carousel-dot" :class="{ active: i === carouselIndex }"
+            @click="goToSlide(i)" :aria-label="`Foto ${i + 1}`"
+          ></button>
         </div>
-        <div class="cd-stats">
-          <div class="cd-stat-box">
-            <div class="cd-stat-val">{{ kategoriStore.list.length || '—' }}</div>
-            <div class="cd-stat-lbl">Cabang Lomba</div>
-          </div>
-          <div class="cd-stat-box">
-            <div class="cd-stat-val">{{ regStore.list.length || '—' }}</div>
-            <div class="cd-stat-lbl">Tim Terdaftar</div>
-          </div>
-          <div class="cd-stat-box">
-            <div class="cd-stat-val">{{ koridorStore.list.length || '—' }}</div>
-            <div class="cd-stat-lbl">Koridor</div>
-          </div>
-        </div>
+      </div>
+      <div v-else-if="!galeriStore.loading" class="hero-carousel hero-carousel-empty">
+        Belum ada foto terbaru.
       </div>
     </section>
 
@@ -195,9 +202,9 @@
 
     <!-- Momen Agustusan tahun lalu -->
     <section style="margin-top:44px;">
-      <div class="section-eyebrow" style="color:#C0871C;">Kilas Balik</div>
+      <div class="section-eyebrow" style="color:#C0871C;">Momen Terbaru</div>
       <div class="section-header-row">
-        <h2 class="section-title">Momen Agustusan Tahun Lalu</h2>
+        <h2 class="section-title">Momen Agustusan Teras Country</h2>
         <button class="link-btn" @click="$router.push({ name: 'galeri' })">Lihat galeri →</button>
       </div>
 
@@ -226,7 +233,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useJadwalStore }    from '@/stores/useJadwal'
 import { useHasilStore }     from '@/stores/useHasil'
 import { useRegistrasiStore } from '@/stores/useRegistrasi'
@@ -239,6 +246,7 @@ import StatusBadge from '@/components/StatusBadge.vue'
 import {
   Volleyball, Gamepad2, Footprints, HandFist, Utensils,
   CircleDot, TreePalm, Dumbbell, PartyPopper, CalendarDays, Trophy,
+  ChevronLeft, ChevronRight,
 } from '@lucide/vue'
 
 const jadwalStore   = useJadwalStore()
@@ -251,6 +259,28 @@ const lokasiStore   = useLokasiStore()
 const galeriStore   = useGaleriStore()
 
 const momenFoto = computed(() => galeriStore.list.slice(0, 8))
+
+// Carousel foto terbaru (hero)
+const carouselFotos = computed(() => galeriStore.list.slice(0, 8))
+const carouselIndex = ref(0)
+const currentFoto = computed(() => carouselFotos.value[carouselIndex.value] || {})
+let carouselTimer
+
+function nextSlide() {
+  if (!carouselFotos.value.length) return
+  carouselIndex.value = (carouselIndex.value + 1) % carouselFotos.value.length
+}
+function prevSlide() {
+  if (!carouselFotos.value.length) return
+  carouselIndex.value = (carouselIndex.value - 1 + carouselFotos.value.length) % carouselFotos.value.length
+}
+function goToSlide(i) {
+  carouselIndex.value = i
+}
+
+watch(carouselFotos, (list) => {
+  if (carouselIndex.value >= list.length) carouselIndex.value = 0
+})
 
 const upcomingJadwal = computed(() =>
   jadwalStore.listWithStatus.filter(j => j.status !== 'Selesai').slice(0, 3)
@@ -377,8 +407,12 @@ onMounted(() => {
   lokasiStore.fetch()
   galeriStore.fetch()
   timer = setInterval(() => { now.value = Date.now() }, 1000)
+  carouselTimer = setInterval(nextSlide, 4000)
 })
-onUnmounted(() => clearInterval(timer))
+onUnmounted(() => {
+  clearInterval(timer)
+  clearInterval(carouselTimer)
+})
 </script>
 
 <style scoped>
@@ -411,6 +445,40 @@ onUnmounted(() => clearInterval(timer))
 .cd-stat-box { flex:1; background:rgba(255,255,255,.06); border-radius:12px; padding:12px; text-align:center; }
 .cd-stat-val { font:800 22px/1 Archivo; color:#F4C36B; }
 .cd-stat-lbl { font:600 10px/1.2 'Plus Jakarta Sans'; color:#B8B0A6; margin-top:5px; }
+
+/* ── Carousel foto terbaru ──────────────── */
+.hero-carousel { position:relative; min-height:320px; border-radius:10px; overflow:hidden; background:#1A1613; }
+.carousel-img { width:100%; height:100%; object-fit:cover; display:block; position:absolute; inset:0; }
+.carousel-overlay { position:absolute; inset:0; background:linear-gradient(to top, rgba(26,22,19,.78) 0%, rgba(26,22,19,0) 55%); pointer-events:none; }
+.carousel-tag {
+  position:absolute; top:16px; left:16px; z-index:1;
+  font:700 12px/1 'Plus Jakarta Sans'; letter-spacing:.12em; text-transform:uppercase;
+  color:#E0A82E; background:rgba(0,0,0,.35); padding:6px 12px; border-radius:999px;
+}
+.carousel-caption {
+  position:absolute; left:18px; right:18px; bottom:42px; z-index:1;
+  color:#fff; font:800 17px/1.3 Archivo;
+  overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; line-clamp:2; -webkit-box-orient:vertical;
+}
+.carousel-nav {
+  position:absolute; top:50%; transform:translateY(-50%); z-index:1;
+  width:34px; height:34px; border-radius:50%; border:none; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  background:rgba(255,255,255,.85); color:#1A1613; transition:background .15s;
+}
+.carousel-nav:hover { background:#fff; }
+.carousel-prev { left:12px; }
+.carousel-next { right:12px; }
+.carousel-dots { position:absolute; bottom:14px; left:0; right:0; z-index:1; display:flex; justify-content:center; gap:6px; }
+.carousel-dot { width:7px; height:7px; padding:0; border-radius:50%; border:none; cursor:pointer; background:rgba(255,255,255,.4); transition:all .2s; }
+.carousel-dot.active { width:18px; border-radius:4px; background:#fff; }
+.hero-carousel-empty {
+  display:flex; align-items:center; justify-content:center;
+  color:#B8B0A6; font:500 14px/1 'Plus Jakarta Sans';
+  border:1.5px dashed rgba(255,255,255,.15);
+}
+.fade-enter-active, .fade-leave-active { transition:opacity .4s ease; }
+.fade-enter-from, .fade-leave-to { opacity:0; }
 
 /* ── Quick links ────────────────────────── */
 .quick-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:16px; }
