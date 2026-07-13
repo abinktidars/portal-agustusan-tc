@@ -231,9 +231,9 @@
     </section>
 
     <!-- Sponsor & Media Partner -->
-    <section v-if="sponsorStore.loading || sponsorStore.sponsors.length || sponsorStore.mediaPartners.length" style="margin-top:44px;">
-      <div class="section-eyebrow" style="color:#9A6B12;">Terima Kasih Kepada</div>
-      <div class="section-header-row">
+    <section v-if="sponsorStore.loading || sponsorStore.sponsors.length || sponsorStore.mediaPartners.length" style="margin-top:44px; text-align: center;">
+      <div class="section-eyebrow" style="color:#9A6B12; ">Terima Kasih Kepada</div>
+      <div class="section-header-row sponsor">
         <h2 class="section-title">Sponsor &amp; Media Partner</h2>
       </div>
 
@@ -545,7 +545,17 @@ onUnmounted(() => {
 /* ── Section headers ────────────────────── */
 .section-eyebrow  { font:700 13px/1 'Plus Jakarta Sans'; letter-spacing:.12em; text-transform:uppercase; color:#CE1126; }
 .section-title    { font:800 30px/1.05 Archivo; color:#1A1613; letter-spacing:-.01em; margin:9px 0 0; }
-.section-header-row { display:flex; align-items:flex-end; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:20px; }
+.section-header-row { 
+  display:flex; 
+  align-items:flex-end; 
+  justify-content:space-between; 
+  gap:16px; 
+  flex-wrap:wrap; 
+  margin-bottom:20px; 
+  &.sponsor {
+    justify-content: center;
+  }
+}
 .link-btn { background:transparent; border:none; color:#CE1126; font:700 14px/1 'Plus Jakarta Sans'; cursor:pointer; }
 
 /* ── Skeleton ───────────────────────────── */
@@ -642,7 +652,7 @@ onUnmounted(() => {
   font:700 12px/1 'Plus Jakarta Sans'; letter-spacing:.08em; text-transform:uppercase;
   color:#7A7368; margin-bottom:12px;
 }
-.sponsor-scroll { display:flex; flex-wrap:wrap; gap:14px; }
+.sponsor-scroll { display:flex; flex-wrap:wrap; gap:14px; justify-content: center;}
 .sponsor-logo-card {
   flex:0 0 auto; width:150px; height:88px;
   display:flex; align-items:center; justify-content:center;
