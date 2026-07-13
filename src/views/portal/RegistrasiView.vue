@@ -122,15 +122,22 @@
         </div>
         <div class="sidebar-divider"></div>
         <div class="sidebar-info">
-          Pendaftaran akan ditutup Tanggal 8 Juli 2026.<br> <br>
+          <!-- Pendaftaran akan ditutup Tanggal 8 Juli 2026.<br> <br> -->
           Pertanyaan lebih lanjut, hubungi: <br>
-          Andie Hans (Ketua Panitia)
+          Andie Hans
           <a
             href="https://wa.me/6281574109182?text=Halo%20Andi%2C%20saya%20ingin%20bertanya%20soal%20registrasi%20lomba"
             target="_blank"
             rel="noopener noreferrer"
             class="wa-link"
-          >0815-7410-9182</a>.
+          >0815-7410-9182</a>. <br>
+          Ashwin
+          <a
+            href="https://wa.me/081903031903?text=Halo%20Ashwin%2C%20saya%20ingin%20bertanya%20soal%20registrasi%20lomba"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="wa-link"
+          >0819-0303-1903</a>.
         </div>
       </div>
     </div>
