@@ -181,7 +181,7 @@ import { usePWAInstall } from '@/composables/usePWAInstall'
 import AdminSplashScreen from '@/components/admin/AdminSplashScreen.vue'
 import {
   LayoutDashboard, Trophy, CalendarDays, Award,
-  Medal, ClipboardList, MapPin, Images, Users, LayoutGrid, ExternalLink, Download
+  Medal, ClipboardList, MapPin, Images, Users, LayoutGrid, ExternalLink, Download, Handshake
 } from '@lucide/vue'
 
 const router    = useRouter()
@@ -219,6 +219,7 @@ const ALL_NAV = [
   { name: 'admin-hasil',      icon: Award,           label: 'Hasil',      roles: ['admin', 'panitia'] },
   { name: 'admin-klasemen',   icon: Medal,           label: 'Klasemen',   roles: ['admin', 'panitia'] },
   { name: 'admin-galeri',     icon: Images,          label: 'Galeri',     roles: ['admin'] },
+  { name: 'admin-sponsor',    icon: Handshake,       label: 'Sponsor',    roles: ['admin'] },
   { name: 'admin-lokasi',     icon: MapPin,          label: 'Lokasi',     roles: ['admin'] },
   { name: 'admin-users',      icon: Users,           label: 'Users',      roles: ['admin'] },
 ]

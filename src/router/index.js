@@ -35,6 +35,7 @@ const router = createRouter({
         { path: 'koridor',    name: 'admin-koridor',    component: () => import('@/views/admin/AdminKoridorView.vue'),    meta: { requiresAuth: true, roles: ['admin'] } },
         { path: 'lokasi',     name: 'admin-lokasi',     component: () => import('@/views/admin/AdminLokasiView.vue'),     meta: { requiresAuth: true, roles: ['admin'] } },
         { path: 'galeri',     name: 'admin-galeri',     component: () => import('@/views/admin/AdminGaleriView.vue'),     meta: { requiresAuth: true, roles: ['admin'] } },
+        { path: 'sponsor',    name: 'admin-sponsor',    component: () => import('@/views/admin/AdminSponsorView.vue'),    meta: { requiresAuth: true, roles: ['admin'] } },
         { path: 'users',      name: 'admin-users',      component: () => import('@/views/admin/AdminUsersView.vue'),      meta: { requiresAuth: true, roles: ['admin'] } },
       ]
     }

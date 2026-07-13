@@ -4,7 +4,7 @@
     <section class="hero-grid">
       <!-- Hero card -->
       <div class="hero-card">
-        <div class="hero-badge">11 Juli – 31 Agustus 2026</div>
+        <div class="hero-badge">11 Juli – 29 Agustus 2026</div>
         <h1 class="hero-title">Semarak Agustusan <span class="hero-title-accent">ke-81</span></h1>
         <p class="hero-desc">Portal bersama warga Teras Country Residence. Yuk Cek jadwal &amp; hasil pertandingan, klasemen, dan daftar lomba semua di satu tempat.</p>
         <div class="hero-actions">
@@ -229,6 +229,54 @@
         Belum ada foto momen Agustusan tahun lalu.
       </div>
     </section>
+
+    <!-- Sponsor & Media Partner -->
+    <section v-if="sponsorStore.loading || sponsorStore.sponsors.length || sponsorStore.mediaPartners.length" style="margin-top:44px;">
+      <div class="section-eyebrow" style="color:#9A6B12;">Terima Kasih Kepada</div>
+      <div class="section-header-row">
+        <h2 class="section-title">Sponsor &amp; Media Partner</h2>
+      </div>
+
+      <div v-if="sponsorStore.loading" class="sponsor-scroll">
+        <div v-for="n in 6" :key="n" class="skeleton-card sponsor-logo-card"></div>
+      </div>
+
+      <template v-else>
+        <div v-if="sponsorStore.sponsors.length" class="sponsor-group">
+          <div class="sponsor-group-label">Sponsor</div>
+          <div class="sponsor-scroll">
+            <a
+              v-for="s in sponsorStore.sponsors" :key="s.id"
+              class="sponsor-logo-card"
+              :href="s.link || undefined"
+              :target="s.link ? '_blank' : undefined"
+              :rel="s.link ? 'noopener' : undefined"
+              :class="{ 'no-link': !s.link }"
+            >
+              <img v-if="s.logoUrl" :src="s.logoUrl" :alt="s.nama" class="sponsor-logo-img" loading="lazy" />
+              <span v-else class="sponsor-logo-fallback">{{ s.nama }}</span>
+            </a>
+          </div>
+        </div>
+
+        <div v-if="sponsorStore.mediaPartners.length" class="sponsor-group">
+          <div class="sponsor-group-label">Media Partner</div>
+          <div class="sponsor-scroll">
+            <a
+              v-for="s in sponsorStore.mediaPartners" :key="s.id"
+              class="sponsor-logo-card"
+              :href="s.link || undefined"
+              :target="s.link ? '_blank' : undefined"
+              :rel="s.link ? 'noopener' : undefined"
+              :class="{ 'no-link': !s.link }"
+            >
+              <img v-if="s.logoUrl" :src="s.logoUrl" :alt="s.nama" class="sponsor-logo-img" loading="lazy" />
+              <span v-else class="sponsor-logo-fallback">{{ s.nama }}</span>
+            </a>
+          </div>
+        </div>
+      </template>
+    </section>
   </div>
 </template>
 
@@ -242,6 +290,7 @@ import { useTipeStore }      from '@/stores/useTipe'
 import { useKoridorStore }   from '@/stores/useKoridor'
 import { useLokasiStore }    from '@/stores/useLokasi'
 import { useGaleriStore }    from '@/stores/useGaleri'
+import { useSponsorStore }   from '@/stores/useSponsor'
 import StatusBadge from '@/components/StatusBadge.vue'
 import {
   Volleyball, Gamepad2, Footprints, HandFist, Utensils,
@@ -257,6 +306,7 @@ const tipeStore     = useTipeStore()
 const koridorStore  = useKoridorStore()
 const lokasiStore   = useLokasiStore()
 const galeriStore   = useGaleriStore()
+const sponsorStore  = useSponsorStore()
 
 const momenFoto = computed(() => galeriStore.list.slice(0, 8))
 
@@ -406,6 +456,7 @@ onMounted(() => {
   koridorStore.fetch()
   lokasiStore.fetch()
   galeriStore.fetch()
+  sponsorStore.fetch()
   timer = setInterval(() => { now.value = Date.now() }, 1000)
   carouselTimer = setInterval(nextSlide, 4000)
 })
@@ -584,6 +635,30 @@ onUnmounted(() => {
 .momen-title { font:700 13px/1.3 'Plus Jakarta Sans'; color:#1A1613; }
 .momen-kat   { margin-top:6px; display:inline-block; padding:3px 9px; border-radius:999px; background:#FFF3CD; color:#856404; font:600 11px/1 'Plus Jakarta Sans'; }
 
+/* ── Sponsor & Media Partner ────────────── */
+.sponsor-group { margin-top:20px; }
+.sponsor-group:first-child { margin-top:0; }
+.sponsor-group-label {
+  font:700 12px/1 'Plus Jakarta Sans'; letter-spacing:.08em; text-transform:uppercase;
+  color:#7A7368; margin-bottom:12px;
+}
+.sponsor-scroll { display:flex; flex-wrap:wrap; gap:14px; }
+.sponsor-logo-card {
+  flex:0 0 auto; width:150px; height:88px;
+  display:flex; align-items:center; justify-content:center;
+  background:#fff; border:1.5px solid #F0D3D7; border-radius:10px;
+  padding:14px; transition:border-color .15s, transform .15s, box-shadow .15s;
+}
+a.sponsor-logo-card { cursor:pointer; }
+a.sponsor-logo-card:hover { border-color:#CE1126; transform:translateY(-2px); box-shadow:0 8px 20px rgba(206,17,38,.10); }
+a.sponsor-logo-card.no-link { cursor:default; }
+a.sponsor-logo-card.no-link:hover { border-color:#F0D3D7; transform:none; box-shadow:none; }
+.sponsor-logo-img { max-width:100%; max-height:100%; object-fit:contain; }
+.sponsor-logo-fallback {
+  font:700 13px/1.3 'Plus Jakarta Sans'; color:#5A534B; text-align:center;
+  overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; line-clamp:2; -webkit-box-orient:vertical;
+}
+
 /* ── Empty ──────────────────────────────── */
 .empty-section {
   padding:32px; border:1.5px dashed #E0D8CE; border-radius:10px;
@@ -619,6 +694,8 @@ onUnmounted(() => {
   }
   .momen-scroll::-webkit-scrollbar { display:none; }
   .momen-card { flex:0 0 62%; scroll-snap-align:start; }
+
+  .sponsor-logo-card { width:120px; height:72px; padding:10px; }
 
   .lomba-preview-grid {
     display:flex; grid-template-columns:none; overflow-x:auto; gap:12px;

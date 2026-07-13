@@ -128,6 +128,25 @@ export async function updateGaleri(id, data, fotoDataUrl) {
 
 export const deleteGaleri = (id) => deleteDoc(doc(db, 'galeri', id))
 
+// ── SPONSOR & MEDIA PARTNER ────────────────────────────
+// Logos are stored as base64 data URLs directly in the `logoUrl` field, same
+// reasoning as galeri above (no Firebase Storage / Blaze plan needed).
+export const getSponsor = () => getDocs(query(collection(db, 'sponsor'), orderBy('urutan'))).then(s => s.docs.map(d => ({ id: d.id, ...d.data() })))
+
+export async function addSponsor(data, logoDataUrl) {
+  const payload = { ...data, logoUrl: logoDataUrl || '', createdAt: new Date() }
+  const docRef = await addDoc(collection(db, 'sponsor'), payload)
+  return { id: docRef.id, ...payload }
+}
+
+export async function updateSponsor(id, data, logoDataUrl) {
+  if (logoDataUrl) data.logoUrl = logoDataUrl
+  await updateDoc(doc(db, 'sponsor', id), data)
+  return { id, ...data }
+}
+
+export const deleteSponsor = (id) => deleteDoc(doc(db, 'sponsor', id))
+
 // ── USERS ─────────────────────────────────────────────
 export const getUsers = () =>
   getDocs(collection(db, 'users')).then(s =>
