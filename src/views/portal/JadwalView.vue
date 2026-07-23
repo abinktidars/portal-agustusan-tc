@@ -202,10 +202,13 @@ const filterMingguIni = ref(false)
 const filterKoridorId = ref('')
 
 const filteredJadwal = computed(() =>
-  jadwalStore.filtered.filter(j =>
-    (!filterMingguIni.value || isMingguIni(j)) &&
-    isDalamKoridor(j, filterKoridorId.value)
-  )
+  jadwalStore.filtered
+    .filter(j =>
+      (!filterMingguIni.value || isMingguIni(j)) &&
+      isDalamKoridor(j, filterKoridorId.value)
+    )
+    .slice()
+    .sort((a, b) => (a.status === 'Selesai') - (b.status === 'Selesai'))
 )
 
 const activeFilterCount = computed(() => [
