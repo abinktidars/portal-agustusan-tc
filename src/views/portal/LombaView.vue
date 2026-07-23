@@ -40,7 +40,7 @@
         <div class="lomba-desc">{{ kat.deskripsi || 'Deskripsi lomba belum diisi.' }}</div>
 
         <div class="card-actions">
-          <button class="daftar-btn" @click="goRegistrasi(kat)">Daftar</button>
+          <button v-if="!kat.hidden" class="daftar-btn" @click="goRegistrasi(kat)">Daftar</button>
           <button class="ketentuan-btn" @click="openModal(kat)">Lihat Ketentuan</button>
         </div>
       </div>
