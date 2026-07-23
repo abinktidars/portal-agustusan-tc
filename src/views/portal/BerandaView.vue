@@ -8,7 +8,8 @@
         <h1 class="hero-title">Semarak Agustusan <span class="hero-title-accent">ke-81</span></h1>
         <p class="hero-desc">Portal bersama warga Teras Country Residence. Yuk Cek jadwal &amp; hasil pertandingan, klasemen, dan daftar lomba semua di satu tempat.</p>
         <div class="hero-actions">
-          <button class="btn-primary" @click="$router.push({ name: 'registrasi' })">Daftar Lomba Sekarang</button>
+          <button class="btn-primary" @click="$router.push({ name: 'hasil' })">Lihat Hasil Pertandingan</button>
+          <button class="btn-secondary" @click="$router.push({ name: 'klasemen' })">Lihat Klasemen</button>
         </div>
       </div>
 
@@ -20,6 +21,11 @@
             :src="currentFoto.url"
             :alt="currentFoto.judul || 'Foto kegiatan'"
             class="carousel-img"
+            role="button"
+            tabindex="0"
+            @click="$router.push({ name: 'galeri' })"
+            @keydown.enter.prevent="$router.push({ name: 'galeri' })"
+            @keydown.space.prevent="$router.push({ name: 'galeri' })"
           />
         </transition>
         <div class="carousel-overlay"></div>
@@ -159,8 +165,59 @@
       </div>
     </section>
     
+    <!-- Klasemen -->
+    <section style="margin-top:44px;" v-if="hasilStore.loading || klasemenHighlights.length">
+      <div class="section-eyebrow" style="color:#2D5B8A;">Klasemen Sementara</div>
+      <div class="section-header-row">
+        <h2 class="section-title">Voli Putra &amp; Badminton</h2>
+        <button class="link-btn" @click="$router.push({ name: 'klasemen' })">Lihat semua →</button>
+      </div>
+
+      <div v-if="hasilStore.loading" class="klasemen-grid">
+        <div v-for="n in 2" :key="n" class="skeleton-card"></div>
+      </div>
+
+      <div v-else-if="klasemenHighlights.length" class="klasemen-grid">
+        <div
+          v-for="k in klasemenHighlights" :key="k.nama"
+          class="klasemen-card" role="button" tabindex="0"
+          @click="$router.push({ name: 'klasemen' })"
+          @keydown.enter.prevent="$router.push({ name: 'klasemen' })"
+          @keydown.space.prevent="$router.push({ name: 'klasemen' })"
+        >
+          <div class="klasemen-card-title">{{ k.nama }}</div>
+          <div class="klasemen-table-wrap">
+            <table class="klasemen-mini-table">
+              <thead>
+                <tr>
+                  <th class="col-rank">#</th>
+                  <th class="col-tim">Tim</th>
+                  <th class="col-num">M</th>
+                  <th class="col-num">K</th>
+                  <th class="col-num">Poin</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="t in k.standings" :key="t.nama" :class="{ 'row-lolos': t.rank <= 2 }">
+                  <td class="col-rank">{{ t.rank }}</td>
+                  <td class="tim-nama">{{ t.nama }}</td>
+                  <td class="col-num">{{ t.menang }}</td>
+                  <td class="col-num">{{ t.kalah }}</td>
+                  <td class="col-num col-poin">{{ t.poin }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div v-else class="empty-section">
+        Klasemen belum tersedia.
+      </div>
+    </section>
+
     <!-- Daftar Lomba -->
-    <section style="margin-top:44px;">
+    <!-- <section style="margin-top:44px;">
       <div class="section-eyebrow" style="color:#2D5B8A;">Cabang Lomba</div>
       <div class="section-header-row">
         <h2 class="section-title">Daftar Lomba</h2>
@@ -197,7 +254,7 @@
       <div v-else class="empty-section">
         Belum ada daftar lomba yang tersedia.
       </div>
-    </section>
+    </section> -->
 
 
     <!-- Momen Agustusan tahun lalu -->
@@ -447,6 +504,81 @@ function isPerorangan(h) {
   return !!(h.juara1 || h.juara2 || h.juara3) || h.jenis === 'Perorangan'
 }
 
+// Klasemen ringkas — hanya Voli Putra & Badminton (yg paling ditunggu warga)
+function normalizeTimKey(nama) {
+  return (nama || '').trim().toLowerCase().replace(/\s+/g, ' ')
+}
+
+function cabangKlasemenType(nama) {
+  const n = (nama || '').toLowerCase()
+  if (n.includes('badminton')) return 'badminton'
+  if (n.includes('voli') || n.includes('volly')) return 'voli'
+  return null
+}
+
+// Poin: badminton menang=1/kalah=0; voli 2-0=3poin, 2-1=2poin, 1-2=1poin, 0-2=0poin
+function standingsFor(katNama) {
+  const type = cabangKlasemenType(katNama)
+  if (!type) return []
+
+  const entries = hasilStore.list.filter(e =>
+    e.cabang === katNama && e.timA && e.timB && /(\d+)\s*[–—-]\s*(\d+)/.test(e.skor || '')
+  )
+  if (!entries.length) return []
+
+  const teams = {}
+  function team(nama) {
+    const key = normalizeTimKey(nama)
+    if (!teams[key]) teams[key] = { nama: (nama || '').trim(), main: 0, menang: 0, kalah: 0, unitFor: 0, unitAgainst: 0, poin: 0 }
+    return teams[key]
+  }
+
+  entries.forEach(e => {
+    const m = e.skor.match(/(\d+)\s*[–—-]\s*(\d+)/)
+    const a = Number(m[1])
+    const b = Number(m[2])
+    const tA = team(e.timA)
+    const tB = team(e.timB)
+    tA.main++; tB.main++
+    tA.unitFor += a; tA.unitAgainst += b
+    tB.unitFor += b; tB.unitAgainst += a
+    if (a === b) return
+
+    if (type === 'badminton') {
+      if (a > b) { tA.menang++; tA.poin += 1; tB.kalah++ }
+      else       { tB.menang++; tB.poin += 1; tA.kalah++ }
+    } else {
+      const winUnit  = Math.max(a, b)
+      const loseUnit = Math.min(a, b)
+      const [poinMenang, poinKalah] = (winUnit === 2 && loseUnit === 0) ? [3, 0] : [2, 1]
+      if (a > b) { tA.menang++; tA.poin += poinMenang; tB.kalah++; tB.poin += poinKalah }
+      else       { tB.menang++; tB.poin += poinMenang; tA.kalah++; tA.poin += poinKalah }
+    }
+  })
+
+  return Object.values(teams)
+    .map(t => ({ ...t, selisih: t.unitFor - t.unitAgainst }))
+    .sort((x, y) => y.poin - x.poin || y.selisih - x.selisih || y.unitFor - x.unitFor)
+    .map((t, i) => ({ ...t, rank: i + 1 }))
+}
+
+const kategoriVoliPutra = computed(() =>
+  kategoriStore.list.find(k => /voli/i.test(k.nama) && !/putri/i.test(k.nama))
+)
+const kategoriBadminton = computed(() =>
+  kategoriStore.list.find(k => /badminton/i.test(k.nama))
+)
+
+const klasemenHighlights = computed(() => {
+  const items = []
+  for (const kat of [kategoriVoliPutra.value, kategoriBadminton.value]) {
+    if (!kat) continue
+    const standings = standingsFor(kat.nama).slice(0, 3)
+    if (standings.length) items.push({ nama: kat.nama, standings })
+  }
+  return items
+})
+
 onMounted(() => {
   jadwalStore.fetch()
   hasilStore.fetch()
@@ -483,6 +615,8 @@ onUnmounted(() => {
 .hero-desc    { margin:16px 0 0; font:500 17px/1.6 'Plus Jakarta Sans'; color:#5A534B; max-width:46ch; }
 .hero-actions { display:flex; gap:12px; margin-top:26px; flex-wrap:wrap; }
 .btn-primary  { padding:14px 26px; border:none; border-radius:8px; background:#CE1126; color:#fff; font:800 15px/1 'Plus Jakarta Sans'; cursor:pointer; box-shadow:0 8px 20px rgba(206,17,38,.22); }
+.btn-secondary{ padding:14px 26px; border:1.5px solid #E0D8CE; border-radius:8px; background:#fff; color:#1A1613; font:800 15px/1 'Plus Jakarta Sans'; cursor:pointer; transition:border-color .15s, color .15s; }
+.btn-secondary:hover { border-color:#CE1126; color:#CE1126; }
 
 /* ── Countdown ──────────────────────────── */
 .countdown-card { background:#1A1613; border-radius:10px; padding:32px; color:#fff; display:flex; flex-direction:column; }
@@ -499,7 +633,7 @@ onUnmounted(() => {
 
 /* ── Carousel foto terbaru ──────────────── */
 .hero-carousel { position:relative; min-height:320px; border-radius:10px; overflow:hidden; background:#1A1613; }
-.carousel-img { width:100%; height:100%; object-fit:cover; display:block; position:absolute; inset:0; }
+.carousel-img { width:100%; height:100%; object-fit:cover; display:block; position:absolute; inset:0; cursor:pointer; }
 .carousel-overlay { position:absolute; inset:0; background:linear-gradient(to top, rgba(26,22,19,.78) 0%, rgba(26,22,19,0) 55%); pointer-events:none; }
 .carousel-tag {
   position:absolute; top:16px; left:16px; z-index:1;
@@ -630,6 +764,31 @@ onUnmounted(() => {
 .podium-item { display:flex; align-items:center; gap:8px; font:600 13px/1.3 'Plus Jakarta Sans'; color:#1A1613; }
 .podium-item span { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 
+/* ── Klasemen ────────────────────────────── */
+.klasemen-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:16px; }
+.klasemen-card {
+  background:#fff; border:1.5px solid #F0D3D7; border-top:3px solid #2D5B8A; border-radius:8px;
+  padding:18px 20px; cursor:pointer; transition:border-color .15s, transform .15s;
+}
+.klasemen-card:hover { border-color:#2D5B8A; transform:translateY(-2px); }
+.klasemen-card-title { font:800 16px/1.2 Archivo; color:#1A1613; margin-bottom:14px; }
+.klasemen-table-wrap { overflow-x:auto; }
+.klasemen-mini-table { width:100%; border-collapse:collapse; min-width:280px; font:500 13px/1.4 'Plus Jakarta Sans'; }
+.klasemen-mini-table th {
+  padding:8px 10px; text-align:left; font:700 10px/1 'Plus Jakarta Sans'; color:#7A7368;
+  letter-spacing:.04em; text-transform:uppercase; border-bottom:1px solid #E2DCD2; white-space:nowrap;
+}
+.klasemen-mini-table td { padding:9px 10px; border-bottom:1px solid #F0EBE2; white-space:nowrap; }
+.klasemen-mini-table tbody tr:last-child td { border-bottom:none; }
+.klasemen-mini-table .col-rank { text-align:center; font-weight:800; color:#1A1613; width:1%; }
+.klasemen-mini-table .col-num  { text-align:center; width:1%; }
+.klasemen-mini-table .col-tim  { width:100%; }
+.klasemen-mini-table .col-poin { font-weight:800; color:#2D5B8A; }
+.klasemen-mini-table .tim-nama { font:700 13px/1.3 'Plus Jakarta Sans'; color:#1A1613; }
+.klasemen-mini-table tbody tr.row-lolos { background:#E9F7EF; }
+.klasemen-mini-table tbody tr.row-lolos .col-rank { color:#1E9E5A; }
+.klasemen-mini-table tbody tr.row-lolos .tim-nama { color:#157A45; }
+
 /* ── Momen Agustusan tahun lalu ─────────── */
 .momen-scroll { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; }
 .momen-card {
@@ -683,6 +842,7 @@ a.sponsor-logo-card.no-link:hover { border-color:#F0D3D7; transform:none; box-sh
 }
 @media(max-width:767px) {
   .hero-grid, .quick-grid { grid-template-columns:1fr !important; }
+  .klasemen-grid { grid-template-columns:1fr; }
   .hero-grid { gap:16px; }
   .hero-title { font-size:34px !important; }
   .hero-desc { font-size:15px; }
